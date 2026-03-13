@@ -1,19 +1,23 @@
+import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 
 const protectedRoutes = ['/dashboard', '/properties', '/bookings', '/settings']
 
-export default auth((req) => {
-  const isLoggedIn = !!req.auth
-  const { pathname } = req.nextUrl
+export async function middleware(request: NextRequest) {
+  const session = await auth()
+  const isLoggedIn = !!session
+  const { pathname } = request.nextUrl
 
   const isProtectedRoute = protectedRoutes.some((route) =>
     pathname.startsWith(route)
   )
 
   if (isProtectedRoute && !isLoggedIn) {
-    return Response.redirect(new URL('/login', req.url))
+    return NextResponse.redirect(new URL('/login', request.nextUrl))
   }
-})
+
+  return NextResponse.next()
+}
 
 export const config = {
   matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
