@@ -1,0 +1,302 @@
+generator client {
+  provider = "prisma-client-js"
+  engineType = "binary"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String    @id @default(cuid())
+  name           String?
+  email          String    @unique
+  emailVerified  DateTime?
+  image          String?
+  hashedPassword String?
+  role           Role      @default(OWNER)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  accounts      Account[]
+  sessions      Session[]
+  properties    Property[]
+  notifications Notification[]
+
+  @@map("users")
+}
+
+enum Role {
+  OWNER
+  ADMIN
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+model Property {
+  id          String         @id @default(cuid())
+  ownerId     String
+  title       String
+  slug        String         @unique
+  description String         @db.Text
+  type        PropertyType   @default(APARTMENT)
+  status      PropertyStatus @default(DRAFT)
+
+  address   String
+  city      String
+  country   String  @default("PT")
+  latitude  Float?
+  longitude Float?
+  zipCode   String?
+
+  maxGuests Int   @default(1)
+  bedrooms  Int   @default(1)
+  bathrooms Int   @default(1)
+  beds      Int   @default(1)
+  area      Float?
+
+  pricePerNight      Float
+  cleaningFee        Float  @default(0)
+  securityDeposit    Float  @default(0)
+  currency           String @default("EUR")
+
+  checkInTime        String             @default("15:00")
+  checkOutTime       String             @default("11:00")
+  minNights          Int                @default(1)
+  maxNights          Int                @default(365)
+  cancellationPolicy CancellationPolicy @default(FLEXIBLE)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  owner        User              @relation(fields: [ownerId], references: [id])
+  images       PropertyImage[]
+  amenities    PropertyAmenity[]
+  bookings     Booking[]
+  reviews      Review[]
+  blockedDates BlockedDate[]
+
+  @@map("properties")
+}
+
+enum PropertyType {
+  APARTMENT
+  HOUSE
+  VILLA
+  STUDIO
+  ROOM
+}
+
+enum PropertyStatus {
+  DRAFT
+  ACTIVE
+  INACTIVE
+  ARCHIVED
+}
+
+enum CancellationPolicy {
+  FLEXIBLE
+  MODERATE
+  STRICT
+}
+
+model PropertyImage {
+  id         String   @id @default(cuid())
+  propertyId String
+  url        String
+  publicId   String
+  alt        String?
+  order      Int      @default(0)
+  isCover    Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@map("property_images")
+}
+
+model Amenity {
+  id       String          @id @default(cuid())
+  name     String          @unique
+  icon     String?
+  category AmenityCategory @default(GENERAL)
+
+  properties PropertyAmenity[]
+
+  @@map("amenities")
+}
+
+enum AmenityCategory {
+  GENERAL
+  KITCHEN
+  BATHROOM
+  BEDROOM
+  OUTDOOR
+  ENTERTAINMENT
+  SAFETY
+  ACCESSIBILITY
+}
+
+model PropertyAmenity {
+  propertyId String
+  amenityId  String
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  amenity  Amenity  @relation(fields: [amenityId], references: [id])
+
+  @@id([propertyId, amenityId])
+  @@map("property_amenities")
+}
+
+model Booking {
+  id               String        @id @default(cuid())
+  propertyId       String
+  confirmationCode String        @unique @default(cuid())
+
+  guestName  String
+  guestEmail String
+  guestPhone String?
+  guestCount Int
+
+  checkIn  DateTime
+  checkOut DateTime
+  nights   Int
+
+  pricePerNight   Float
+  cleaningFee     Float  @default(0)
+  securityDeposit Float  @default(0)
+  totalPrice      Float
+  currency        String @default("EUR")
+
+  status          BookingStatus @default(PENDING)
+  paymentStatus   PaymentStatus @default(UNPAID)
+  paymentIntentId String?
+
+  guestMessage String?       @db.Text
+  ownerNotes   String?       @db.Text
+  source       BookingSource @default(DIRECT)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  property Property @relation(fields: [propertyId], references: [id])
+  review   Review?
+
+  @@map("bookings")
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+  NO_SHOW
+}
+
+enum PaymentStatus {
+  UNPAID
+  PARTIAL
+  PAID
+  REFUNDED
+}
+
+enum BookingSource {
+  DIRECT
+  AIRBNB
+  BOOKING
+  MANUAL
+}
+
+model BlockedDate {
+  id         String   @id @default(cuid())
+  propertyId String
+  date       DateTime @db.Date
+  reason     String?
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@unique([propertyId, date])
+  @@map("blocked_dates")
+}
+
+model Review {
+  id          String   @id @default(cuid())
+  propertyId  String
+  bookingId   String   @unique
+  guestName   String
+  rating      Int
+  comment     String?  @db.Text
+  ownerReply  String?  @db.Text
+  isPublished Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  property Property @relation(fields: [propertyId], references: [id])
+  booking  Booking  @relation(fields: [bookingId], references: [id])
+
+  @@map("reviews")
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
+  title     String
+  message   String
+  data      Json?
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
+
+enum NotificationType {
+  NEW_BOOKING
+  BOOKING_CANCELLED
+  BOOKING_CONFIRMED
+  PAYMENT_RECEIVED
+  NEW_REVIEW
+  CHECK_IN_REMINDER
+  CHECK_OUT_REMINDER
+  SYSTEM
+}

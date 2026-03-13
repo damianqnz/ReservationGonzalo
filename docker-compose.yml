@@ -1,0 +1,22 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: always
+    container_name: reservation_db
+    environment:
+      POSTGRES_USER: alojamiento_user
+      POSTGRES_PASSWORD: alojamiento_pass
+      POSTGRES_DB: reservation_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U alojamiento_user -d reservation_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+    driver: local
