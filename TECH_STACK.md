@@ -1,6 +1,6 @@
 # Tech Stack — ReservationGonzalo
 
-> Actualizado automáticamente el **13/3/2026, 17:10:10**
+> Actualizado automáticamente el **13/3/2026, 18:02:37**
 > Ejecuta `npm run tech-stack` para actualizar.
 
 ## Runtime
@@ -20,38 +20,38 @@
 ## Base de datos
 | Paquete | Versión |
 |---------|---------|
-| prisma | no instalado |
-| @prisma/client | no instalado |
+| prisma | 6.19.2 |
+| @prisma/client | 7.5.0 |
 | PostgreSQL | 16 (Docker) |
 
 ## Autenticación
 | Paquete | Versión |
 |---------|---------|
-| next-auth | no instalado |
-| @auth/prisma-adapter | no instalado |
-| bcryptjs | no instalado |
+| next-auth | 5.0.0-beta.30 |
+| @auth/prisma-adapter | 2.11.1 |
+| bcryptjs | 3.0.3 |
 
 ## UI & Estilos
 | Paquete | Versión |
 |---------|---------|
 | tailwindcss | 4.2.1 |
-| lucide-react | no instalado |
-| class-variance-authority | no instalado |
-| clsx | no instalado |
+| lucide-react | 0.577.0 |
+| class-variance-authority | 0.7.1 |
+| clsx | 2.1.1 |
 
 ## Validación & Formularios
 | Paquete | Versión |
 |---------|---------|
 | zod | 4.3.6 |
-| react-hook-form | no instalado |
+| react-hook-form | 7.71.2 |
 
 ## Dev Tools
 | Herramienta | Versión |
 |-------------|---------|
 | eslint | 9.39.4 |
-| husky | no instalado |
-| jest | no instalado |
-| prettier | no instalado |
+| husky | 9.1.7 |
+| jest | 30.3.0 |
+| prettier | 3.8.1 |
 
 ## Deploy & CI/CD
 | Herramienta | Versión |
