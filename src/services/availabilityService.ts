@@ -1,5 +1,6 @@
 import { BookingStatus } from '@prisma/client'
 import { db } from '@/lib/db'
+import { isDateOverlap, normalizeDate } from '@/lib/date'
 
 const ACTIVE_STATUSES: BookingStatus[] = [
   BookingStatus.PENDING,
@@ -11,32 +12,31 @@ const ACTIVE_STATUSES: BookingStatus[] = [
  * Returns true if no active booking overlaps and no blocked dates exist.
  *
  * Overlap condition (half-open intervals):
- *   booking.checkIn  < requestedCheckOut
- *   booking.checkOut > requestedCheckIn
+ *   booking.checkIn  < requestedEnd
+ *   booking.checkOut > requestedStart
  */
 export async function checkAvailability(
   roomId: string,
   startDate: Date,
   endDate: Date,
 ): Promise<boolean> {
+  const start = normalizeDate(startDate)
+  const end = normalizeDate(endDate)
+
   return db.$transaction(async (tx) => {
-    const overlappingBooking = await tx.booking.findFirst({
+    const activeBookings = await tx.booking.findMany({
       where: {
         propertyId: roomId,
         status: { in: ACTIVE_STATUSES },
-        checkIn: { lt: endDate },
-        checkOut: { gt: startDate },
       },
-      select: { id: true },
+      select: { checkIn: true, checkOut: true },
     })
 
-    if (overlappingBooking) return false
+    const hasConflict = activeBookings.some(({ checkIn, checkOut }) =>
+      isDateOverlap(normalizeDate(checkIn), normalizeDate(checkOut), start, end),
+    )
 
-    // Normalise to midnight UTC for date-only comparison
-    const start = new Date(startDate)
-    start.setUTCHours(0, 0, 0, 0)
-    const end = new Date(endDate)
-    end.setUTCHours(0, 0, 0, 0)
+    if (hasConflict) return false
 
     const blockedDate = await tx.blockedDate.findFirst({
       where: {
@@ -72,10 +72,8 @@ export async function getUnavailableDates(roomId: string): Promise<Date[]> {
   const dateSet = new Set<string>()
 
   for (const { checkIn, checkOut } of activeBookings) {
-    const cursor = new Date(checkIn)
-    cursor.setUTCHours(0, 0, 0, 0)
-    const end = new Date(checkOut)
-    end.setUTCHours(0, 0, 0, 0)
+    const cursor = normalizeDate(checkIn)
+    const end = normalizeDate(checkOut)
 
     while (cursor < end) {
       dateSet.add(cursor.toISOString())
@@ -84,9 +82,7 @@ export async function getUnavailableDates(roomId: string): Promise<Date[]> {
   }
 
   for (const { date } of blockedDates) {
-    const d = new Date(date)
-    d.setUTCHours(0, 0, 0, 0)
-    dateSet.add(d.toISOString())
+    dateSet.add(normalizeDate(date).toISOString())
   }
 
   return Array.from(dateSet).map((iso) => new Date(iso)).sort((a, b) => a.getTime() - b.getTime())
