@@ -98,6 +98,32 @@ export async function markAllAsRead(userId: string): Promise<number> {
 }
 
 /**
+ * Returns the latest notifications for a user together with the total
+ * unread count, using a single Prisma transaction.
+ *
+ * @param userId - The user's ID.
+ * @param limit - Max notifications to return (default 20).
+ */
+export async function listNotifications(userId: string, limit = 20) {
+  try {
+    const [items, unreadCount] = await db.$transaction([
+      db.notification.findMany({
+        where: { userId },
+        select: NOTIFICATION_SELECT,
+        orderBy: { createdAt: 'desc' },
+        take: limit,
+      }),
+      db.notification.count({ where: { userId, isRead: false } }),
+    ])
+
+    return { items, unreadCount }
+  } catch (error) {
+    console.error('[NotificationService]', error)
+    throw error
+  }
+}
+
+/**
  * Returns the count of unread notifications for a user.
  *
  * @param userId - The user's ID.
