@@ -1,6 +1,7 @@
 import NextAuth from 'next-auth'
 import { PrismaAdapter } from '@auth/prisma-adapter'
 import CredentialsProvider from 'next-auth/providers/credentials'
+import GoogleProvider from 'next-auth/providers/google'
 import bcrypt from 'bcryptjs'
 import { db } from '@/lib/db'
 
@@ -11,6 +12,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     signIn: '/login',
   },
   providers: [
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    }),
     CredentialsProvider({
       name: 'credentials',
       credentials: {
@@ -38,10 +43,23 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, account }) {
       if (user) {
-        token.id = user.id
-        token.role = (user as { role: string }).role
+        if (account?.provider === 'google') {
+          // Google sign-in: only allow users that already exist with OWNER role
+          const dbUser = await db.user.findUnique({
+            where: { email: user.email! },
+            select: { id: true, role: true },
+          })
+          if (!dbUser || dbUser.role !== 'OWNER') {
+            return null
+          }
+          token.id = dbUser.id
+          token.role = dbUser.role
+        } else {
+          token.id = user.id
+          token.role = (user as { role: string }).role
+        }
       }
       return token
     },
