@@ -1,6 +1,11 @@
 import Image from 'next/image'
 
-export default function DashboardTopbar() {
+interface DashboardTopbarProps {
+  unreadCount?: number
+  userName?: string
+}
+
+export default function DashboardTopbar({ unreadCount = 0, userName = 'Gonzalo R.' }: DashboardTopbarProps) {
   return (
     <header className="fixed top-0 right-0 left-64 h-16 border-b border-slate-200 bg-white/80 backdrop-blur-md flex justify-between items-center px-8 z-20">
       <div className="flex items-center gap-4 flex-1">
@@ -20,7 +25,13 @@ export default function DashboardTopbar() {
         <div className="flex items-center gap-4">
           <button className="relative p-2 hover:bg-slate-100 rounded-full transition-all">
             <span className="material-symbols-outlined text-slate-500">notifications</span>
-            <span className="absolute top-2 right-2 w-2 h-2 bg-[#8b1a1a] rounded-full border-2 border-white"></span>
+            {unreadCount > 0 && (
+              <span className="absolute top-1.5 right-1.5 min-w-[16px] h-4 bg-primary rounded-full border-2 border-white flex items-center justify-center">
+                <span className="text-[9px] font-bold text-white px-0.5">
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
+              </span>
+            )}
           </button>
           <button className="p-2 hover:bg-slate-100 rounded-full transition-all">
             <span className="material-symbols-outlined text-slate-500">chat_bubble</span>
@@ -29,7 +40,7 @@ export default function DashboardTopbar() {
         <div className="h-8 w-[1px] bg-slate-200"></div>
         <div className="flex items-center gap-3 cursor-pointer">
           <div className="text-right hidden sm:block">
-            <p className="text-sm font-bold text-[#1a1a2e]">Gonzalo R.</p>
+            <p className="text-sm font-bold text-[#1a1a2e]">{userName}</p>
             <p className="text-[10px] text-slate-500">Gerente de Propriedade</p>
           </div>
           <div className="relative w-10 h-10 rounded-full overflow-hidden border-2 border-slate-200">
