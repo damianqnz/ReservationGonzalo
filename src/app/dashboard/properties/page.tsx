@@ -1,117 +1,194 @@
-interface Room {
-  id: string
-  checkIn: string
-  checkOut: string
-  guest: string
-  otherRoom: string
-  isVip?: boolean
+import { redirect } from 'next/navigation'
+import { auth } from '@/lib/auth'
+import { db } from '@/lib/db'
+import { BookingStatus, PropertyStatus } from '@prisma/client'
+import Link from 'next/link'
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function fmtCurrency(amount: number): string {
+  return new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(amount)
 }
 
-interface RoomCategory {
-  name: string
-  units: number
-  rooms: Room[]
+const STATUS_BADGE: Record<string, { label: string; bg: string; text: string }> = {
+  ACTIVE:   { label: 'Ativa',      bg: 'bg-emerald-50', text: 'text-emerald-700' },
+  DRAFT:    { label: 'Rascunho',   bg: 'bg-slate-100',  text: 'text-slate-600'   },
+  INACTIVE: { label: 'Inativa',    bg: 'bg-amber-50',   text: 'text-amber-700'   },
+  ARCHIVED: { label: 'Arquivada',  bg: 'bg-red-50',     text: 'text-red-700'     },
 }
 
-const roomCategories: RoomCategory[] = [
-  {
-    name: 'Suítes Júnior',
-    units: 4,
-    rooms: [
-      { id: '101', checkIn: '12/10/2023', checkOut: '15/10/2023', guest: 'John Doe', otherRoom: '102' },
-      { id: '104', checkIn: '14/10/2023', checkOut: '20/10/2023', guest: 'Mariya Johns', otherRoom: 'Não' },
-    ]
-  },
-  {
-    name: 'Suítes de Luxo',
-    units: 2,
-    rooms: [
-      { id: '204', checkIn: '10/10/2023', checkOut: '12/10/2023', guest: 'Carlos Mendes', otherRoom: '205' },
-    ]
-  },
-  {
-    name: 'Suítes VIP',
-    units: 1,
-    rooms: [
-      { id: '502', checkIn: '18/10/2023', checkOut: '25/10/2023', guest: 'Elena Rodriguez', otherRoom: 'Não', isVip: true },
-    ]
-  }
-]
+// ─── Page ─────────────────────────────────────────────────────────────────────
 
-export default function PropertiesPage() {
+export default async function PropertiesPage() {
+  const session = await auth()
+  if (!session?.user) redirect('/login')
+
+  const ownerId = session.user.id
+
+  const properties = await db.property.findMany({
+    where: { ownerId, status: { not: PropertyStatus.ARCHIVED } },
+    select: {
+      id: true,
+      title: true,
+      type: true,
+      status: true,
+      pricePerNight: true,
+      maxGuests: true,
+      bedrooms: true,
+      bathrooms: true,
+      city: true,
+      images: {
+        where: { isCover: true },
+        select: { url: true, alt: true },
+        take: 1,
+      },
+      bookings: {
+        where: { status: { in: [BookingStatus.PENDING, BookingStatus.CONFIRMED] } },
+        select: { id: true },
+      },
+      reviews: {
+        where: { isPublished: true },
+        select: { rating: true },
+      },
+    },
+    orderBy: { createdAt: 'asc' },
+  })
+
+  // ─── Render ───────────────────────────────────────────────────────────────
   return (
     <div className="space-y-8">
       <div className="flex justify-between items-end">
         <div>
-          <h2 className="text-3xl font-extrabold text-[#1a1a2e] tracking-tight">Propriedades e Quartos</h2>
-          <p className="text-slate-500 mt-1">Gestão e visão geral do status de todas as suítes disponíveis.</p>
+          <h2 className="text-3xl font-extrabold text-[#1a1a2e] tracking-tight">Propriedades</h2>
+          <p className="text-slate-500 mt-1">
+            {properties.length} propriedade{properties.length !== 1 ? 's' : ''} registada{properties.length !== 1 ? 's' : ''}
+          </p>
         </div>
-        <button className="bg-[#8b1a1a] text-white px-6 py-2.5 rounded-2xl font-semibold flex items-center gap-2 shadow-lg shadow-red-900/10 hover:opacity-90 transition-all active:scale-95">
+        <Link
+          href="/dashboard/properties/new"
+          className="bg-[#8b1a1a] text-white px-6 py-2.5 rounded-2xl font-semibold flex items-center gap-2 shadow-lg shadow-red-900/10 hover:opacity-90 transition-all active:scale-95"
+        >
           <span className="material-symbols-outlined text-lg">add</span>
-          Nova Listagem
-        </button>
+          Nova Propriedade
+        </Link>
       </div>
 
-      <div className="space-y-12">
-        {roomCategories.map((category) => (
-          <section key={category.name}>
-            <div className="flex items-center gap-3 mb-6">
-              <div className="h-8 w-1.5 bg-[#8b1a1a] rounded-full"></div>
-              <h3 className="text-xl font-bold text-[#1a1a2e]">{category.name}</h3>
-              <span className="ml-auto text-xs font-bold bg-slate-100 px-3 py-1 rounded-full text-slate-500 border border-slate-200">
-                {category.units} UNIDADES
-              </span>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {category.rooms.map((room) => (
-                <div key={room.id} className="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 hover:shadow-md transition-shadow">
-                  <div className="flex justify-between items-start mb-4">
-                    <div className="flex items-center gap-2">
-                       <span className="text-2xl font-bold text-[#8b1a1a]">{room.id}</span>
-                       {room.isVip && (
-                         <span className="material-symbols-outlined text-[#8b1a1a] text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
-                       )}
+      {properties.length === 0 ? (
+        <div className="bg-white rounded-xl border border-slate-200 p-16 text-center">
+          <span className="material-symbols-outlined text-4xl text-slate-300">home_work</span>
+          <p className="text-slate-400 mt-2 font-medium">Nenhuma propriedade encontrada.</p>
+          <p className="text-sm text-slate-400 mt-1">Adicione a sua primeira propriedade para começar a receber reservas.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          {properties.map((property) => {
+            const activeBookings = property.bookings.length
+            const reviewCount = property.reviews.length
+            const avgRating =
+              reviewCount > 0
+                ? (property.reviews.reduce((sum, r) => sum + r.rating, 0) / reviewCount).toFixed(1)
+                : null
+            const coverImage = property.images[0]
+            const badge = STATUS_BADGE[property.status] ?? STATUS_BADGE.DRAFT
+
+            return (
+              <div
+                key={property.id}
+                className="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow overflow-hidden flex flex-col"
+              >
+                {/* Cover image */}
+                <div className="h-44 bg-slate-100 relative overflow-hidden">
+                  {coverImage ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={coverImage.url}
+                      alt={coverImage.alt ?? property.title}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <span className="material-symbols-outlined text-5xl text-slate-300">home_work</span>
                     </div>
-                    <button className="text-slate-400 hover:bg-slate-50 p-1 rounded-lg">
-                      <span className="material-symbols-outlined text-xl">more_vert</span>
-                    </button>
+                  )}
+                  <span
+                    className={`absolute top-3 right-3 px-2.5 py-1 rounded-full text-[10px] font-bold ${badge.bg} ${badge.text}`}
+                  >
+                    {badge.label}
+                  </span>
+                </div>
+
+                {/* Card body */}
+                <div className="p-5 flex flex-col gap-4 flex-1">
+                  <div>
+                    <h3 className="font-bold text-[#1a1a2e] text-base truncate">{property.title}</h3>
+                    <p className="text-xs text-slate-500 mt-0.5 flex items-center gap-1">
+                      <span className="material-symbols-outlined text-sm">location_on</span>
+                      {property.city}
+                    </p>
                   </div>
-                  <div className="space-y-4">
-                    <div className="flex gap-4">
-                      <div className="flex-1">
-                        <p className="text-[10px] uppercase tracking-wider font-bold text-slate-400">Check-in</p>
-                        <p className="text-sm font-semibold">{room.checkIn}</p>
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-[10px] uppercase tracking-wider font-bold text-slate-400">Check-out</p>
-                        <p className="text-sm font-semibold">{room.checkOut}</p>
-                      </div>
+
+                  {/* Stats row */}
+                  <div className="grid grid-cols-3 gap-3 text-center">
+                    <div className="bg-slate-50 rounded-xl p-2.5">
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Reservas</p>
+                      <p className="text-sm font-bold text-[#1a1a2e] mt-0.5">{activeBookings}</p>
                     </div>
-                    <div>
-                      <p className="text-[10px] uppercase tracking-wider font-bold text-slate-400">Hóspede</p>
-                      <p className="text-sm font-semibold flex items-center gap-2">
-                        <span className="material-symbols-outlined text-base text-[#8b1a1a]">person</span>
-                        {room.guest}
+                    <div className="bg-slate-50 rounded-xl p-2.5">
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Avaliação</p>
+                      <p className="text-sm font-bold text-[#1a1a2e] mt-0.5">
+                        {avgRating ? (
+                          <span className="flex items-center justify-center gap-0.5">
+                            <span className="material-symbols-outlined text-amber-400 text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
+                            {avgRating}
+                          </span>
+                        ) : (
+                          <span className="text-slate-300">—</span>
+                        )}
                       </p>
                     </div>
-                    <div className="pt-3 border-t border-slate-100 flex justify-between items-center">
-                      <div>
-                        <p className="text-[10px] uppercase tracking-wider font-bold text-slate-400">Outro quarto</p>
-                        <p className="text-sm font-medium">{room.otherRoom}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-[10px] uppercase tracking-wider font-bold text-slate-400">Quartos</p>
-                        <p className="text-sm font-medium">01</p>
-                      </div>
+                    <div className="bg-slate-50 rounded-xl p-2.5">
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Noite</p>
+                      <p className="text-sm font-bold text-[#1a1a2e] mt-0.5">{fmtCurrency(property.pricePerNight)}</p>
                     </div>
                   </div>
+
+                  {/* Amenities row */}
+                  <div className="flex items-center gap-4 text-xs text-slate-500">
+                    <span className="flex items-center gap-1">
+                      <span className="material-symbols-outlined text-sm">bed</span>
+                      {property.bedrooms} quarto{property.bedrooms !== 1 ? 's' : ''}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <span className="material-symbols-outlined text-sm">bathtub</span>
+                      {property.bathrooms} wc
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <span className="material-symbols-outlined text-sm">group</span>
+                      até {property.maxGuests}
+                    </span>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="pt-3 border-t border-slate-100 flex items-center gap-2 mt-auto">
+                    <Link
+                      href={`/dashboard/reservations?propertyId=${property.id}`}
+                      className="flex-1 text-center text-xs font-bold text-[#8b1a1a] border border-[#8b1a1a]/30 rounded-lg py-2 hover:bg-[#8b1a1a]/5 transition-colors"
+                    >
+                      Ver Reservas
+                    </Link>
+                    <Link
+                      href={`/dashboard/properties/${property.id}/edit`}
+                      className="flex-1 text-center text-xs font-bold text-slate-600 border border-slate-200 rounded-lg py-2 hover:bg-slate-50 transition-colors"
+                    >
+                      Editar
+                    </Link>
+                  </div>
                 </div>
-              ))}
-            </div>
-          </section>
-        ))}
-      </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }
