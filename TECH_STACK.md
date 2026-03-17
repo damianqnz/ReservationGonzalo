@@ -1,6 +1,6 @@
 # Tech Stack — ReservationGonzalo
 
-> Actualizado automáticamente el **13/3/2026, 18:02:37**
+> Actualizado automáticamente el **17/3/2026, 15:18:50**
 > Ejecuta `npm run tech-stack` para actualizar.
 
 ## Runtime
@@ -21,7 +21,7 @@
 | Paquete | Versión |
 |---------|---------|
 | prisma | 6.19.2 |
-| @prisma/client | 7.5.0 |
+| @prisma/client | 6.19.2 |
 | PostgreSQL | 16 (Docker) |
 
 ## Autenticación
@@ -58,4 +58,4 @@
 |-------------|---------|
 | Vercel | latest |
 | GitHub Actions | latest |
-| Docker | N/A |
+| Docker | 29.2.1, build a5c7197 |
