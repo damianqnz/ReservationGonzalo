@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+
+<html lang="pt-br"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700&amp;family=Plus+Jakarta+Sans:wght@600;700;800&amp;family=Outfit:wght@300;400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              primary: "#8b1a1a",
+              "on-primary": "#ffffff",
+              "primary-container": "#ffdad4",
+              "on-primary-container": "#3a0a05",
+              surface: "#fffbff",
+              "on-surface": "#201a19",
+              "surface-container-low": "#f7f2f2",
+              "surface-container": "#f1ecec",
+              "on-surface-variant": "#534341",
+              outline: "#857371",
+              "outline-variant": "#d8c2bf"
+            },
+            fontFamily: {
+              "headline": ["Plus Jakarta Sans", "sans-serif"],
+              "body": ["Outfit", "sans-serif"],
+              "label": ["Public Sans", "sans-serif"]
+            },
+            borderRadius: {
+              "DEFAULT": "0.75rem",
+              "lg": "0.75rem",
+              "xl": "1rem",
+              "full": "9999px"
+            },
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body { font-family: 'Outfit', sans-serif; }
+        h1, h2, h3 { font-family: 'Plus Jakarta Sans', sans-serif; }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-body antialiased">
+<div class="flex min-h-screen">
+<!-- SideNavBar -->
+<aside class="docked left h-screen w-64 border-r border-outline-variant flex flex-col h-full py-6 bg-surface font-sans antialiased text-sm font-medium">
+<div class="px-6 mb-8">
+<div class="text-xl font-bold tracking-tight text-on-surface">LuxeRentals</div>
+<div class="text-xs text-on-surface-variant opacity-70">Admin Portal</div>
+</div>
+<nav class="flex-1 space-y-1">
+<!-- Dashboard -->
+<div class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors duration-200 cursor-pointer active:scale-95">
+<span class="material-symbols-outlined">dashboard</span>
+<span>Dashboard</span>
+</div>
+<!-- Booking -->
+<div class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors duration-200 cursor-pointer active:scale-95">
+<span class="material-symbols-outlined">calendar_month</span>
+<span>Booking</span>
+</div>
+<!-- Propiedades (Active with Dropdown) -->
+<div>
+<div class="flex items-center justify-between px-4 py-3 text-primary bg-primary-container/10 border-r-4 border-primary hover:bg-surface-container-low transition-colors duration-200 cursor-pointer group">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined">domain</span>
+<span>Propiedades</span>
+</div>
+<span class="material-symbols-outlined text-sm">keyboard_arrow_down</span>
+</div>
+<div class="pl-12 py-2 pr-4 space-y-1 bg-primary-container/5">
+<button class="w-full text-left py-2 px-3 rounded-lg text-on-surface-variant hover:text-primary hover:bg-primary-container/10 transition-colors text-sm">
+                        editar Espacios
+                    </button>
+</div>
+</div>
+<!-- Clientes -->
+<div class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors duration-200 cursor-pointer active:scale-95">
+<span class="material-symbols-outlined">group</span>
+<span>Clientes</span>
+</div>
+<!-- Informes -->
+<div class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors duration-200 cursor-pointer active:scale-95">
+<span class="material-symbols-outlined">leaderboard</span>
+<span>Informes</span>
+</div>
+<!-- Reviews -->
+<div class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors duration-200 cursor-pointer active:scale-95">
+<span class="material-symbols-outlined">star</span>
+<span>Reviews</span>
+</div>
+</nav>
+<div class="mt-auto border-t border-outline-variant/30 pt-4 space-y-1">
+<div class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors duration-200 cursor-pointer active:scale-95">
+<span class="material-symbols-outlined">settings</span>
+<span>Settings</span>
+</div>
+<div class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors duration-200 cursor-pointer active:scale-95">
+<span class="material-symbols-outlined">help_center</span>
+<span>Support</span>
+</div>
+</div>
+</aside>
+<main class="flex-1 flex flex-col bg-surface-container-low/30 overflow-hidden">
+<!-- TopNavBar -->
+<header class="docked top w-full h-16 border-b border-outline-variant flex justify-between items-center px-8 bg-surface/80 backdrop-blur-md font-sans text-sm z-10">
+<div class="flex items-center gap-4">
+<h1 class="text-lg font-bold text-on-surface">Add Details</h1>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-4 text-on-surface-variant">
+<span class="material-symbols-outlined cursor-pointer hover:bg-surface-container p-2 rounded-full transition-all">notifications</span>
+<span class="material-symbols-outlined cursor-pointer hover:bg-surface-container p-2 rounded-full transition-all">chat_bubble</span>
+</div>
+<div class="h-8 w-8 rounded-full overflow-hidden border border-outline-variant">
+<img alt="User profile" data-alt="Admin user profile photo" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAz3GbhLWVPL9-kLN6zZbBinafgryJeqrDUFtg0XoqNo3APJYcH553fLRu55g2vylGLPZs6pa8mxIpcTbst-N9D63XEr7YdeoHpvAGTdYdpe5Zn-m3nF-x-1tFUDsY-ATNdL73xq_sBRlzYYUC9R4Emso0LV4wreDbF5_yHo1NwuLgmR69RQuOLXNUy5Cxgtf2v8yK_3hTM_geUma6xOkAGS3pFTm7CoTbxepOfAoUyu7JT678WZDIUNnDaUdeVCOMMnC9W4595aCOu"/>
+</div>
+</div>
+</header>
+<!-- Main Content Area: Form -->
+<div class="flex-1 overflow-y-auto p-8">
+<div class="max-w-5xl mx-auto">
+<div class="bg-surface rounded-xl shadow-sm border border-outline-variant overflow-hidden">
+<div class="p-8">
+<h2 class="text-2xl font-bold text-on-surface mb-8">Informações do Quarto</h2>
+<form class="space-y-8">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+<!-- Form Fields -->
+<div class="space-y-2">
+<label class="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Numero do quarto</label>
+<input class="w-full px-4 py-3 rounded-lg border border-outline-variant bg-surface focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all" placeholder="Ex: 101" type="text"/>
+</div>
+<div class="space-y-2">
+<label class="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Tipo de quarto</label>
+<select class="w-full px-4 py-3 rounded-lg border border-outline-variant bg-surface focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all appearance-none">
+<option>Suíte Luxo</option>
+<option>Quarto Standard</option>
+<option>Quarto Familiar</option>
+<option>Suíte Presidencial</option>
+</select>
+</div>
+<div class="space-y-2">
+<label class="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Com ou sem ar condicionado</label>
+<select class="w-full px-4 py-3 rounded-lg border border-outline-variant bg-surface focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all appearance-none">
+<option>Com ar condicionado</option>
+<option>Sem ar condicionado</option>
+</select>
+</div>
+<div class="space-y-2">
+<label class="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Refeição</label>
+<select class="w-full px-4 py-3 rounded-lg border border-outline-variant bg-surface focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all appearance-none">
+<option>Café da manhã incluso</option>
+<option>Meia pensão</option>
+<option>Pensão completa</option>
+<option>Nenhuma refeiçao</option>
+</select>
+</div>
+<div class="space-y-2">
+<label class="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Taxas de cancelamento</label>
+<select class="w-full px-4 py-3 rounded-lg border border-outline-variant bg-surface focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all appearance-none">
+<option>Gratuito até 24h</option>
+<option>Gratuito até 7 dias</option>
+<option>Não reembolsável</option>
+</select>
+</div>
+<div class="space-y-2">
+<label class="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Capacidade de leitos</label>
+<select class="w-full px-4 py-3 rounded-lg border border-outline-variant bg-surface focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all appearance-none">
+<option>1 Pessoa</option>
+<option>2 Pessoas</option>
+<option>3 Pessoas</option>
+<option>4+ Pessoas</option>
+</select>
+</div>
+<div class="space-y-2">
+<label class="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Número de telefone</label>
+<input class="w-full px-4 py-3 rounded-lg border border-outline-variant bg-surface focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all" placeholder="+55 (00) 00000-0000" type="text"/>
+</div>
+<div class="space-y-2">
+<label class="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Aluguel por noite</label>
+<div class="relative">
+<span class="absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant font-medium">R$</span>
+<input class="w-full pl-12 pr-4 py-3 rounded-lg border border-outline-variant bg-surface focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all" placeholder="0,00" type="text"/>
+</div>
+</div>
+</div>
+<!-- Upload Area -->
+<div class="space-y-2">
+<label class="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Fotos do quarto</label>
+<div class="border-2 border-dashed border-outline-variant rounded-xl p-12 bg-surface-container-low/50 flex flex-col items-center justify-center group hover:bg-surface-container-low hover:border-primary transition-all cursor-pointer">
+<div class="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-primary text-3xl">cloud_upload</span>
+</div>
+<p class="text-on-surface font-semibold">Arraste e solte fotos aqui</p>
+<p class="text-sm text-on-surface-variant mt-1">ou clique para selecionar arquivos do seu computador</p>
+<p class="text-xs text-on-surface-variant mt-4 opacity-60">Suporta JPG, PNG, WEBP (Max. 5MB por foto)</p>
+</div>
+</div>
+<!-- Textarea Details -->
+<div class="space-y-2">
+<label class="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Detalhes do quarto</label>
+<textarea class="w-full px-4 py-3 rounded-lg border border-outline-variant bg-surface focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all resize-none" placeholder="Descreva as principais características, vista, comodidades extras..." rows="4"></textarea>
+</div>
+<!-- Action Buttons -->
+<div class="flex items-center justify-end gap-4 pt-4">
+<button class="px-8 py-3 rounded-lg text-on-surface-variant font-semibold hover:bg-surface-container transition-all active:scale-95" type="button">
+                                    Cancelar
+                                </button>
+<button class="px-10 py-3 rounded-lg bg-primary text-on-primary font-semibold shadow-lg shadow-primary/20 hover:bg-opacity-90 transition-all active:scale-95" type="submit">
+                                    Enviar
+                                </button>
+</div>
+</form>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

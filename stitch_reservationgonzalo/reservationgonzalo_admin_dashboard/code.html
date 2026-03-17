@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>ReservationGonzalo - Admin Dashboard</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&amp;family=Outfit:wght@300;400;500&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#1a1a2e",
+                        accent: "#8b1a1a",
+                        surface: "#ffffff",
+                        "on-surface": "#1a1a2e",
+                        "on-surface-variant": "#64748b",
+                        "primary-container": "#f1f5f9",
+                        "outline-variant": "#e2e8f0",
+                        "surface-container-low": "#f8fafc",
+                        "surface-container": "#f1f5f9"
+                    },
+                    fontFamily: {
+                        "headline": ["Plus Jakarta Sans", "sans-serif"],
+                        "body": ["Outfit", "sans-serif"],
+                        "label": ["Outfit", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "12px",
+                        "xl": "16px",
+                        "full": "9999px"
+                    },
+                    boxShadow: {
+                        "soft": "0 2px 15px -3px rgba(0, 0, 0, 0.07), 0 4px 6px -2px rgba(0, 0, 0, 0.05)"
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: #fbfbfb;
+        }
+        h1, h2, h3, .font-headline {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .chart-gradient-primary {
+            background: linear-gradient(180deg, rgba(26, 26, 46, 0.1) 0%, rgba(26, 26, 46, 0) 100%);
+        }
+        .chart-line-accent {
+            stroke: #8b1a1a;
+            stroke-width: 2;
+            fill: none;
+        }
+    </style>
+</head>
+<body class="text-on-surface antialiased">
+<div class="flex h-screen overflow-hidden">
+<!-- SideNavBar Component -->
+<aside class="docked left h-screen w-64 border-r border-outline-variant bg-surface flex flex-col py-6 font-sans antialiased text-sm font-medium">
+<div class="px-6 mb-10">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 bg-primary flex items-center justify-center rounded-lg">
+<span class="material-symbols-outlined text-white">apartment</span>
+</div>
+<div>
+<h1 class="text-xl font-bold tracking-tight text-on-surface leading-tight">ReservationGonzalo</h1>
+<p class="text-[10px] uppercase tracking-widest text-on-surface-variant font-bold">Admin Portal</p>
+</div>
+</div>
+</div>
+<nav class="flex-1 space-y-1">
+<div class="flex items-center gap-3 px-6 py-3 text-primary bg-primary-container/10 border-r-4 border-primary cursor-pointer active:scale-95 transition-colors duration-200">
+<span class="material-symbols-outlined">dashboard</span>
+<span>Dashboard</span>
+</div>
+<div class="flex items-center gap-3 px-6 py-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors duration-200 cursor-pointer active:scale-95">
+<span class="material-symbols-outlined">calendar_month</span>
+<span>Bookings</span>
+</div>
+<div class="flex items-center gap-3 px-6 py-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors duration-200 cursor-pointer active:scale-95">
+<span class="material-symbols-outlined">domain</span>
+<span>Properties</span>
+</div>
+<div class="flex items-center gap-3 px-6 py-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors duration-200 cursor-pointer active:scale-95">
+<span class="material-symbols-outlined">group</span>
+<span>Customers</span>
+</div>
+<div class="flex items-center gap-3 px-6 py-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors duration-200 cursor-pointer active:scale-95">
+<span class="material-symbols-outlined">leaderboard</span>
+<span>Analytics</span>
+</div>
+</nav>
+<div class="px-4 mt-auto space-y-1">
+<div class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors duration-200 cursor-pointer">
+<span class="material-symbols-outlined">settings</span>
+<span>Settings</span>
+</div>
+<div class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors duration-200 cursor-pointer">
+<span class="material-symbols-outlined">help_center</span>
+<span>Support</span>
+</div>
+</div>
+</aside>
+<!-- Main Content Area -->
+<div class="flex-1 flex flex-col overflow-hidden">
+<!-- TopNavBar Component -->
+<header class="docked top w-full h-16 border-b border-outline-variant bg-surface/80 backdrop-blur-md flex justify-between items-center px-8 z-10">
+<div class="flex items-center gap-4 flex-1">
+<div class="relative w-full max-w-md focus-within:ring-2 focus-within:ring-primary/20 rounded-lg transition-all">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-xl">search</span>
+<input class="w-full bg-surface-container-low border-none rounded-lg pl-10 pr-4 py-2 text-sm focus:ring-0" placeholder="Search analytics, bookings or properties..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-4">
+<button class="relative p-2 hover:bg-surface-container rounded-full transition-all">
+<span class="material-symbols-outlined text-on-surface-variant">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-accent rounded-full border-2 border-surface"></span>
+</button>
+<button class="p-2 hover:bg-surface-container rounded-full transition-all">
+<span class="material-symbols-outlined text-on-surface-variant">chat_bubble</span>
+</button>
+</div>
+<div class="h-8 w-[1px] bg-outline-variant"></div>
+<div class="flex items-center gap-3 cursor-pointer">
+<div class="text-right hidden sm:block">
+<p class="text-sm font-bold text-primary">Gonzalo R.</p>
+<p class="text-[10px] text-on-surface-variant">Property Manager</p>
+</div>
+<img class="w-10 h-10 rounded-full object-cover border-2 border-outline-variant" data-alt="Professional male user profile portrait" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCW4UEKqW05NpJMy1GdhdKfPzvBdr-_xGGwelEYoaSPxgRlDpUquKD9qdF4z81Vzd67I0ilmBTy__3_2GHqR4fdJavuO3f2TFthTQwPCHYOYGxivHba4Hqmy7HlgtVwMwcSZIEjdf4rkakl28cfvgWNbsX_L_5U-hdNbyjGG_kDp2CfpIlcEVcZM4UGLmHekXhe_hnXHySka6dNaQNlH-o0SiIMbOOJ9EuXzU_j1cG2Zj5nUvBni7DgpFN0UPffimLprdNPdrqoeZG0"/>
+</div>
+</div>
+</header>
+<!-- Dashboard Canvas -->
+<main class="flex-1 overflow-y-auto p-8 space-y-8">
+<div class="flex justify-between items-end">
+<div>
+<h2 class="text-3xl font-extrabold text-primary tracking-tight">Dashboard Overview</h2>
+<p class="text-on-surface-variant mt-1">Welcome back, Gonzalo. Here's what's happening today.</p>
+</div>
+<div class="flex gap-3">
+<button class="px-4 py-2 bg-surface border border-outline-variant rounded-lg text-sm font-semibold flex items-center gap-2 hover:bg-surface-container-low transition-all">
+<span class="material-symbols-outlined text-lg">calendar_today</span>
+<span>Last 30 Days</span>
+</button>
+<button class="px-4 py-2 bg-primary text-white rounded-lg text-sm font-semibold flex items-center gap-2 hover:opacity-90 transition-all">
+<span class="material-symbols-outlined text-lg">file_download</span>
+<span>Export Data</span>
+</button>
+</div>
+</div>
+<!-- Summary Cards Bento Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+<!-- Visitors -->
+<div class="bg-surface p-6 rounded-lg shadow-soft border border-outline-variant relative overflow-hidden group">
+<div class="flex justify-between items-start mb-4">
+<div class="p-2 bg-primary-container rounded-lg text-primary">
+<span class="material-symbols-outlined">visibility</span>
+</div>
+<span class="text-emerald-600 text-xs font-bold flex items-center bg-emerald-50 px-2 py-1 rounded-full">+12.5%</span>
+</div>
+<p class="text-on-surface-variant text-sm font-medium">Total Visitors</p>
+<h3 class="text-2xl font-bold text-primary mt-1">24,508</h3>
+<div class="mt-4 h-12 w-full flex items-end gap-1">
+<div class="flex-1 bg-primary/10 rounded-t-sm h-[40%] group-hover:h-[60%] transition-all"></div>
+<div class="flex-1 bg-primary/10 rounded-t-sm h-[60%] group-hover:h-[80%] transition-all"></div>
+<div class="flex-1 bg-primary/10 rounded-t-sm h-[50%] group-hover:h-[70%] transition-all"></div>
+<div class="flex-1 bg-primary/10 rounded-t-sm h-[80%] group-hover:h-[100%] transition-all"></div>
+<div class="flex-1 bg-primary/10 rounded-t-sm h-[70%] group-hover:h-[90%] transition-all"></div>
+<div class="flex-1 bg-primary/10 rounded-t-sm h-[90%] group-hover:h-[100%] transition-all"></div>
+</div>
+</div>
+<!-- Bookings -->
+<div class="bg-surface p-6 rounded-lg shadow-soft border border-outline-variant relative overflow-hidden group">
+<div class="flex justify-between items-start mb-4">
+<div class="p-2 bg-primary-container rounded-lg text-primary">
+<span class="material-symbols-outlined">event_available</span>
+</div>
+<span class="text-emerald-600 text-xs font-bold flex items-center bg-emerald-50 px-2 py-1 rounded-full">+8.2%</span>
+</div>
+<p class="text-on-surface-variant text-sm font-medium">Bookings</p>
+<h3 class="text-2xl font-bold text-primary mt-1">1,284</h3>
+<div class="mt-4 h-12 w-full flex items-end gap-1">
+<div class="flex-1 bg-accent/10 rounded-t-sm h-[30%] group-hover:h-[50%] transition-all"></div>
+<div class="flex-1 bg-accent/10 rounded-t-sm h-[50%] group-hover:h-[70%] transition-all"></div>
+<div class="flex-1 bg-accent/10 rounded-t-sm h-[40%] group-hover:h-[60%] transition-all"></div>
+<div class="flex-1 bg-accent/10 rounded-t-sm h-[70%] group-hover:h-[90%] transition-all"></div>
+<div class="flex-1 bg-accent/10 rounded-t-sm h-[90%] group-hover:h-[100%] transition-all"></div>
+<div class="flex-1 bg-accent/10 rounded-t-sm h-[80%] group-hover:h-[100%] transition-all"></div>
+</div>
+</div>
+<!-- Revenue -->
+<div class="bg-surface p-6 rounded-lg shadow-soft border border-outline-variant relative overflow-hidden group">
+<div class="flex justify-between items-start mb-4">
+<div class="p-2 bg-primary-container rounded-lg text-primary">
+<span class="material-symbols-outlined">payments</span>
+</div>
+<span class="text-accent text-xs font-bold flex items-center bg-accent/5 px-2 py-1 rounded-full">-2.4%</span>
+</div>
+<p class="text-on-surface-variant text-sm font-medium">Revenue</p>
+<h3 class="text-2xl font-bold text-primary mt-1">$142,600</h3>
+<div class="mt-4 h-12 w-full flex items-end gap-1">
+<div class="flex-1 bg-primary/10 rounded-t-sm h-[80%] group-hover:h-[100%] transition-all"></div>
+<div class="flex-1 bg-primary/10 rounded-t-sm h-[70%] group-hover:h-[90%] transition-all"></div>
+<div class="flex-1 bg-primary/10 rounded-t-sm h-[90%] group-hover:h-[100%] transition-all"></div>
+<div class="flex-1 bg-primary/10 rounded-t-sm h-[50%] group-hover:h-[70%] transition-all"></div>
+<div class="flex-1 bg-primary/10 rounded-t-sm h-[40%] group-hover:h-[60%] transition-all"></div>
+<div class="flex-1 bg-primary/10 rounded-t-sm h-[30%] group-hover:h-[50%] transition-all"></div>
+</div>
+</div>
+<!-- Rooms -->
+<div class="bg-surface p-6 rounded-lg shadow-soft border border-outline-variant relative overflow-hidden group">
+<div class="flex justify-between items-start mb-4">
+<div class="p-2 bg-primary-container rounded-lg text-primary">
+<span class="material-symbols-outlined">bed</span>
+</div>
+<span class="text-emerald-600 text-xs font-bold flex items-center bg-emerald-50 px-2 py-1 rounded-full">+4.1%</span>
+</div>
+<p class="text-on-surface-variant text-sm font-medium">Active Rooms</p>
+<h3 class="text-2xl font-bold text-primary mt-1">452</h3>
+<div class="mt-4 h-12 w-full flex items-end gap-1">
+<div class="flex-1 bg-accent/10 rounded-t-sm h-[40%] group-hover:h-[60%] transition-all"></div>
+<div class="flex-1 bg-accent/10 rounded-t-sm h-[30%] group-hover:h-[50%] transition-all"></div>
+<div class="flex-1 bg-accent/10 rounded-t-sm h-[60%] group-hover:h-[80%] transition-all"></div>
+<div class="flex-1 bg-accent/10 rounded-t-sm h-[80%] group-hover:h-[100%] transition-all"></div>
+<div class="flex-1 bg-accent/10 rounded-t-sm h-[70%] group-hover:h-[90%] transition-all"></div>
+<div class="flex-1 bg-accent/10 rounded-t-sm h-[50%] group-hover:h-[70%] transition-all"></div>
+</div>
+</div>
+</div>
+<!-- Charts and Map Section -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+<!-- Revenue Monthly Trends -->
+<div class="lg:col-span-2 bg-surface p-8 rounded-lg shadow-soft border border-outline-variant">
+<div class="flex justify-between items-center mb-8">
+<div>
+<h3 class="text-xl font-bold text-primary">Revenue Trends</h3>
+<p class="text-sm text-on-surface-variant">Monthly breakdown of gross earnings</p>
+</div>
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-2">
+<span class="w-3 h-3 rounded-full bg-accent"></span>
+<span class="text-xs font-medium text-on-surface-variant">Last Year</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="w-3 h-3 rounded-full bg-primary"></span>
+<span class="text-xs font-medium text-on-surface-variant">This Year</span>
+</div>
+</div>
+</div>
+<div class="h-64 w-full relative">
+<!-- Simulated Chart -->
+<svg class="w-full h-full overflow-visible" preserveaspectratio="none" viewbox="0 0 400 100">
+<defs>
+<lineargradient id="grad" x1="0%" x2="0%" y1="0%" y2="100%">
+<stop offset="0%" style="stop-color:#8b1a1a;stop-opacity:0.2"></stop>
+<stop offset="100%" style="stop-color:#8b1a1a;stop-opacity:0"></stop>
+</lineargradient>
+</defs>
+<path d="M0,80 Q50,70 100,50 T200,60 T300,30 T400,10 L400,100 L0,100 Z" fill="url(#grad)"></path>
+<path d="M0,80 Q50,70 100,50 T200,60 T300,30 T400,10" fill="none" stroke="#8b1a1a" stroke-width="2"></path>
+<circle cx="100" cy="50" fill="#8b1a1a" r="4"></circle>
+<circle cx="300" cy="30" fill="#8b1a1a" r="4"></circle>
+</svg>
+<div class="absolute bottom-0 w-full flex justify-between text-[10px] font-bold text-on-surface-variant uppercase tracking-tighter pt-4">
+<span>Jan</span><span>Feb</span><span>Mar</span><span>Apr</span><span>May</span><span>Jun</span><span>Jul</span><span>Aug</span><span>Sep</span><span>Oct</span><span>Nov</span><span>Dec</span>
+</div>
+</div>
+</div>
+<!-- Pais Principal Map -->
+<div class="bg-surface p-8 rounded-lg shadow-soft border border-outline-variant">
+<h3 class="text-xl font-bold text-primary mb-1">País Principal</h3>
+<p class="text-sm text-on-surface-variant mb-6">Regional booking distribution</p>
+<div class="aspect-square w-full rounded-lg overflow-hidden relative border border-outline-variant bg-slate-50">
+<img class="w-full h-full object-cover opacity-80" data-alt="Abstract world map with data points" data-location="World" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDLuCcOKnIAnPmnS_UwYwSlJ5f9l60qBqSopLMXJ_mCyzYrsxUIEMApjBorEeSHyxKV14WZlj6-9aw3ruMOA8m-pkBRrnDbbGfo1nyo7-jFv6qCx_OaJH8s4R6GdCos1oX2WFNo_FLuBczX8tr1dAzJgSV6a-nHIn5tGgAulcL57k8nVVwb2Zgy5CIz-8NpfmN39ApIBDJjqpzXSfwJn_a1MisGslOc8pePAvyDkl-8ggPosnCnPochytAIq_yl0nJZImeiyqjhpnAR"/>
+<div class="absolute inset-0 flex items-center justify-center">
+<div class="bg-primary/90 text-white p-4 rounded-xl shadow-xl flex flex-col items-center gap-1 backdrop-blur-sm">
+<span class="text-xs uppercase font-bold opacity-70">Spain</span>
+<span class="text-2xl font-black">34.2%</span>
+<span class="text-[10px] bg-accent px-2 py-0.5 rounded">Top Region</span>
+</div>
+</div>
+</div>
+<div class="mt-6 space-y-3">
+<div class="flex justify-between items-center">
+<span class="text-sm font-medium">Madrid</span>
+<span class="text-sm font-bold">12,402</span>
+</div>
+<div class="w-full bg-outline-variant h-1.5 rounded-full overflow-hidden">
+<div class="bg-accent h-full w-[70%]"></div>
+</div>
+<div class="flex justify-between items-center">
+<span class="text-sm font-medium">Barcelona</span>
+<span class="text-sm font-bold">8,190</span>
+</div>
+<div class="w-full bg-outline-variant h-1.5 rounded-full overflow-hidden">
+<div class="bg-primary h-full w-[45%]"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Recent Reservas Table -->
+<div class="bg-surface rounded-lg shadow-soft border border-outline-variant overflow-hidden">
+<div class="p-8 border-b border-outline-variant flex justify-between items-center">
+<div>
+<h3 class="text-xl font-bold text-primary">Reservas</h3>
+<p class="text-sm text-on-surface-variant">Latest 10 booking transactions</p>
+</div>
+<button class="text-accent text-sm font-bold hover:underline">View All</button>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left">
+<thead class="bg-surface-container-low">
+<tr>
+<th class="px-8 py-4 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Booking ID</th>
+<th class="px-8 py-4 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Customer Name</th>
+<th class="px-8 py-4 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Check-in</th>
+<th class="px-8 py-4 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Status</th>
+<th class="px-8 py-4 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Amount</th>
+<th class="px-8 py-4 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Action</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant">
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="px-8 py-4 font-bold text-primary text-sm">#RES-9021</td>
+<td class="px-8 py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary text-xs">AA</div>
+<span class="text-sm font-medium">Alejandro Alba</span>
+</div>
+</td>
+<td class="px-8 py-4 text-sm text-on-surface-variant">Oct 24, 2023</td>
+<td class="px-8 py-4">
+<span class="px-3 py-1 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-full">Confirmed</span>
+</td>
+<td class="px-8 py-4 text-sm font-bold">$1,450.00</td>
+<td class="px-8 py-4">
+<button class="p-2 hover:bg-surface-container rounded-lg transition-all">
+<span class="material-symbols-outlined text-on-surface-variant">more_horiz</span>
+</button>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="px-8 py-4 font-bold text-primary text-sm">#RES-8842</td>
+<td class="px-8 py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center font-bold text-accent text-xs">MC</div>
+<span class="text-sm font-medium">Maria Cardona</span>
+</div>
+</td>
+<td class="px-8 py-4 text-sm text-on-surface-variant">Oct 25, 2023</td>
+<td class="px-8 py-4">
+<span class="px-3 py-1 bg-amber-50 text-amber-700 text-xs font-bold rounded-full">Pending</span>
+</td>
+<td class="px-8 py-4 text-sm font-bold">$890.00</td>
+<td class="px-8 py-4">
+<button class="p-2 hover:bg-surface-container rounded-lg transition-all">
+<span class="material-symbols-outlined text-on-surface-variant">more_horiz</span>
+</button>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="px-8 py-4 font-bold text-primary text-sm">#RES-7651</td>
+<td class="px-8 py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center font-bold text-slate-600 text-xs">JB</div>
+<span class="text-sm font-medium">Julian Beltran</span>
+</div>
+</td>
+<td class="px-8 py-4 text-sm text-on-surface-variant">Oct 28, 2023</td>
+<td class="px-8 py-4">
+<span class="px-3 py-1 bg-red-50 text-red-700 text-xs font-bold rounded-full">Cancelled</span>
+</td>
+<td class="px-8 py-4 text-sm font-bold">$2,100.00</td>
+<td class="px-8 py-4">
+<button class="p-2 hover:bg-surface-container rounded-lg transition-all">
+<span class="material-symbols-outlined text-on-surface-variant">more_horiz</span>
+</button>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="px-8 py-4 font-bold text-primary text-sm">#RES-6549</td>
+<td class="px-8 py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary text-xs">EP</div>
+<span class="text-sm font-medium">Elena Ponds</span>
+</div>
+</td>
+<td class="px-8 py-4 text-sm text-on-surface-variant">Nov 01, 2023</td>
+<td class="px-8 py-4">
+<span class="px-3 py-1 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-full">Confirmed</span>
+</td>
+<td class="px-8 py-4 text-sm font-bold">$3,420.00</td>
+<td class="px-8 py-4">
+<button class="p-2 hover:bg-surface-container rounded-lg transition-all">
+<span class="material-symbols-outlined text-on-surface-variant">more_horiz</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</main>
+</div>
+</div>
+</body></html>

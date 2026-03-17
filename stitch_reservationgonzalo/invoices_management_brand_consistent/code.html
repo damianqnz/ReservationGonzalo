@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Invoices Management - ReservationGonzalo</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Outfit:wght@300;400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            DEFAULT: "#8b1a1a",
+                            dark: "#6b1414",
+                            light: "#fdeeee"
+                        },
+                        brand: {
+                            navy: "#00004d", // Darker navy for heading match
+                            sidebar: "#000080"
+                        }
+                    },
+                    fontFamily: {
+                        "headline": ["Plus Jakarta Sans", "sans-serif"],
+                        "body": ["Outfit", "sans-serif"],
+                    },
+                    borderRadius: {
+                        'xl-custom': '12px',
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            line-height: 1;
+            text-transform: none;
+            letter-spacing: normal;
+            word-wrap: normal;
+            white-space: nowrap;
+            direction: ltr;
+        }
+        body { font-family: 'Outfit', sans-serif; }
+        h1, h2, h3, h4, .font-headline { font-family: 'Plus Jakarta Sans', sans-serif; color: #00004d; }
+    </style>
+</head>
+<body class="bg-[#f8fafc] text-slate-900 antialiased">
+<!-- Sidebar -->
+<aside class="h-screen w-64 fixed left-0 top-0 flex flex-col bg-brand-sidebar z-30 font-medium py-8 justify-between">
+<div>
+<div class="px-8 mb-10">
+<h1 class="text-xl font-extrabold text-white tracking-tight">ReservationGonzalo</h1>
+<p class="text-white/50 text-[10px] uppercase tracking-widest mt-1 font-bold">Admin Portal</p>
+</div>
+<nav class="px-4 space-y-1.5">
+<a class="flex items-center gap-3 text-white/70 hover:text-white px-4 py-3 rounded-xl hover:bg-white/5 transition-all group" href="#">
+<span class="material-symbols-outlined text-[22px] group-hover:scale-110 transition-transform">dashboard</span>
+<span class="text-sm">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 text-white/70 hover:text-white px-4 py-3 rounded-xl hover:bg-white/5 transition-all group" href="#">
+<span class="material-symbols-outlined text-[22px] group-hover:scale-110 transition-transform">calendar_today</span>
+<span class="text-sm">Booking</span>
+</a>
+<a class="flex items-center gap-3 text-white/70 hover:text-white px-4 py-3 rounded-xl hover:bg-white/5 transition-all group" href="#">
+<span class="material-symbols-outlined text-[22px] group-hover:scale-110 transition-transform">home_work</span>
+<span class="text-sm">Propiedades</span>
+</a>
+<a class="flex items-center gap-3 text-white/70 hover:text-white px-4 py-3 rounded-xl hover:bg-white/5 transition-all group" href="#">
+<span class="material-symbols-outlined text-[22px] group-hover:scale-110 transition-transform">group</span>
+<span class="text-sm">Clientes</span>
+</a>
+<a class="flex items-center gap-3 text-white/70 hover:text-white px-4 py-3 rounded-xl hover:bg-white/5 transition-all group" href="#">
+<span class="material-symbols-outlined text-[22px] group-hover:scale-110 transition-transform">confirmation_number</span>
+<span class="text-sm">Cupones</span>
+</a>
+<a class="flex items-center gap-3 text-white/70 hover:text-white px-4 py-3 rounded-xl hover:bg-white/5 transition-all group" href="#">
+<span class="material-symbols-outlined text-[22px] group-hover:scale-110 transition-transform">analytics</span>
+<span class="text-sm">Informes</span>
+</a>
+<a class="flex items-center gap-3 text-white/70 hover:text-white px-4 py-3 rounded-xl hover:bg-white/5 transition-all group" href="#">
+<span class="material-symbols-outlined text-[22px] group-hover:scale-110 transition-transform">rate_review</span>
+<span class="text-sm">Reviews</span>
+</a>
+<a class="flex items-center gap-3 bg-primary text-white rounded-xl px-4 py-3 shadow-lg shadow-black/10 transition-all group" href="#">
+<span class="material-symbols-outlined text-[22px] group-hover:scale-110 transition-transform">receipt_long</span>
+<span class="text-sm">Invoices</span>
+</a>
+</nav>
+</div>
+<div class="px-4 space-y-1.5">
+<a class="flex items-center gap-3 text-white/70 hover:text-white px-4 py-3 rounded-xl hover:bg-white/5 transition-all" href="#">
+<span class="material-symbols-outlined text-[22px]">settings</span>
+<span class="text-sm">Settings</span>
+</a>
+<a class="flex items-center gap-3 text-white/70 hover:text-white px-4 py-3 rounded-xl hover:bg-white/5 transition-all" href="#">
+<span class="material-symbols-outlined text-[22px]">logout</span>
+<span class="text-sm">Logout</span>
+</a>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="ml-64 min-h-screen pb-12">
+<!-- Top Bar -->
+<header class="sticky top-0 z-20 w-full bg-white border-b border-slate-100 flex items-center justify-between px-8 h-20">
+<div class="flex items-center flex-1 max-w-2xl">
+<div class="relative w-full group">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors">search</span>
+<input class="w-full bg-slate-50 border-none rounded-2xl py-3 pl-12 pr-4 text-sm focus:ring-2 focus:ring-primary/20 transition-all outline-none placeholder:text-slate-400" placeholder="Search invoices, guests, or IDs..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-2">
+<button class="hover:bg-slate-50 rounded-full p-2.5 transition-colors relative">
+<span class="material-symbols-outlined text-slate-600">notifications</span>
+<span class="absolute top-2.5 right-2.5 w-2 h-2 bg-primary rounded-full border-2 border-white"></span>
+</button>
+<button class="hover:bg-slate-50 rounded-full p-2.5 transition-colors">
+<span class="material-symbols-outlined text-slate-600">help</span>
+</button>
+</div>
+<div class="h-8 w-px bg-slate-200"></div>
+<div class="flex items-center gap-3">
+<div class="text-right">
+<p class="text-sm font-bold text-slate-900 leading-none">Admin User</p>
+<p class="text-[11px] text-slate-500 font-medium mt-1">Super Admin</p>
+</div>
+<img alt="Administrator profile" class="w-10 h-10 rounded-full object-cover border-2 border-slate-100 ring-2 ring-primary/5" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDcAei_7XNMHmB8HeuiB287FENkWf1_Y3EvDd-qzXSD-m6ri0U4P798KsU49VcxfAq0_YB_RKJYbFUdfpib6Bvk8A6wnambVY7645-wP84nWOl7QWyU4mIXnZ0NoMx14vyZpKlFPteJfhdwbt9sqg3t36qBlaB5S3ad8cu3Gf37PMgt1efV51AFu9tlXL8I6WK6nbx0HYj_WeoMVlAn2IA4Yd_rzUjUYF-5eCHiq02wWq9Yygs8IAIZU4LRAbn1gfF3JIEphNkLEIqW"/>
+</div>
+</div>
+</header>
+<div class="p-10 max-w-[1400px] mx-auto">
+<!-- Header Section -->
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
+<div>
+<h2 class="text-3xl font-extrabold tracking-tight">Invoices Management</h2>
+<p class="text-slate-500 text-base mt-1.5">Track payments, manage billings and guest transactions.</p>
+</div>
+<div class="flex items-center gap-3">
+<button class="flex items-center gap-2 px-5 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-xl-custom text-sm font-semibold hover:bg-slate-50 shadow-sm transition-all active:scale-[0.98]">
+<span class="material-symbols-outlined text-[20px]">download</span>
+                        Export to CSV
+                    </button>
+<button class="flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-xl-custom text-sm font-semibold hover:bg-primary-dark shadow-lg shadow-primary/20 transition-all active:scale-[0.98]">
+<span class="material-symbols-outlined text-[20px]">add</span>
+                        Create Invoice
+                    </button>
+</div>
+</div>
+<!-- Dashboard Stats -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
+<div class="bg-white p-6 rounded-xl-custom shadow-sm border border-slate-100 relative overflow-hidden group">
+<div class="flex items-center justify-between mb-4">
+<span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Total Revenue</span>
+<div class="p-2 bg-emerald-50 text-emerald-600 rounded-lg">
+<span class="material-symbols-outlined text-[20px] fill-0">payments</span>
+</div>
+</div>
+<div class="flex flex-col">
+<h3 class="text-2xl font-extrabold text-slate-900">$128,430.00</h3>
+<div class="flex items-center gap-1.5 mt-2">
+<span class="flex items-center text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
+<span class="material-symbols-outlined text-[12px] mr-1">trending_up</span>
+                                +12.5%
+                            </span>
+<span class="text-[11px] text-slate-400 font-medium">from last month</span>
+</div>
+</div>
+</div>
+<div class="bg-white p-6 rounded-xl-custom shadow-sm border border-slate-100 relative overflow-hidden group">
+<div class="flex items-center justify-between mb-4">
+<span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Paid Invoices</span>
+<div class="p-2 bg-blue-50 text-blue-600 rounded-lg">
+<span class="material-symbols-outlined text-[20px]">check_circle</span>
+</div>
+</div>
+<div class="flex flex-col">
+<h3 class="text-2xl font-extrabold text-slate-900">1,240</h3>
+<p class="text-[11px] text-slate-400 font-medium mt-2">85% of total volume</p>
+</div>
+</div>
+<div class="bg-white p-6 rounded-xl-custom shadow-sm border border-slate-100 relative overflow-hidden group">
+<div class="flex items-center justify-between mb-4">
+<span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Overdue</span>
+<div class="p-2 bg-red-50 text-red-600 rounded-lg">
+<span class="material-symbols-outlined text-[20px]">warning</span>
+</div>
+</div>
+<div class="flex flex-col">
+<h3 class="text-2xl font-extrabold text-slate-900">$12,850.00</h3>
+<p class="text-[11px] text-red-600 font-semibold mt-2">Requires immediate action</p>
+</div>
+</div>
+<div class="bg-white p-6 rounded-xl-custom shadow-sm border border-slate-100 relative overflow-hidden group">
+<div class="flex items-center justify-between mb-4">
+<span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Processing</span>
+<div class="p-2 bg-amber-50 text-amber-600 rounded-lg">
+<span class="material-symbols-outlined text-[20px]">sync</span>
+</div>
+</div>
+<div class="flex flex-col">
+<h3 class="text-2xl font-extrabold text-slate-900">$4,210.00</h3>
+<p class="text-[11px] text-amber-600 font-semibold mt-2">14 pending transactions</p>
+</div>
+</div>
+</div>
+<!-- Filters Section -->
+<div class="bg-white p-4 rounded-xl-custom shadow-sm border border-slate-100 mb-6 flex flex-wrap items-center gap-4">
+<div class="flex items-center gap-2 px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer group">
+<span class="material-symbols-outlined text-[18px] text-slate-400 group-hover:text-slate-600">calendar_month</span>
+<select class="bg-transparent border-none text-xs font-bold text-slate-700 focus:ring-0 p-0 pr-8 cursor-pointer appearance-none">
+<option>Last 30 Days</option>
+<option>Last Quarter</option>
+<option>Current Year</option>
+</select>
+<span class="material-symbols-outlined text-[18px] text-slate-400 -ml-6 pointer-events-none">expand_more</span>
+</div>
+<div class="flex items-center gap-2 px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer group">
+<span class="material-symbols-outlined text-[18px] text-slate-400 group-hover:text-slate-600">filter_list</span>
+<select class="bg-transparent border-none text-xs font-bold text-slate-700 focus:ring-0 p-0 pr-8 cursor-pointer appearance-none">
+<option>All Statuses</option>
+<option>Paid</option>
+<option>Overdue</option>
+<option>Processing</option>
+</select>
+<span class="material-symbols-outlined text-[18px] text-slate-400 -ml-6 pointer-events-none">expand_more</span>
+</div>
+<div class="flex items-center gap-2 px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer group">
+<span class="material-symbols-outlined text-[18px] text-slate-400 group-hover:text-slate-600">apartment</span>
+<select class="bg-transparent border-none text-xs font-bold text-slate-700 focus:ring-0 p-0 pr-8 cursor-pointer appearance-none">
+<option>All Properties</option>
+<option>Ocean View Villa</option>
+<option>Urban Loft #4</option>
+<option>Mountain Retreat</option>
+</select>
+<span class="material-symbols-outlined text-[18px] text-slate-400 -ml-6 pointer-events-none">expand_more</span>
+</div>
+<div class="ml-auto flex items-center gap-3">
+<button class="flex items-center gap-1.5 text-[11px] text-slate-400 font-bold uppercase tracking-wider hover:text-primary transition-colors">
+                        Clear Filters
+                        <span class="material-symbols-outlined text-[18px] bg-slate-100 p-1 rounded-lg">close</span>
+</button>
+</div>
+</div>
+<!-- Invoices Table Container -->
+<div class="bg-white rounded-xl-custom shadow-sm border border-slate-100 overflow-hidden">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-slate-50/30 border-b border-slate-100">
+<th class="px-8 py-5 text-[11px] font-extrabold text-slate-400 uppercase tracking-widest">
+<div class="flex items-center gap-2 cursor-pointer hover:text-slate-600">
+                                        Invoice ID
+                                        <span class="material-symbols-outlined text-[16px]">unfold_more</span>
+</div>
+</th>
+<th class="px-8 py-5 text-[11px] font-extrabold text-slate-400 uppercase tracking-widest">Guest</th>
+<th class="px-8 py-5 text-[11px] font-extrabold text-slate-400 uppercase tracking-widest">Property</th>
+<th class="px-8 py-5 text-[11px] font-extrabold text-slate-400 uppercase tracking-widest">Date</th>
+<th class="px-8 py-5 text-[11px] font-extrabold text-slate-400 uppercase tracking-widest text-right">Amount</th>
+<th class="px-8 py-5 text-[11px] font-extrabold text-slate-400 uppercase tracking-widest">Status</th>
+<th class="px-8 py-5"></th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-50">
+<!-- Table Row 1 -->
+<tr class="hover:bg-slate-50/50 transition-colors group">
+<td class="px-8 py-5">
+<span class="text-sm font-extrabold text-slate-900">#INV-8821</span>
+</td>
+<td class="px-8 py-5">
+<div class="flex items-center gap-3">
+<div class="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-500 border border-white ring-1 ring-slate-100">ML</div>
+<div>
+<p class="text-sm font-bold text-slate-900">Marcus Lowes</p>
+<p class="text-[11px] text-slate-500 font-medium">marcus.l@example.com</p>
+</div>
+</div>
+</td>
+<td class="px-8 py-5">
+<span class="text-[10px] font-bold text-slate-600 bg-slate-100 px-2.5 py-1 rounded-lg">Ocean View Villa</span>
+</td>
+<td class="px-8 py-5">
+<span class="text-xs text-slate-500 font-medium">Oct 24, 2023</span>
+</td>
+<td class="px-8 py-5 text-right">
+<span class="text-sm font-extrabold text-slate-900">$2,450.00</span>
+</td>
+<td class="px-8 py-5">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-600">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
+                                        Paid
+                                    </span>
+</td>
+<td class="px-8 py-5 text-right">
+<button class="text-slate-300 hover:text-slate-600 transition-colors p-1 rounded-lg hover:bg-white shadow-none hover:shadow-sm">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Table Row 2 -->
+<tr class="hover:bg-slate-50/50 transition-colors group">
+<td class="px-8 py-5">
+<span class="text-sm font-extrabold text-slate-900">#INV-8822</span>
+</td>
+<td class="px-8 py-5">
+<div class="flex items-center gap-3">
+<img alt="Sarah Jenkins" class="w-9 h-9 rounded-full object-cover border border-white ring-1 ring-slate-100" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDKrdl11Ws8JEQm_3wQLQi4uUcwllxjZhNewIkLNWS8WWAByXc-ayFg00fLZCQRhNCw5iYzYIpNYroxogeqq3TDRLmD8Zv_Ks8apYMi9jLXk6NHWff19WeWhgRIjXlI5PakyZAmWFvwzMN06cCMvtq6B5xhGNcRdJtR9gxnsGKmBZ1pWXe3d59xkopz-HoE5I38IWi6y4kembO7zzsqAKWC9pTnhkVfkIdn8Qw3gbDHXWVn0gdBUHl1UaOMy-q5YhoxsY1aaYrKpEEN"/>
+<div>
+<p class="text-sm font-bold text-slate-900">Sarah Jenkins</p>
+<p class="text-[11px] text-slate-500 font-medium">s.jenkins@company.io</p>
+</div>
+</div>
+</td>
+<td class="px-8 py-5">
+<span class="text-[10px] font-bold text-slate-600 bg-slate-100 px-2.5 py-1 rounded-lg">Mountain Retreat</span>
+</td>
+<td class="px-8 py-5">
+<span class="text-xs text-slate-500 font-medium">Oct 22, 2023</span>
+</td>
+<td class="px-8 py-5 text-right">
+<span class="text-sm font-extrabold text-slate-900">$1,120.00</span>
+</td>
+<td class="px-8 py-5">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-red-50 text-red-600">
+<span class="w-1.5 h-1.5 rounded-full bg-red-600"></span>
+                                        Overdue
+                                    </span>
+</td>
+<td class="px-8 py-5 text-right">
+<button class="text-slate-300 hover:text-slate-600 transition-colors p-1 rounded-lg hover:bg-white">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Table Row 3 -->
+<tr class="hover:bg-slate-50/50 transition-colors group">
+<td class="px-8 py-5">
+<span class="text-sm font-extrabold text-slate-900">#INV-8823</span>
+</td>
+<td class="px-8 py-5">
+<div class="flex items-center gap-3">
+<div class="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-500 border border-white ring-1 ring-slate-100">DA</div>
+<div>
+<p class="text-sm font-bold text-slate-900">David Anderson</p>
+<p class="text-[11px] text-slate-500 font-medium">david.a@gmail.com</p>
+</div>
+</div>
+</td>
+<td class="px-8 py-5">
+<span class="text-[10px] font-bold text-slate-600 bg-slate-100 px-2.5 py-1 rounded-lg">Urban Loft #4</span>
+</td>
+<td class="px-8 py-5">
+<span class="text-xs text-slate-500 font-medium">Oct 20, 2023</span>
+</td>
+<td class="px-8 py-5 text-right">
+<span class="text-sm font-extrabold text-slate-900">$850.00</span>
+</td>
+<td class="px-8 py-5">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-50 text-amber-600">
+<span class="w-1.5 h-1.5 rounded-full bg-amber-600"></span>
+                                        Processing
+                                    </span>
+</td>
+<td class="px-8 py-5 text-right">
+<button class="text-slate-300 hover:text-slate-600 transition-colors p-1 rounded-lg hover:bg-white">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Table Row 4 -->
+<tr class="hover:bg-slate-50/50 transition-colors group">
+<td class="px-8 py-5">
+<span class="text-sm font-extrabold text-slate-900">#INV-8824</span>
+</td>
+<td class="px-8 py-5">
+<div class="flex items-center gap-3">
+<img alt="Robert Fox" class="w-9 h-9 rounded-full object-cover border border-white ring-1 ring-slate-100" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCula5AEQ3BA4KM2rXBJC-jNszCIdEz9eBRlZJWn1DbMddxQwXqiQKiqNrKVOtpo26_CuZh4TlV_8arEQ-q62ZitItMoPdjIGR3SYQcfVTE8aTk4iEu4IaMAzjykDCiGMbN-eLRLFwoOWfUY3ipIxygCOO_HnFxNsnNJTT_e-GQTQRtrR4UsCvXepKOwQHgtkZFMotWgt-px8p7mZLcHbMDZR1SjE6vfXoXvuD7xizeYhlxbywZDzS6tZmFroQD5fDrpLyncCDjmXNp"/>
+<div>
+<p class="text-sm font-bold text-slate-900">Robert Fox</p>
+<p class="text-[11px] text-slate-500 font-medium">robert.fox@outlook.com</p>
+</div>
+</div>
+</td>
+<td class="px-8 py-5">
+<span class="text-[10px] font-bold text-slate-600 bg-slate-100 px-2.5 py-1 rounded-lg">Ocean View Villa</span>
+</td>
+<td class="px-8 py-5">
+<span class="text-xs text-slate-500 font-medium">Oct 19, 2023</span>
+</td>
+<td class="px-8 py-5 text-right">
+<span class="text-sm font-extrabold text-slate-900">$3,100.00</span>
+</td>
+<td class="px-8 py-5">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-600">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
+                                        Paid
+                                    </span>
+</td>
+<td class="px-8 py-5 text-right">
+<button class="text-slate-300 hover:text-slate-600 transition-colors p-1 rounded-lg hover:bg-white">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Pagination -->
+<div class="bg-white px-8 py-6 border-t border-slate-100 flex items-center justify-between">
+<p class="text-xs text-slate-400 font-bold uppercase tracking-widest">
+                        Showing <span class="text-slate-900 font-extrabold">1-10</span> of <span class="text-slate-900 font-extrabold">245</span>
+</p>
+<div class="flex items-center gap-2">
+<button class="w-9 h-9 flex items-center justify-center rounded-xl border border-slate-200 text-slate-400 hover:bg-slate-50 disabled:opacity-50 transition-all">
+<span class="material-symbols-outlined text-[18px]">chevron_left</span>
+</button>
+<div class="flex items-center gap-1.5 mx-2">
+<button class="w-9 h-9 rounded-xl bg-primary text-white text-xs font-bold shadow-lg shadow-primary/20">1</button>
+<button class="w-9 h-9 rounded-xl text-slate-500 text-xs font-bold hover:bg-slate-50 transition-colors">2</button>
+<button class="w-9 h-9 rounded-xl text-slate-500 text-xs font-bold hover:bg-slate-50 transition-colors">3</button>
+<span class="text-slate-300 px-1">...</span>
+<button class="w-9 h-9 rounded-xl text-slate-500 text-xs font-bold hover:bg-slate-50 transition-colors">25</button>
+</div>
+<button class="w-9 h-9 flex items-center justify-center rounded-xl border border-slate-200 text-slate-400 hover:bg-slate-50 transition-all">
+<span class="material-symbols-outlined text-[18px]">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</main>
+</body></html>

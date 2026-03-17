@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+
+<html lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700&amp;family=Plus+Jakarta+Sans:wght@500;600;700;800&amp;family=Outfit:wght@300;400;500&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            navy: "#1a1a2e",
+                            burgundy: "#8b1a1a",
+                            sage: "#f0f4f1",
+                            dark: "#121212",
+                        }
+                    },
+                    fontFamily: {
+                        "headline": ["Plus Jakarta Sans", "sans-serif"],
+                        "body": ["Outfit", "sans-serif"],
+                        "label": ["Public Sans", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "12px",
+                        "lg": "12px",
+                        "xl": "16px",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: #ffffff;
+            color: #1a1a2e;
+        }
+        h1, h2, h3, h4 {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            color: #1a1a2e;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+<body class="antialiased overflow-x-hidden">
+<!-- TopNavBar -->
+<nav class="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-100 h-20">
+<div class="max-w-7xl mx-auto px-6 h-full flex items-center justify-between">
+<div class="flex items-center gap-8">
+<span class="text-xl font-bold tracking-tight text-brand-navy">ReservationGonzalo</span>
+</div>
+<div class="flex items-center gap-6">
+<div class="hidden md:flex items-center gap-6 mr-2">
+<a class="text-sm font-medium hover:text-brand-burgundy transition-colors" href="#">Ayuda</a>
+<div class="flex items-center gap-2 text-xs font-semibold text-gray-500 border-x border-gray-100 px-6">
+<button class="hover:text-brand-burgundy transition-colors">PT</button>
+<span class="text-gray-300">|</span>
+<button class="text-brand-navy">EN</button>
+<span class="text-gray-300">|</span>
+<button class="hover:text-brand-burgundy transition-colors">ES</button>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 hover:bg-gray-50 rounded-lg transition-colors">
+<span class="material-symbols-outlined align-middle">menu</span>
+</button>
+</div>
+</div>
+</div>
+</nav>
+<main>
+<!-- Hero Section -->
+<section class="py-20 lg:py-32 px-6 overflow-hidden">
+<div class="max-w-7xl mx-auto grid lg:grid-cols-2 gap-16 items-center">
+<div class="space-y-8">
+<h1 class="text-5xl lg:text-7xl font-extrabold leading-[1.1] tracking-tight">Quem somos</h1>
+<p class="text-lg lg:text-xl text-gray-600 max-w-xl leading-relaxed">
+                    Redefiniendo el concepto de hospitalidad moderna. En ReservationGonzalo, conectamos a viajeros exigentes con espacios únicos que inspiran, transformando cada estancia en una experiencia inolvidable.
+                </p>
+</div>
+<div class="relative grid grid-cols-2 gap-4 h-[500px]">
+<div class="col-span-1 row-span-2 rounded-2xl overflow-hidden shadow-xl transform hover:scale-[1.02] transition-transform duration-500">
+<img class="w-full h-full object-cover" data-alt="Modern apartment interior keys and entrance" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCoXdaAUAYRCRydVwDXyaY-8xehZKNZbHysDV2cumSp4mR2AGOsoYhRJQaKa6c3jYPgMf11xgfZSXgTvoDPTnzDMraePrwN0yRmsKqm6f_tynxKZOAlpbs4wCke92g1MuZrwiUfGk4P7D-MkodIkqKXZj6UpKOo91PpD9_KZUXcQKvC2euf3TkG7yqsqmmFqMJo1P6rHts9DAvlC1TEpgUJKtgJEUPWjqS5rRM51GW7UpOOqk9W19KvqFAWlfgxS9XS9TvPrJOCyrt6"/>
+</div>
+<div class="col-span-1 h-[240px] rounded-2xl overflow-hidden shadow-lg transform translate-y-4 hover:translate-y-2 transition-all duration-500">
+<img class="w-full h-full object-cover" data-alt="Panoramic modern city view and skyscrapers" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAA6WQJ_Kv4nBj-dmyXEo405icr50_zIY9t7Z1Ii93szisirAT-A_76xoclb5lL5hbtLO55AGqEZ5e0bXjJqLRW6cpAsgAh-JZsVgBRWmFZQqi_thGSDIIjntqz16Pg2vOocz5l4hcgHairqGwB29bc0mtExscM4G2ErnFbWxZ1OAEtC74I2N3loVhlvoO6Si24CXH0eNsvIF5ds3lSuFNX3lk54TjzfrK3N7au4d8I1TuLLtnTNMsNmOrXzlNWNr4GZjSsTrEQ4GS-"/>
+</div>
+<div class="col-span-1 h-[240px] rounded-2xl overflow-hidden shadow-lg transform -translate-y-4 hover:-translate-y-6 transition-all duration-500">
+<img class="w-full h-full object-cover" data-alt="Person enjoying a luxury infinity pool" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCtyr2RzaWhlyIdeDFWAFV0cGj3CW6xo11qcaVgSNbRfubBoynHUMNA6bXZOuu3MDo5UvR5WMI34q3eh0mRtmEMO8aGqToX68o6yMzdBIovB5BuFVh0sOsssAG0z1NItL-X4z6cA8Pb0N7268awtxv90rrKYX6McnEB0wCXNqVoXXw7HtOMuTmAaNE5n-d_aLp9Cs2BQVAuqWUQcpGcBvBLgjz6mXoWdPOfNA6zMJSiNU42W7eyM8WOHYhmOJeipRMv4xVpgQ1zqvy4"/>
+</div>
+</div>
+</div>
+</section>
+<!-- Nuestra Trayectoria -->
+<section class="py-24 bg-gray-50 px-6">
+<div class="max-w-7xl mx-auto grid lg:grid-cols-2 gap-20 items-center">
+<div class="relative">
+<div class="aspect-[4/5] rounded-3xl overflow-hidden shadow-2xl">
+<img class="w-full h-full object-cover" data-alt="Traditional London street view and architecture" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDiWgJdBqcBPDFk4DMub7X9qcbS-QQfWtDGrE5R3ciznl1EX-CvuuqxAxVN9OKFjBEDVM_TbGuKIJjTMo-MBUojPrziGeWFsKlRQQSzPOw0cYDC4_nRB5DXhpgS_qKHtCUpZ3BxdQeXvpBpCTO82w74coiyI4v8G3I2rJnJDsgq2-aADxvTA8FnGpVOiymhe1NCi12oWeQcpb_nZKK6MkFH2LoaUt-EiQz08Kf_in5llyeL59niOx7Jk3hS2fHGoGuKIFhImTIcJOE7"/>
+</div>
+<div class="absolute -bottom-10 -right-10 bg-brand-burgundy text-white p-12 rounded-2xl hidden xl:block">
+<span class="text-4xl font-bold">Est. 2018</span>
+</div>
+</div>
+<div class="space-y-12">
+<div class="space-y-6">
+<h2 class="text-4xl lg:text-5xl font-bold">Nuestra trayectoria</h2>
+<p class="text-lg text-gray-600 leading-relaxed">
+                        Nuestra historia comenzó en el corazón de Londres, donde identificamos una necesidad de servicios de alojamiento de alta calidad que combinaran el confort de un hogar con los estándares de un hotel de lujo. Desde entonces, hemos crecido exponencialmente sin perder nuestra esencia.
+                    </p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-8 pt-8">
+<div class="space-y-2">
+<p class="text-3xl font-extrabold text-brand-burgundy">+1.5M</p>
+<p class="text-sm font-medium text-gray-500 uppercase tracking-wider">huéspedes felices</p>
+</div>
+<div class="space-y-2 border-l border-gray-200 pl-8">
+<p class="text-3xl font-extrabold text-brand-burgundy">150</p>
+<p class="text-sm font-medium text-gray-500 uppercase tracking-wider">nuevos alojamientos/mes</p>
+</div>
+<div class="space-y-2 border-l border-gray-200 pl-8">
+<p class="text-3xl font-extrabold text-brand-burgundy">+3000</p>
+<p class="text-sm font-medium text-gray-500 uppercase tracking-wider">alojamientos en 43 ciudades</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Trustpilot Section -->
+<section class="py-24 bg-[#f4f7f4] px-6">
+<div class="max-w-7xl mx-auto">
+<div class="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
+<div class="space-y-4">
+<h2 class="text-4xl font-bold">Déjanos hacerlo bien</h2>
+<p class="text-gray-600">Lo que dicen nuestros huéspedes sobre sus experiencias con nosotros.</p>
+</div>
+<div class="flex items-center gap-2 bg-white px-4 py-2 rounded-full shadow-sm">
+<span class="text-green-600 font-bold">Trustpilot</span>
+<div class="flex text-green-600">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+<div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+<div class="flex items-center gap-1 text-green-600 mb-4">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+</div>
+<p class="text-gray-700 italic mb-6">"Increíble atención desde el primer momento. El apartamento en Madrid superó mis expectativas, todo impecable y muy céntrico."</p>
+<p class="font-bold">Ana García</p>
+<p class="text-sm text-gray-500">Madrid, España</p>
+</div>
+<div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+<div class="flex items-center gap-1 text-green-600 mb-4">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+</div>
+<p class="text-gray-700 italic mb-6">"La gestión fue rapidísima. Me sentí seguro en todo momento gracias al soporte 24/7. Repetiré sin duda."</p>
+<p class="font-bold">Mark Thompson</p>
+<p class="text-sm text-gray-500">London, UK</p>
+</div>
+<div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+<div class="flex items-center gap-1 text-green-600 mb-4">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+</div>
+<p class="text-gray-700 italic mb-6">"Calidad de hotel con la calidez de un hogar. La limpieza y el detalle en la decoración son de otro nivel."</p>
+<p class="font-bold">Isabelle Roche</p>
+<p class="text-sm text-gray-500">Paris, France</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Hospédate con nosotros -->
+<section class="py-24 px-6">
+<div class="max-w-7xl mx-auto grid lg:grid-cols-2 gap-16 items-center">
+<div class="order-2 lg:order-1 relative">
+<div class="aspect-square rounded-full overflow-hidden border-[16px] border-gray-50 shadow-2xl">
+<img class="w-full h-full object-cover" data-alt="Satisfied guest relaxing in luxury rental" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDlfonV99pDs1540biHy4C3aI7avBinpx8_AHmQhLrUjHm_ZU13ppJvfQ0xRr0rWAZ3DeM6fwo6ZZn3fKwGeuE5a7O5-Aj4k6IiDaNphnbxOX8J-ohVu_N4aLrhsUdimhHhRLdP7RmhhWJTk6kZxcjX-fVvuzNghs8nSXDwSDbQDnTj6IUg8Kw3L1EGrqSHEEaEkM_jQAL7IGMbA7vOgq2qU_xRKiB0a8jPi5uzEtbLwGydZHdzg6ftiRCW21e5yCGoxT7E8-Q10Ksg"/>
+</div>
+<div class="absolute top-10 right-0 bg-white p-6 rounded-2xl shadow-xl flex items-center gap-4">
+<div class="bg-green-100 p-3 rounded-full text-green-600">
+<span class="material-symbols-outlined">verified</span>
+</div>
+<div>
+<p class="font-bold">Calidad Premium</p>
+<p class="text-xs text-gray-500">Garantizada por Gonzalo</p>
+</div>
+</div>
+</div>
+<div class="order-1 lg:order-2 space-y-10">
+<h2 class="text-4xl lg:text-5xl font-bold">Hospédate con nosotros</h2>
+<p class="text-lg text-gray-600">Disfruta de una estancia sin preocupaciones con beneficios diseñados exclusivamente para tu confort.</p>
+<ul class="space-y-4">
+<li class="flex items-center gap-4">
+<div class="bg-brand-burgundy/10 p-1 rounded-full text-brand-burgundy">
+<span class="material-symbols-outlined text-xl">check</span>
+</div>
+<span class="font-medium text-lg">Alquileres personalizados</span>
+</li>
+<li class="flex items-center gap-4">
+<div class="bg-brand-burgundy/10 p-1 rounded-full text-brand-burgundy">
+<span class="material-symbols-outlined text-xl">check</span>
+</div>
+<span class="font-medium text-lg">Mejores precios</span>
+</li>
+<li class="flex items-center gap-4">
+<div class="bg-brand-burgundy/10 p-1 rounded-full text-brand-burgundy">
+<span class="material-symbols-outlined text-xl">check</span>
+</div>
+<span class="font-medium text-lg">Conserjería</span>
+</li>
+<li class="flex items-center gap-4">
+<div class="bg-brand-burgundy/10 p-1 rounded-full text-brand-burgundy">
+<span class="material-symbols-outlined text-xl">check</span>
+</div>
+<span class="font-medium text-lg">Desinfección</span>
+</li>
+<li class="flex items-center gap-4">
+<div class="bg-brand-burgundy/10 p-1 rounded-full text-brand-burgundy">
+<span class="material-symbols-outlined text-xl">check</span>
+</div>
+<span class="font-medium text-lg">Atención 24/7</span>
+</li>
+</ul>
+<button class="bg-brand-burgundy text-white px-10 py-4 rounded-xl font-bold text-lg hover:bg-red-900 transition-all shadow-lg hover:shadow-brand-burgundy/20">
+                    Reservar con nosotros
+                </button>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="bg-white pt-20 pb-10 border-t border-gray-100 px-6">
+<div class="max-w-7xl mx-auto space-y-16">
+<div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-12">
+<div class="col-span-2 lg:col-span-1 space-y-6">
+<span class="text-xl font-bold text-brand-navy">ReservationGonzalo</span>
+<p class="text-gray-500 text-sm leading-relaxed">Redefiniendo el lujo y la comodidad en el alquiler vacacional de alta gama.</p>
+<div class="flex gap-4">
+<a class="text-gray-400 hover:text-brand-burgundy transition-colors" href="#"><span class="material-symbols-outlined">public</span></a>
+<a class="text-gray-400 hover:text-brand-burgundy transition-colors" href="#"><span class="material-symbols-outlined">camera</span></a>
+<a class="text-gray-400 hover:text-brand-burgundy transition-colors" href="#"><span class="material-symbols-outlined">business</span></a>
+</div>
+</div>
+<div class="space-y-6">
+<p class="font-bold text-sm uppercase tracking-widest text-gray-900">Empresa</p>
+<ul class="space-y-4 text-sm text-gray-600">
+<li><a class="hover:text-brand-burgundy transition-colors" href="#">About Us</a></li>
+<li><a class="hover:text-brand-burgundy transition-colors" href="#">Trayectoria</a></li>
+<li><a class="hover:text-brand-burgundy transition-colors" href="#">Carreras</a></li>
+</ul>
+</div>
+<div class="space-y-6">
+<p class="font-bold text-sm uppercase tracking-widest text-gray-900">Legal</p>
+<ul class="space-y-4 text-sm text-gray-600">
+<li><a class="hover:text-brand-burgundy transition-colors" href="#">Privacy Policy</a></li>
+<li><a class="hover:text-brand-burgundy transition-colors" href="#">Terms of Service</a></li>
+<li><a class="hover:text-brand-burgundy transition-colors" href="#">Cookies</a></li>
+</ul>
+</div>
+<div class="space-y-6">
+<p class="font-bold text-sm uppercase tracking-widest text-gray-900">Redes</p>
+<ul class="space-y-4 text-sm text-gray-600">
+<li><a class="hover:text-brand-burgundy transition-colors" href="#">Instagram</a></li>
+<li><a class="hover:text-brand-burgundy transition-colors" href="#">LinkedIn</a></li>
+<li><a class="hover:text-brand-burgundy transition-colors" href="#">Twitter</a></li>
+</ul>
+</div>
+<div class="space-y-6">
+<p class="font-bold text-sm uppercase tracking-widest text-gray-900">Contacto</p>
+<ul class="space-y-4 text-sm text-gray-600">
+<li><a class="hover:text-brand-burgundy transition-colors" href="#">Contact Us</a></li>
+<li><a class="hover:text-brand-burgundy transition-colors" href="#">Soporte</a></li>
+</ul>
+</div>
+</div>
+<div class="pt-10 border-t border-gray-100 flex flex-col md:flex-row justify-between items-center gap-6">
+<p class="text-sm text-gray-400">© 2024 ReservationGonzalo. All rights reserved.</p>
+<div class="flex items-center gap-2">
+<span class="text-sm text-gray-400">Página oficial de Gonzalo</span>
+<span class="material-symbols-outlined text-brand-burgundy" style="font-variation-settings: 'FILL' 1;">favorite</span>
+</div>
+</div>
+</div>
+</footer>
+</body></html>
