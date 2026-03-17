@@ -110,7 +110,8 @@ Before creating any file ask:
 
 ### Done ✅
 - Prisma schema (13 models)
-- NextAuth v5 with JWT + credentials
+- NextAuth v5 with JWT + credentials + Google OAuth
+- Google OAuth: only users with role OWNER in DB can sign in
 - Middleware protecting /dashboard
 - availabilityService.ts
 - Stitch UI components converted to TSX
@@ -130,6 +131,6 @@ Before creating any file ask:
 - pricingService.ts (seasonal + long stay)
 - Connect dashboard to real data
 - Guest portal (access by email/code)
-- Google/Apple OAuth
+- Apple OAuth
 - Push notifications (web push → mobile later)
 - Tests (Jest + Playwright)
