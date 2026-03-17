@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>ReservationGonzalo - Menu</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&amp;family=Outfit:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#8b1a1a",
+                        "background-light": "#ffffff",
+                        "background-dark": "#1a1a2e",
+                        "surface": "#f8f9fa",
+                        "text-main": "#1a1a2e",
+                        "muted": "#6b6b80",
+                    },
+                    fontFamily: {
+                        "display": ["Plus Jakarta Sans", "sans-serif"],
+                        "body": ["Outfit", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "2xl": "1rem", "full": "9999px"},
+                    boxShadow: {
+                        'soft': '0 8px 30px rgba(26, 26, 46, 0.06)',
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Outfit', sans-serif;
+        }
+        h1, h2, h3, h4, h5, h6, .font-display {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-text-main dark:text-white antialiased">
+<!-- Background Overlay -->
+<div class="fixed inset-0 bg-black/40 z-40 transition-opacity"></div>
+<!-- Slide-out Drawer -->
+<div class="fixed top-0 right-0 h-full w-[80%] max-w-sm bg-background-light dark:bg-background-dark z-50 shadow-soft flex flex-col transform transition-transform duration-300 translate-x-0">
+<!-- Header -->
+<div class="flex items-center justify-between p-6 border-b border-surface dark:border-gray-800">
+<button class="text-text-main dark:text-white p-2 -ml-2 rounded-full hover:bg-surface dark:hover:bg-gray-800 transition-colors focus:outline-none focus:ring-2 focus:ring-primary">
+<span class="material-symbols-outlined text-[24px]">close</span>
+</button>
+<h2 class="font-display font-bold text-[20px] text-text-main dark:text-white">ReservationGonzalo</h2>
+</div>
+<!-- Scrollable Content -->
+<div class="flex-1 overflow-y-auto p-6 flex flex-col gap-8">
+<!-- Language Toggle -->
+<div>
+<p class="text-sm text-muted dark:text-gray-400 mb-3 font-medium uppercase tracking-wider">Idioma</p>
+<div class="flex h-[40px] items-center rounded-[8px] bg-surface dark:bg-gray-800 p-1">
+<label class="flex cursor-pointer h-full grow items-center justify-center overflow-hidden rounded-[6px] text-sm font-medium transition-colors bg-text-main text-white dark:bg-white dark:text-text-main shadow-sm">
+<span>PT</span>
+<input checked="" class="hidden" name="lang" type="radio" value="PT"/>
+</label>
+<label class="flex cursor-pointer h-full grow items-center justify-center overflow-hidden rounded-[6px] text-sm font-medium text-muted dark:text-gray-400 hover:text-text-main dark:hover:text-white transition-colors">
+<span>EN</span>
+<input class="hidden" name="lang" type="radio" value="EN"/>
+</label>
+<label class="flex cursor-pointer h-full grow items-center justify-center overflow-hidden rounded-[6px] text-sm font-medium text-muted dark:text-gray-400 hover:text-text-main dark:hover:text-white transition-colors">
+<span>ES</span>
+<input class="hidden" name="lang" type="radio" value="ES"/>
+</label>
+</div>
+</div>
+<!-- Navigation Links -->
+<nav class="flex flex-col gap-[32px]">
+<a class="font-display text-[20px] font-semibold text-text-main dark:text-white hover:text-primary dark:hover:text-primary transition-colors flex items-center justify-between group" href="#">
+                    Início
+                    <span class="material-symbols-outlined text-muted opacity-0 group-hover:opacity-100 transition-opacity">chevron_right</span>
+</a>
+<a class="font-display text-[20px] font-semibold text-text-main dark:text-white hover:text-primary dark:hover:text-primary transition-colors flex items-center justify-between group" href="#">
+                    Os nossos alojamentos
+                    <span class="material-symbols-outlined text-muted opacity-0 group-hover:opacity-100 transition-opacity">chevron_right</span>
+</a>
+<a class="font-display text-[20px] font-semibold text-text-main dark:text-white hover:text-primary dark:hover:text-primary transition-colors flex items-center justify-between group" href="#">
+                    Sobre nós
+                    <span class="material-symbols-outlined text-muted opacity-0 group-hover:opacity-100 transition-opacity">chevron_right</span>
+</a>
+<a class="font-display text-[20px] font-semibold text-text-main dark:text-white hover:text-primary dark:hover:text-primary transition-colors flex items-center justify-between group" href="#">
+                    Contacto
+                    <span class="material-symbols-outlined text-muted opacity-0 group-hover:opacity-100 transition-opacity">chevron_right</span>
+</a>
+</nav>
+</div>
+<!-- Footer Action -->
+<div class="p-6 mt-auto border-t border-surface dark:border-gray-800">
+<button class="w-full py-[14px] rounded-[12px] border border-text-main dark:border-white text-text-main dark:text-white font-display font-semibold text-[15px] hover:bg-surface dark:hover:bg-gray-800 transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:focus:ring-offset-background-dark">
+                Iniciar Sessão
+            </button>
+</div>
+</div>
+</body></html>
