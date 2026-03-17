@@ -164,6 +164,7 @@ model Booking {
   updatedAt        DateTime      @updatedAt
   property         Property      @relation(fields: [propertyId], references: [id])
   review           Review?
+  guestAccessLogs  GuestAccess[]
 
   @@map("bookings")
 }
@@ -277,4 +278,19 @@ enum NotificationType {
   CHECK_IN_REMINDER
   CHECK_OUT_REMINDER
   SYSTEM
+}
+
+// ─── ACCESO HUÉSPED ──────────────────────────────────────────────────────────
+
+model GuestAccess {
+  id               String   @id @default(cuid())
+  email            String
+  confirmationCode String?
+  bookingId        String
+  accessedAt       DateTime @default(now())
+  ipAddress        String?
+
+  booking Booking @relation(fields: [bookingId], references: [id])
+
+  @@map("guest_access_logs")
 }
