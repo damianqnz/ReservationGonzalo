@@ -3,6 +3,11 @@ import { BookingStatus, NotificationType, PaymentStatus } from '@prisma/client'
 import { db } from '@/lib/db'
 import { cancelReservation } from '@/lib/services/reservationService'
 import { createNotification } from '@/lib/services/notificationService'
+import {
+  EMAIL_BOOKING_SELECT,
+  sendBookingConfirmationToGuest,
+  sendNewBookingNotificationToOwner,
+} from '@/lib/services/emailService'
 
 // ─── Stripe singleton ─────────────────────────────────────────────────────────
 
@@ -164,8 +169,8 @@ export async function confirmReservation(paymentIntentId: string) {
     })
   }
 
-  return db.$transaction(async (tx) => {
-    const updated = await tx.booking.update({
+  const updated = await db.$transaction(async (tx) => {
+    const result = await tx.booking.update({
       where: { id: booking.id },
       data: {
         status: BookingStatus.CONFIRMED,
@@ -174,8 +179,7 @@ export async function confirmReservation(paymentIntentId: string) {
       select: PAYMENT_BOOKING_SELECT,
     })
 
-    // Non-blocking notification (fire-and-forget inside transaction is intentional
-    // — notification failure should not roll back the payment confirmation)
+    // Notification inside transaction — failure rolls back (acceptable: DB notification)
     await createNotification({
       type: NotificationType.BOOKING_CONFIRMED,
       title: 'Reserva Confirmada',
@@ -183,6 +187,22 @@ export async function confirmReservation(paymentIntentId: string) {
       data: { bookingId: booking.id, confirmationCode: booking.confirmationCode },
     })
 
-    return updated
+    return result
   })
+
+  // Fetch full booking data needed for emails (outside transaction — read-only)
+  const fullBooking = await db.booking.findUnique({
+    where: { id: booking.id },
+    select: EMAIL_BOOKING_SELECT,
+  })
+
+  if (fullBooking) {
+    // Fire-and-forget both emails in parallel — failure must NOT affect the confirmation
+    void Promise.allSettled([
+      sendBookingConfirmationToGuest(fullBooking),
+      sendNewBookingNotificationToOwner(fullBooking),
+    ])
+  }
+
+  return updated
 }

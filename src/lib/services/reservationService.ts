@@ -2,6 +2,7 @@ import { BookingStatus, PaymentStatus, PropertyStatus } from '@prisma/client'
 import { db } from '@/lib/db'
 import { nightsBetween, normalizeDate } from '@/lib/date'
 import { checkAvailability } from '@/services/availabilityService'
+import { sendCancellationToGuest } from '@/lib/services/emailService'
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -361,7 +362,7 @@ export async function cancelReservation(id: string, reason?: string) {
 
   const isRefundable = booking.paymentStatus === PaymentStatus.PAID
 
-  return db.booking.update({
+  const cancelled = await db.booking.update({
     where: { id },
     data: {
       status: BookingStatus.CANCELLED,
@@ -370,4 +371,9 @@ export async function cancelReservation(id: string, reason?: string) {
     },
     select: BOOKING_SELECT,
   })
+
+  // Fire-and-forget email — failure must NOT affect the cancellation result
+  void sendCancellationToGuest(cancelled, reason)
+
+  return cancelled
 }
