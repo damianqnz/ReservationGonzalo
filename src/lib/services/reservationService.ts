@@ -295,6 +295,48 @@ export async function listReservations(input: {
 }
 
 /**
+ * Updates owner-controlled fields on a reservation.
+ * If status is set to CANCELLED, delegates to cancelReservation() which
+ * enforces cancellable-state rules and handles REFUNDED paymentStatus.
+ * For all other status changes, updates the fields directly.
+ *
+ * @param id - Booking ID.
+ * @param data - Fields to update: status, ownerNotes, paymentStatus.
+ * @throws {Error} If the reservation is not found or the transition is invalid.
+ */
+export async function updateReservation(
+  id: string,
+  data: {
+    status?: BookingStatus
+    ownerNotes?: string
+    paymentStatus?: PaymentStatus
+  },
+) {
+  if (data.status === BookingStatus.CANCELLED) {
+    return cancelReservation(id, data.ownerNotes)
+  }
+
+  const existing = await db.booking.findUnique({
+    where: { id },
+    select: { id: true },
+  })
+
+  if (!existing) {
+    throw new Error('Reservation not found')
+  }
+
+  return db.booking.update({
+    where: { id },
+    data: {
+      ...(data.status != null && { status: data.status }),
+      ...(data.ownerNotes != null && { ownerNotes: data.ownerNotes }),
+      ...(data.paymentStatus != null && { paymentStatus: data.paymentStatus }),
+    },
+    select: BOOKING_SELECT,
+  })
+}
+
+/**
  * Cancels a reservation by ID.
  * Only PENDING or CONFIRMED reservations can be cancelled.
  * If the booking was PAID, automatically sets paymentStatus to REFUNDED.
