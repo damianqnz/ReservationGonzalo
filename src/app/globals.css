@@ -42,3 +42,57 @@ body {
 .material-symbols-filled {
   font-variation-settings: "FILL" 1;
 }
+
+/* ─── react-day-picker overrides ─────────────────────────────────── */
+.rdp-custom {
+  --rdp-accent-color: #8b1a1a;
+  --rdp-accent-background-color: #f5e6e6;
+  --rdp-day-font: inherit;
+  --rdp-outside-opacity: 0.3;
+}
+
+.rdp-custom .rdp-day_button {
+  border-radius: 50%;
+  font-size: 13px;
+  font-family: inherit;
+}
+
+.rdp-custom .rdp-selected .rdp-day_button {
+  background-color: #8b1a1a;
+  color: #ffffff;
+}
+
+.rdp-custom .rdp-range_middle .rdp-day_button {
+  background-color: #f5e6e6;
+  color: #8b1a1a;
+  border-radius: 0;
+}
+
+.rdp-custom .rdp-range_start .rdp-day_button,
+.rdp-custom .rdp-range_end .rdp-day_button {
+  background-color: #8b1a1a;
+  color: #ffffff;
+  border-radius: 50%;
+}
+
+.rdp-custom .rdp-day_button:hover:not([disabled]) {
+  background-color: #f5e6e6;
+  color: #8b1a1a;
+}
+
+.rdp-custom .rdp-disabled .rdp-day_button {
+  opacity: 0.25;
+  cursor: not-allowed;
+}
+
+.rdp-custom .rdp-caption_label {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a1a2e;
+}
+
+.rdp-custom .rdp-nav_button:hover {
+  background-color: #f5e6e6;
+  color: #8b1a1a;
+}
