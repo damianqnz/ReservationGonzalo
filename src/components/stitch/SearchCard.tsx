@@ -86,13 +86,19 @@ export default function SearchCard() {
   }, []);
 
   // ── Derived values ───────────────────────────────────────────────────────────
-  const hasRange = dateRange?.from && dateRange?.to;
-  const nights = hasRange ? nightsBetween(dateRange.from!, dateRange.to!) : 0;
+  // A complete range requires both dates AND they must be different days
+  const hasRange =
+    !!(dateRange?.from &&
+    dateRange?.to &&
+    dateRange.from.getTime() !== dateRange.to.getTime())
+  const nights = hasRange ? nightsBetween(dateRange!.from!, dateRange!.to!) : 0;
   const totalGuests = adults + children;
 
   const dateLabel = hasRange
-    ? `${formatShortDate(dateRange.from!)} → ${formatShortDate(dateRange.to!)} (${nights} noite${nights !== 1 ? "s" : ""})`
-    : "Check-in / Check-out";
+    ? `${formatShortDate(dateRange!.from!)} → ${formatShortDate(dateRange!.to!)} (${nights} noite${nights !== 1 ? "s" : ""})`
+    : dateRange?.from
+      ? `${formatShortDate(dateRange.from)} → ?`
+      : "Check-in / Check-out";
 
   const guestsLabel =
     children > 0
@@ -144,13 +150,13 @@ export default function SearchCard() {
                   </span>
                   <span
                     className={`text-[15px] font-medium mt-0.5 truncate ${
-                      hasRange ? "text-text-main" : "text-text-muted"
+                      dateRange?.from ? "text-text-main" : "text-text-muted"
                     }`}
                   >
                     {dateLabel}
                   </span>
                 </div>
-                {hasRange && (
+                {dateRange?.from && (
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
@@ -171,7 +177,14 @@ export default function SearchCard() {
                     selected={dateRange}
                     onSelect={(range) => {
                       setDateRange(range);
-                      if (range?.from && range?.to) setDatePickerOpen(false);
+                      // Only close when both dates are set AND they're different days
+                      if (
+                        range?.from &&
+                        range?.to &&
+                        range.from.getTime() !== range.to.getTime()
+                      ) {
+                        setDatePickerOpen(false);
+                      }
                     }}
                     numberOfMonths={2}
                     pagedNavigation
