@@ -10,6 +10,7 @@ const navItems = [
   { name: 'Propriedades', icon: 'domain', href: '/dashboard/properties' },
   { name: 'Clientes', icon: 'group', href: '/dashboard/customers' },
   { name: 'Análises', icon: 'leaderboard', href: '/dashboard/analytics' },
+  { name: 'Cupões', icon: 'local_offer', href: '/dashboard/coupons' },
 ]
 
 const bottomNavItems = [
