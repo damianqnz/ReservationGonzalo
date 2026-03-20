@@ -165,6 +165,11 @@ model Booking {
   expiresAt        DateTime?
   roomId           String?
   room             Room?         @relation(fields: [roomId], references: [id])
+  guestCountry      String?
+  acceptedTerms     Boolean   @default(false)
+  acceptedPrivacy   Boolean   @default(false)
+  acceptedMarketing Boolean   @default(false)
+  termsAcceptedAt   DateTime?
   createdAt        DateTime      @default(now())
   updatedAt        DateTime      @updatedAt
   property         Property      @relation(fields: [propertyId], references: [id])
