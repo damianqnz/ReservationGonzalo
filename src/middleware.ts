@@ -5,15 +5,21 @@ const protectedRoutes = ['/dashboard', '/properties', '/bookings', '/settings']
 
 export async function middleware(request: NextRequest) {
   const session = await auth()
-  const isLoggedIn = !!session
   const { pathname } = request.nextUrl
 
   const isProtectedRoute = protectedRoutes.some((route) =>
     pathname.startsWith(route)
   )
 
-  if (isProtectedRoute && !isLoggedIn) {
-    return NextResponse.redirect(new URL('/login', request.nextUrl))
+  if (isProtectedRoute) {
+    if (!session) {
+      return NextResponse.redirect(new URL('/login', request.nextUrl))
+    }
+
+    const role = session.user?.role
+    if (role !== 'OWNER' && role !== 'ADMIN') {
+      return NextResponse.redirect(new URL('/login', request.nextUrl))
+    }
   }
 
   return NextResponse.next()
