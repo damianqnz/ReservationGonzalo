@@ -1,7 +1,9 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { signOut } from 'next-auth/react'
 
 const navItems = [
   { name: 'Dashboard', icon: 'dashboard', href: '/dashboard' },
@@ -20,6 +22,12 @@ const bottomNavItems = [
 
 export default function DashboardSidebar() {
   const pathname = usePathname()
+  const [signingOut, setSigningOut] = useState(false)
+
+  async function handleSignOut() {
+    setSigningOut(true)
+    await signOut({ callbackUrl: '/login' })
+  }
 
   return (
     <aside className="fixed left-0 top-0 h-screen w-64 border-r border-slate-200 bg-white flex flex-col py-6 font-sans antialiased text-sm font-medium z-30">
@@ -73,10 +81,14 @@ export default function DashboardSidebar() {
             </Link>
           )
         })}
-        <div className="flex items-center gap-3 px-4 py-3 text-slate-500 hover:text-[#1a1a2e] hover:bg-slate-50 transition-colors duration-200 cursor-pointer">
+        <button
+          onClick={handleSignOut}
+          disabled={signingOut}
+          className="w-full flex items-center gap-3 px-4 py-3 text-slate-500 hover:text-[#8b1a1a] hover:bg-slate-50 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
           <span className="material-symbols-outlined">logout</span>
-          <span>Sair</span>
-        </div>
+          <span>{signingOut ? 'A sair...' : 'Sair'}</span>
+        </button>
       </div>
     </aside>
   )
