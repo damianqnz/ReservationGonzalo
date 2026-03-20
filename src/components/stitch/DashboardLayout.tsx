@@ -12,7 +12,7 @@ export default function DashboardLayout({ children, unreadCount = 0, userName }:
     <div className="min-h-screen bg-[#fbfbfb]">
       <DashboardSidebar />
       <div className="pl-64 flex flex-col min-h-screen">
-        <DashboardTopbar unreadCount={unreadCount} userName={userName} />
+        <DashboardTopbar unreadCount={unreadCount} />
         <main className="flex-1 mt-16 p-8">
           {children}
         </main>

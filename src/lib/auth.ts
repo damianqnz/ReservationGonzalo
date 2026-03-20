@@ -30,6 +30,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   session: { strategy: 'jwt' },
   pages: {
     signIn: '/login',
+    error: '/login',
   },
   providers: [
     GoogleProvider({
@@ -80,48 +81,34 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   },
   callbacks: {
     /**
-     * For Google OAuth sign-ins: blocks GUEST users from accessing
-     * the dashboard. New users are handled by the createUser event.
-     * Existing users with OWNER or ADMIN role proceed normally.
+     * Allow all sign-ins — role-based routing is handled by middleware.
      */
-    async signIn({ user, account }) {
-      if (account?.provider === 'google' && user.email) {
-        const existingUser = await db.user.findUnique({
-          where: { email: user.email },
-          select: { role: true },
-        })
-        // New users (not yet in DB) are handled by createUser event — allow
-        if (existingUser &&
-            existingUser.role !== 'OWNER' &&
-            existingUser.role !== 'ADMIN') {
-          return false
-        }
-      }
+    async signIn() {
       return true
     },
 
     /**
-     * Reads id and role from DB on every sign-in so the JWT always reflects
-     * the current DB state. Works for both Google and Credentials providers.
+     * Persists id, role, and email into the JWT on first sign-in.
+     * For Credentials: user comes from authorize() with DB role.
+     * For Google OAuth: user comes from PrismaAdapter with DB role.
      */
     async jwt({ token, user }) {
-      if (user?.email) {
-        const dbUser = await db.user.findUnique({
-          where: { email: user.email },
-          select: { id: true, role: true },
-        })
-        if (dbUser) {
-          token.id = dbUser.id
-          token.role = dbUser.role
-        }
+      if (user) {
+        token.id = user.id
+        token.role = (user as { role?: string }).role
+        token.email = user.email
       }
       return token
     },
 
+    /**
+     * Exposes id, role, and email on the client-side session object.
+     */
     async session({ session, token }) {
       if (token) {
         session.user.id = token.id as string
         session.user.role = token.role as string
+        session.user.email = token.email as string
       }
       return session
     },

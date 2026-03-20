@@ -1,11 +1,42 @@
+'use client'
+
+import { useEffect, useRef, useState } from 'react'
+import { useSession, signOut } from 'next-auth/react'
 import Image from 'next/image'
+import Link from 'next/link'
 
 interface DashboardTopbarProps {
   unreadCount?: number
-  userName?: string
 }
 
-export default function DashboardTopbar({ unreadCount = 0, userName = 'Gonzalo R.' }: DashboardTopbarProps) {
+export default function DashboardTopbar({ unreadCount = 0 }: DashboardTopbarProps) {
+  const { data: session } = useSession()
+  const [dropdownOpen, setDropdownOpen] = useState(false)
+  const [signingOut, setSigningOut] = useState(false)
+  const dropdownRef = useRef<HTMLDivElement>(null)
+
+  const userName = session?.user?.name ?? 'Utilizador'
+  const userEmail = session?.user?.email ?? ''
+  const userImage = session?.user?.image ?? null
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setDropdownOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  async function handleSignOut() {
+    setSigningOut(true)
+    setDropdownOpen(false)
+    await signOut({ callbackUrl: '/login' })
+  }
+
+  const initial = userName.charAt(0).toUpperCase()
+
   return (
     <header className="fixed top-0 right-0 left-64 h-16 border-b border-slate-200 bg-white/80 backdrop-blur-md flex justify-between items-center px-8 z-20">
       <div className="flex items-center gap-4 flex-1">
@@ -37,20 +68,69 @@ export default function DashboardTopbar({ unreadCount = 0, userName = 'Gonzalo R
             <span className="material-symbols-outlined text-slate-500">chat_bubble</span>
           </button>
         </div>
-        <div className="h-8 w-[1px] bg-slate-200"></div>
-        <div className="flex items-center gap-3 cursor-pointer">
-          <div className="text-right hidden sm:block">
-            <p className="text-sm font-bold text-[#1a1a2e]">{userName}</p>
-            <p className="text-[10px] text-slate-500">Gerente de Propriedade</p>
-          </div>
-          <div className="relative w-10 h-10 rounded-full overflow-hidden border-2 border-slate-200">
-            <Image
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuCW4UEKqW05NpJMy1GdhdKfPzvBdr-_xGGwelEYoaSPxgRlDpUquKD9qdF4z81Vzd67I0ilmBTy__3_2GHqR4fdJavuO3f2TFthTQwPCHYOYGxivHba4Hqmy7HlgtVwMwcSZIEjdf4rkakl28cfvgWNbsX_L_5U-hdNbyjGG_kDp2CfpIlcEVcZM4UGLmHekXhe_hnXHySka6dNaQNlH-o0SiIMbOOJ9EuXzU_j1cG2Zj5nUvBni7DgpFN0UPffimLprdNPdrqoeZG0"
-              alt="Perfil do administrador"
-              fill
-              className="object-cover"
-            />
-          </div>
+
+        <div className="h-8 w-[1px] bg-slate-200" />
+
+        {/* Profile dropdown */}
+        <div ref={dropdownRef} className="relative">
+          <button
+            onClick={() => setDropdownOpen((v) => !v)}
+            aria-haspopup="menu"
+            aria-expanded={dropdownOpen}
+            className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
+          >
+            <div className="text-right hidden sm:block">
+              <p className="text-sm font-bold text-[#1a1a2e]">{userName}</p>
+              <p className="text-[10px] text-slate-500">Gerente de Propriedade</p>
+            </div>
+            <div className="relative w-10 h-10 rounded-full overflow-hidden border-2 border-slate-200 flex items-center justify-center bg-[#1a1a2e]">
+              {userImage ? (
+                <Image
+                  src={userImage}
+                  alt={userName}
+                  fill
+                  className="object-cover"
+                />
+              ) : (
+                <span className="text-white text-sm font-bold">{initial}</span>
+              )}
+            </div>
+          </button>
+
+          {dropdownOpen && (
+            <div
+              role="menu"
+              className="absolute right-0 mt-2 w-56 bg-white border border-slate-200 rounded-xl shadow-lg py-1 z-50 animate-in fade-in slide-in-from-top-1 duration-150"
+            >
+              {/* User info — non-clickable */}
+              <div className="px-4 py-3 border-b border-slate-100">
+                <p className="text-sm font-semibold text-[#1a1a2e] truncate">{userName}</p>
+                <p className="text-xs text-slate-500 truncate">{userEmail}</p>
+              </div>
+
+              <Link
+                href="/dashboard/settings"
+                role="menuitem"
+                onClick={() => setDropdownOpen(false)}
+                className="flex items-center gap-2 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+              >
+                <span className="material-symbols-outlined text-[18px] text-slate-500">manage_accounts</span>
+                O meu perfil
+              </Link>
+
+              <div className="border-t border-slate-100 my-1" />
+
+              <button
+                role="menuitem"
+                onClick={handleSignOut}
+                disabled={signingOut}
+                className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-[#8b1a1a] hover:bg-slate-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <span className="material-symbols-outlined text-[18px]">logout</span>
+                {signingOut ? 'A terminar sessão...' : 'Terminar sessão'}
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </header>

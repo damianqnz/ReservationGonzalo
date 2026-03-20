@@ -1,25 +1,34 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 
-const protectedRoutes = ['/dashboard', '/properties', '/bookings', '/settings']
-
 export async function middleware(request: NextRequest) {
   const session = await auth()
-  const { pathname } = request.nextUrl
+  const role = session?.user?.role
+  const email = session?.user?.email
+  const path = request.nextUrl.pathname
 
-  const isProtectedRoute = protectedRoutes.some((route) =>
-    pathname.startsWith(route)
-  )
-
-  if (isProtectedRoute) {
+  // ── Protect /dashboard and its sub-routes ──────────────────────────────────
+  if (path.startsWith('/dashboard')) {
     if (!session) {
-      return NextResponse.redirect(new URL('/login', request.nextUrl))
+      return NextResponse.redirect(new URL('/login', request.url))
     }
-
-    const role = session.user?.role
     if (role !== 'OWNER' && role !== 'ADMIN') {
-      return NextResponse.redirect(new URL('/login', request.nextUrl))
+      const portalUrl = email
+        ? `/portal?email=${encodeURIComponent(email)}`
+        : '/portal'
+      return NextResponse.redirect(new URL(portalUrl, request.url))
     }
+  }
+
+  // ── Auto-redirect authenticated users away from /login ────────────────────
+  if (path === '/login' && session) {
+    if (role === 'OWNER' || role === 'ADMIN') {
+      return NextResponse.redirect(new URL('/dashboard', request.url))
+    }
+    const portalUrl = email
+      ? `/portal?email=${encodeURIComponent(email)}`
+      : '/portal'
+    return NextResponse.redirect(new URL(portalUrl, request.url))
   }
 
   return NextResponse.next()

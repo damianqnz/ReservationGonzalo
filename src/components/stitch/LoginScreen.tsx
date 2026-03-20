@@ -14,7 +14,11 @@ export default function LoginScreen() {
   // Main tabs
   const [activeTab, setActiveTab] = useState<Tab>('owner')
 
-  // Tab 1 — owner login
+  // Tab 1 — credentials login
+  const [ownerEmail, setOwnerEmail] = useState('')
+  const [ownerPassword, setOwnerPassword] = useState('')
+  const [ownerLoading, setOwnerLoading] = useState(false)
+  const [ownerError, setOwnerError] = useState('')
   const [googleLoading, setGoogleLoading] = useState(false)
 
   // Tab 2 — guest booking search
@@ -23,6 +27,25 @@ export default function LoginScreen() {
   const [email, setEmail] = useState('')
   const [guestLoading, setGuestLoading] = useState(false)
   const [guestError, setGuestError] = useState('')
+
+  async function handleOwnerSignIn(e: React.SyntheticEvent) {
+    e.preventDefault()
+    setOwnerError('')
+    setOwnerLoading(true)
+    const result = await signIn('credentials', {
+      email: ownerEmail,
+      password: ownerPassword,
+      redirect: false,
+    })
+    if (!result || result.error) {
+      setOwnerError('Email ou password incorretos')
+      setOwnerLoading(false)
+      return
+    }
+    // Middleware handles role-based routing: OWNER/ADMIN → /dashboard, GUEST → /portal
+    router.push('/dashboard')
+    router.refresh()
+  }
 
   async function handleGoogleSignIn() {
     setGoogleLoading(true)
@@ -35,7 +58,7 @@ export default function LoginScreen() {
     setGuestError('')
   }
 
-  async function handleGuestSearch(e: React.FormEvent) {
+  async function handleGuestSearch(e: React.SyntheticEvent) {
     e.preventDefault()
     setGuestError('')
     setGuestLoading(true)
@@ -171,26 +194,53 @@ export default function LoginScreen() {
             {/* ── Tab 1: Owner login ─────────────────────────────────────── */}
             {activeTab === 'owner' && (
               <>
-                <form className="space-y-4">
+                <form onSubmit={handleOwnerSignIn} className="space-y-4">
                   <div>
                     <label
                       className="block text-xs font-semibold uppercase tracking-wider mb-1 px-1"
                       htmlFor="login-email"
                     >
-                      Correo electrónico
+                      Email
                     </label>
                     <input
                       className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-primary focus:border-primary transition-all outline-none"
                       id="login-email"
                       placeholder="nombre@ejemplo.com"
                       type="email"
+                      required
+                      value={ownerEmail}
+                      onChange={(e) => { setOwnerError(''); setOwnerEmail(e.target.value) }}
                     />
                   </div>
+                  <div>
+                    <label
+                      className="block text-xs font-semibold uppercase tracking-wider mb-1 px-1"
+                      htmlFor="login-password"
+                    >
+                      Password
+                    </label>
+                    <input
+                      className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-primary focus:border-primary transition-all outline-none"
+                      id="login-password"
+                      placeholder="••••••••"
+                      type="password"
+                      required
+                      value={ownerPassword}
+                      onChange={(e) => { setOwnerError(''); setOwnerPassword(e.target.value) }}
+                    />
+                  </div>
+                  {ownerError && (
+                    <div className="flex items-center gap-2 text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2.5">
+                      <AlertCircle size={15} className="shrink-0" />
+                      <span>{ownerError}</span>
+                    </div>
+                  )}
                   <button
-                    className="w-full bg-primary text-white font-semibold py-3.5 rounded-lg hover:bg-primary/80 transition-colors shadow-lg mt-2"
+                    className="w-full bg-primary text-white font-semibold py-3.5 rounded-lg hover:bg-primary/80 transition-colors shadow-lg mt-2 disabled:opacity-60 disabled:cursor-not-allowed"
                     type="submit"
+                    disabled={ownerLoading}
                   >
-                    Continuar con correo electrónico
+                    {ownerLoading ? 'A entrar...' : 'Iniciar sessão'}
                   </button>
                 </form>
 
@@ -235,15 +285,6 @@ export default function LoginScreen() {
                   </button>
                 </div>
 
-                <p className="mt-10 text-center text-sm text-text-muted">
-                  ¿No tienes una cuenta?{' '}
-                  <a
-                    className="text-text-main font-semibold hover:underline"
-                    href="#"
-                  >
-                    Regístrate
-                  </a>
-                </p>
               </>
             )}
 
