@@ -82,23 +82,7 @@ export default function LoginScreen() {
 
   return (
     <div className="bg-white text-text-main antialiased min-h-screen">
-      {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 h-16 px-4 md:px-8 flex items-center justify-between">
-        <span className="font-display font-bold text-xl tracking-tight">
-          ReservationGonzalo
-        </span>
-        <button className="flex items-center gap-2 border border-gray-200 rounded-full py-1.5 px-3 hover:shadow-md transition-shadow">
-          <span className="material-symbols-outlined text-xl">menu</span>
-          <span
-            className="material-symbols-outlined text-2xl"
-            style={{ fontVariationSettings: "'FILL' 1" }}
-          >
-            account_circle
-          </span>
-        </button>
-      </header>
-
-      <main className="min-h-screen pt-16 flex flex-col md:flex-row">
+      <main className="min-h-screen flex flex-col md:flex-row">
         {/* Left: Benefits Panel */}
         <section className="hidden md:flex md:w-1/2 lg:w-3/5 relative overflow-hidden bg-surface p-12 items-center justify-center">
           <div className="absolute inset-0 z-0">
