@@ -62,19 +62,40 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       },
     }),
   ],
+  events: {
+    /**
+     * Fires once when a user is first created by the PrismaAdapter.
+     * Sets the role based on ADMIN_EMAILS / OWNER_EMAILS env vars.
+     * Using events.createUser guarantees the record exists in DB.
+     */
+    async createUser({ user }) {
+      if (user.email) {
+        const correctRole = getRoleForEmail(user.email)
+        await db.user.update({
+          where: { id: user.id },
+          data: { role: correctRole },
+        })
+      }
+    },
+  },
   callbacks: {
     /**
-     * For Google OAuth sign-ins: assigns the correct role based on ADMIN_EMAILS
-     * and OWNER_EMAILS env vars. Runs after the adapter creates the user in DB.
-     * Any email not in those lists gets (or keeps) the GUEST role.
+     * For Google OAuth sign-ins: blocks GUEST users from accessing
+     * the dashboard. New users are handled by the createUser event.
+     * Existing users with OWNER or ADMIN role proceed normally.
      */
     async signIn({ user, account }) {
       if (account?.provider === 'google' && user.email) {
-        const correctRole = getRoleForEmail(user.email)
-        await db.user.update({
+        const existingUser = await db.user.findUnique({
           where: { email: user.email },
-          data: { role: correctRole },
+          select: { role: true },
         })
+        // New users (not yet in DB) are handled by createUser event — allow
+        if (existingUser &&
+            existingUser.role !== 'OWNER' &&
+            existingUser.role !== 'ADMIN') {
+          return false
+        }
       }
       return true
     },
