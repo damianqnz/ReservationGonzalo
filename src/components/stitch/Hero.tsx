@@ -1,6 +1,6 @@
 export default function Hero() {
   return (
-    <section className="relative h-[400px] w-full bg-surface">
+    <section className="relative h-[420px] w-full bg-surface">
       <div
         className="absolute inset-0 bg-cover bg-center"
         style={{
@@ -12,7 +12,7 @@ export default function Hero() {
       </div>
       <div className="relative h-full flex flex-col items-center justify-center px-6 pb-12 text-center">
         <h1 className="font-display font-bold text-[32px] leading-tight text-white max-w-[320px]">
-          Reserve a sua próxima estadia
+          Reserve a sua próxima estadia em Cascais
         </h1>
       </div>
     </section>

@@ -14,8 +14,8 @@ export default function Home() {
       <main>
         <Hero />
         <SearchCard />
-        <TrustBadges />
         <FeaturedProperties />
+        <TrustBadges />
         <WhyBookDirect />
         <GuestReviews />
       </main>

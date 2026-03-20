@@ -3,7 +3,7 @@ import { z } from 'zod'
 import { BookingStatus, PaymentStatus } from '@prisma/client'
 import { auth } from '@/lib/auth'
 import {
-  getReservationById,
+  getReservation,
   updateReservation,
 } from '@/lib/services/reservationService'
 
@@ -28,7 +28,7 @@ export async function GET(
   const { id } = await params
 
   try {
-    const booking = await getReservationById(id)
+    const booking = await getReservation(id)
 
     if (!booking) {
       return NextResponse.json({ data: null, error: 'Reservation not found.' }, { status: 404 })

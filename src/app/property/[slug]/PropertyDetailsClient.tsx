@@ -59,6 +59,19 @@ interface PropertyData {
   owner: { name: string | null };
   avgRating: number | null;
   reviewCount: number;
+  hasRooms: boolean;
+  rooms: {
+    id: string;
+    name: string;
+    description: string | null;
+    type: string;
+    maxGuests: number;
+    bedrooms: number;
+    bathrooms: number;
+    beds: number;
+    pricePerNight: number;
+    images: { url: string; alt: string | null; isCover: boolean }[];
+  }[];
 }
 
 interface Props {
@@ -121,6 +134,13 @@ const TYPE_LABELS: Record<string, string> = {
   VILLA: "Vila inteira",
   STUDIO: "Estúdio inteiro",
   ROOM: "Quarto privado",
+  SINGLE: "Quarto Individual",
+  DOUBLE: "Quarto Duplo",
+  TWIN: "Quarto Twin",
+  SUITE: "Suite",
+  JUNIOR_SUITE: "Suite Junior",
+  FAMILY: "Quarto Familiar",
+  ENTIRE_PLACE: "Alojamento Completo",
 };
 
 const CANCELLATION_LABELS: Record<string, string> = {
@@ -135,6 +155,7 @@ const MONTHS_PT = [
 ];
 
 function formatShortDate(iso: string): string {
+  if (!iso) return "";
   const d = new Date(iso);
   return `${d.getUTCDate()} ${MONTHS_PT[d.getUTCMonth()]}`;
 }
@@ -174,12 +195,16 @@ function GuestModal({
   checkIn,
   checkOut,
   defaultGuests,
+  selectedRoomId,
+  selectedRoomName,
   onClose,
 }: {
   property: PropertyData;
   checkIn: string;
   checkOut: string;
   defaultGuests: number;
+  selectedRoomId?: string;
+  selectedRoomName?: string;
   onClose: () => void;
 }) {
   const router = useRouter();
@@ -209,6 +234,7 @@ function GuestModal({
           guestPhone: values.guestPhone || undefined,
           guestCount: values.guestCount,
           guestMessage: values.guestMessage || undefined,
+          roomId: selectedRoomId,
         }),
       });
 
@@ -240,7 +266,7 @@ function GuestModal({
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-surface shrink-0">
           <h2 className="font-display font-semibold text-[17px] text-text-main">
-            Dados da reserva
+            Dados da reserva {selectedRoomName ? `— ${selectedRoomName}` : ""}
           </h2>
           <button
             onClick={onClose}
@@ -380,14 +406,37 @@ export default function PropertyDetailsClient({
   checkOut,
   guests,
   nights,
-  totalPrice,
+  totalPrice: initialTotalPrice,
 }: Props) {
   const [activeImg, setActiveImg] = useState(0);
   const [modalOpen, setModalOpen] = useState(false);
+  const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
 
   const hasDates = !!(checkIn && checkOut && nights);
 
+  // Derived selected room data
+  const selectedRoom = property.rooms.find((r) => r.id === selectedRoomId);
+  const currentPricePerNight = selectedRoom
+    ? selectedRoom.pricePerNight
+    : property.pricePerNight;
+
+  const totalPrice =
+    hasDates && nights
+      ? currentPricePerNight * nights +
+      property.cleaningFee +
+      property.securityDeposit
+      : initialTotalPrice;
+
   const images = property.images.length > 0 ? property.images : null;
+
+  const handleBookNow = () => {
+    if (property.hasRooms && !selectedRoomId) {
+      const el = document.getElementById("room-selector");
+      if (el) el.scrollIntoView({ behavior: "smooth" });
+      return;
+    }
+    setModalOpen(true);
+  };
 
   return (
     <div className="bg-background text-text-main antialiased pb-24">
@@ -440,11 +489,10 @@ export default function PropertyDetailsClient({
                   <button
                     key={i}
                     onClick={() => setActiveImg(i)}
-                    className={`w-14 h-10 rounded-lg overflow-hidden border-2 transition-all relative ${
-                      activeImg === i
+                    className={`w-14 h-10 rounded-lg overflow-hidden border-2 transition-all relative ${activeImg === i
                         ? "border-white shadow-lg scale-110"
                         : "border-transparent opacity-60"
-                    }`}
+                      }`}
                     aria-label={`Foto ${i + 1}`}
                   >
                     <Image src={img.url} alt="" fill className="object-cover" sizes="56px" />
@@ -650,6 +698,137 @@ export default function PropertyDetailsClient({
 
         <hr className="mx-4 border-surface" />
 
+        {/* ── Room Selector (if applicable) ────────────────────────────────── */}
+        {property.hasRooms && property.rooms.length > 0 && (
+          <>
+            <section id="room-selector" className="px-4 py-8 space-y-6 bg-slate-50">
+              <div className="space-y-1">
+                <h3 className="text-[20px] font-display font-bold">
+                  Escolha o seu quarto
+                </h3>
+                <p className="text-[14px] text-text-muted">
+                  Selecione a opção que melhor se adapta às suas necessidades.
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                {property.rooms.map((room) => {
+                  const isExcl = room.type === "ENTIRE_PLACE";
+                  const isSelected = selectedRoomId === room.id;
+                  const roomImg =
+                    room.images.find((i) => i.isCover)?.url ||
+                    room.images[0]?.url ||
+                    "/placeholder.jpg";
+
+                  return (
+                    <div key={room.id} className="space-y-2">
+                      {isExcl && (
+                        <div className="flex items-center gap-4 py-2">
+                          <div className="h-px bg-slate-200 flex-1" />
+                          <span className="text-[12px] font-bold text-slate-400 uppercase tracking-widest">
+                            ou
+                          </span>
+                          <div className="h-px bg-slate-200 flex-1" />
+                        </div>
+                      )}
+
+                      <button
+                        onClick={() => setSelectedRoomId(room.id)}
+                        className={`w-full text-left flex flex-col sm:flex-row gap-4 p-4 rounded-2xl border-2 transition-all ${isSelected
+                            ? "border-[#8b1a1a] bg-white shadow-md ring-1 ring-[#8b1a1a]/10"
+                            : "border-surface bg-white hover:border-slate-300"
+                          } ${isExcl ? "bg-amber-50/50" : ""}`}
+                      >
+                        {/* Room Image */}
+                        <div className="relative w-full sm:w-32 h-24 shrink-0 rounded-xl overflow-hidden bg-surface">
+                          <Image
+                            src={roomImg}
+                            alt={room.name}
+                            fill
+                            className="object-cover"
+                            sizes="(max-width: 640px) 100vw, 128px"
+                          />
+                        </div>
+
+                        {/* Room Details */}
+                        <div className="flex-1 space-y-2">
+                          <div className="flex items-start justify-between gap-2">
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <h4 className="font-bold text-[16px]">
+                                  {room.name}
+                                </h4>
+                                <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-surface text-text-muted">
+                                  {TYPE_LABELS[room.type] ?? room.type}
+                                </span>
+                              </div>
+                              {isExcl && (
+                                <p className="text-[12px] text-amber-700 font-medium">
+                                  Inclui todos os quartos
+                                </p>
+                              )}
+                            </div>
+                            <div className="text-right shrink-0">
+                              <p className="text-[16px] font-bold text-text-main">
+                                {room.pricePerNight}€
+                              </p>
+                              <p className="text-[11px] text-text-muted">
+                                /noite
+                              </p>
+                            </div>
+                          </div>
+
+                          {room.description && (
+                            <p className="text-[13px] text-text-muted line-clamp-2 leading-relaxed">
+                              {room.description}
+                            </p>
+                          )}
+
+                          <div className="flex items-center gap-4 text-[12px] text-text-muted">
+                            <span className="flex items-center gap-1.5">
+                              <span className="material-symbols-outlined text-[16px]">
+                                group
+                              </span>
+                              {room.maxGuests}
+                            </span>
+                            <span className="flex items-center gap-1.5">
+                              <span className="material-symbols-outlined text-[16px]">
+                                bed
+                              </span>
+                              {room.beds}
+                            </span>
+                            <span className="flex items-center gap-1.5">
+                              <span className="material-symbols-outlined text-[16px]">
+                                shower
+                              </span>
+                              {room.bathrooms}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Selection indicator (mobile) */}
+                        <div className="mt-2 sm:mt-0 flex items-center justify-center">
+                          <div
+                            className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${isSelected
+                                ? "bg-[#8b1a1a] border-[#8b1a1a]"
+                                : "border-slate-300"
+                              }`}
+                          >
+                            {isSelected && (
+                              <Check size={14} className="text-white" />
+                            )}
+                          </div>
+                        </div>
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+            <hr className="mx-4 border-surface" />
+          </>
+        )}
+
         {/* ── Location placeholder ─────────────────────────────────────────── */}
         <section className="px-4 py-6 space-y-4">
           <h3 className="text-[18px] font-display font-bold">Localização</h3>
@@ -672,14 +851,14 @@ export default function PropertyDetailsClient({
               <>
                 <div className="flex items-baseline gap-1">
                   <span className="text-[22px] font-extrabold text-text-main">
-                    {property.pricePerNight.toFixed(0)}€
+                    {currentPricePerNight.toFixed(0)}€
                   </span>
                   <span className="text-[13px] text-text-muted">/noite</span>
                 </div>
                 <p className="text-[12px] text-text-muted truncate">
+                  {selectedRoom ? `${selectedRoom.name} · ` : ""}
                   {formatShortDate(checkIn!)} → {formatShortDate(checkOut!)} ·{" "}
-                  {nights} noite{nights !== 1 ? "s" : ""} ·{" "}
-                  {guests ?? 1} hóspede{(guests ?? 1) !== 1 ? "s" : ""}
+                  {nights} noite{nights !== 1 ? "s" : ""}
                 </p>
                 {totalPrice !== undefined && (
                   <p className="text-[12px] font-semibold text-primary">
@@ -702,10 +881,13 @@ export default function PropertyDetailsClient({
 
           {hasDates ? (
             <button
-              onClick={() => setModalOpen(true)}
-              className="shrink-0 bg-primary hover:bg-primary/90 text-white font-bold px-6 py-3 rounded-xl shadow-lg shadow-primary/20 transition-all text-[15px]"
+              onClick={handleBookNow}
+              className={`shrink-0 bg-primary hover:bg-primary/90 text-white font-bold px-6 py-3 rounded-xl shadow-lg shadow-primary/20 transition-all text-[15px] ${property.hasRooms && !selectedRoomId ? "opacity-60" : ""
+                }`}
             >
-              Reservar agora
+              {property.hasRooms && !selectedRoomId
+                ? "Escolher quarto"
+                : "Reservar agora"}
             </button>
           ) : (
             <button
@@ -725,6 +907,8 @@ export default function PropertyDetailsClient({
           checkIn={checkIn}
           checkOut={checkOut}
           defaultGuests={guests ?? 1}
+          selectedRoomId={selectedRoomId || undefined}
+          selectedRoomName={selectedRoom?.name}
           onClose={() => setModalOpen(false)}
         />
       )}

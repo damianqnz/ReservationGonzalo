@@ -1,4 +1,4 @@
-import { PrismaClient, Role, PropertyType, PropertyStatus, CancellationPolicy, AmenityCategory, BookingStatus, PaymentStatus, BookingSource, NotificationType } from "@prisma/client";
+import { PrismaClient, Role, PropertyType, PropertyStatus, CancellationPolicy, AmenityCategory, BookingStatus, PaymentStatus, BookingSource, NotificationType, RoomType, RoomStatus } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
@@ -13,6 +13,8 @@ async function main() {
   await prisma.blockedDate.deleteMany();
   await prisma.propertyAmenity.deleteMany();
   await prisma.propertyImage.deleteMany();
+  await prisma.roomImage.deleteMany();
+  await prisma.room.deleteMany();
   await prisma.property.deleteMany();
   await prisma.amenity.deleteMany();
   await prisma.session.deleteMany();
@@ -310,6 +312,103 @@ async function main() {
 
   console.log(`🏠 3 properties created`);
 
+  // ─── HABITACIONES (Chiado) ──────────────────────────────────────────────────
+  await prisma.property.update({
+    where: { id: property1.id },
+    data: { hasRooms: true },
+  });
+
+  const room1 = await prisma.room.create({
+    data: {
+      propertyId: property1.id,
+      name: "Quarto Duplo",
+      type: RoomType.DOUBLE,
+      maxGuests: 2,
+      bedrooms: 1,
+      bathrooms: 1,
+      beds: 1,
+      pricePerNight: 80,
+      order: 1,
+      images: {
+        create: {
+          url: "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800",
+          publicId: "room1_cover",
+          isCover: true,
+          order: 0,
+        },
+      },
+    },
+  });
+
+  const room2 = await prisma.room.create({
+    data: {
+      propertyId: property1.id,
+      name: "Suite Junior",
+      type: RoomType.JUNIOR_SUITE,
+      maxGuests: 2,
+      bedrooms: 1,
+      bathrooms: 1,
+      beds: 1,
+      pricePerNight: 120,
+      order: 2,
+      images: {
+        create: {
+          url: "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800",
+          publicId: "room2_cover",
+          isCover: true,
+          order: 0,
+        },
+      },
+    },
+  });
+
+  const room3 = await prisma.room.create({
+    data: {
+      propertyId: property1.id,
+      name: "Quarto Individual",
+      type: RoomType.SINGLE,
+      maxGuests: 1,
+      bedrooms: 1,
+      bathrooms: 1,
+      beds: 1,
+      pricePerNight: 60,
+      order: 3,
+      images: {
+        create: {
+          url: "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800",
+          publicId: "room3_cover",
+          isCover: true,
+          order: 0,
+        },
+      },
+    },
+  });
+
+  const room4 = await prisma.room.create({
+    data: {
+      propertyId: property1.id,
+      name: "Alojamento Completo",
+      description: "Reserve o apartamento inteiro para total privacidad. Inclui todos os quartos.",
+      type: RoomType.ENTIRE_PLACE,
+      maxGuests: 4,
+      bedrooms: 2,
+      bathrooms: 1,
+      beds: 3,
+      pricePerNight: 250,
+      order: 4,
+      images: {
+        create: {
+          url: "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=800",
+          publicId: "room4_cover",
+          isCover: true,
+          order: 0,
+        },
+      },
+    },
+  });
+
+  console.log(`🏨 4 rooms created for property Chiado`);
+
   // ─── Bookings ─────────────────────────────────────────────────────────────────
   // Past confirmed booking with review
   const booking1 = await prisma.booking.create({
@@ -537,6 +636,7 @@ async function main() {
   console.log(`👤 Users:         2 (1 admin, 1 owner)`);
   console.log(`🛎️  Amenities:     ${amenities.length}`);
   console.log(`🏠 Properties:    3 (Chiado, Algarve, Oporto)`);
+  console.log(`🏨 Rooms:         4 (Chiado)`);
   console.log(`📅 Bookings:      5`);
   console.log(`⭐ Reviews:       2`);
   console.log(`🔔 Notifications: 5`);

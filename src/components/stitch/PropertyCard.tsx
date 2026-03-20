@@ -5,7 +5,13 @@ interface PropertyCardProps {
   name: string;
   location: string;
   price: string;
+  slug: string;
+  checkIn?: string;
+  checkOut?: string;
+  guests?: number;
 }
+
+import Link from "next/link";
 
 export default function PropertyCard({
   image,
@@ -14,9 +20,23 @@ export default function PropertyCard({
   name,
   location,
   price,
+  slug,
+  checkIn,
+  checkOut,
+  guests,
 }: PropertyCardProps) {
+  // Build URL with optional query parameters
+  const query = new URLSearchParams();
+  if (checkIn) query.set("checkIn", checkIn);
+  if (checkOut) query.set("checkOut", checkOut);
+  if (guests) query.set("guests", guests.toString());
+
+  const queryString = query.toString();
+  const href = `/property/${slug}${queryString ? `?${queryString}` : ""}`;
+
   return (
-    <article className="bg-white rounded-[0.75rem] shadow-soft overflow-hidden group cursor-pointer">
+    <Link href={href} className="block group">
+      <article className="bg-white rounded-[0.75rem] shadow-soft overflow-hidden cursor-pointer hover:shadow-lg transition-all duration-300">
       <div className="relative h-[200px] overflow-hidden">
         <img
           alt={alt}
@@ -60,5 +80,6 @@ export default function PropertyCard({
         </div>
       </div>
     </article>
+  </Link>
   );
 }

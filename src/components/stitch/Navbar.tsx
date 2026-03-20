@@ -153,7 +153,7 @@ function UserMenu() {
                 className="flex items-center gap-2 px-4 py-2.5 text-[14px] text-text-main hover:bg-surface transition-colors"
               >
                 <span className="material-symbols-outlined text-[18px]">calendar_month</span>
-                Mis reservas
+                Minhas reservas
               </Link>
 
               <div className="border-t border-surface my-1" />
@@ -165,7 +165,7 @@ function UserMenu() {
                 className="flex items-center gap-2 px-4 py-2.5 text-[14px] text-text-main hover:bg-surface transition-colors"
               >
                 <span className="material-symbols-outlined text-[18px]">login</span>
-                Iniciar sesión
+                Iniciar sessão
               </Link>
             </>
           )}
@@ -223,59 +223,59 @@ export default function Navbar() {
   return (
     <>
       <header
-        className={`sticky top-0 z-50 w-full bg-white/80 backdrop-blur-md border-b transition-all duration-300 h-16 flex items-center justify-between px-6 ${
-          scrolled ? "border-surface shadow-sm" : "border-transparent"
-        }`}
+        className={`sticky top-0 z-50 w-full bg-white/80 backdrop-blur-md border-b transition-all duration-300 h-16 flex items-center ${scrolled ? "border-surface shadow-sm" : "border-transparent"
+          }`}
       >
-        <a
-          href="#"
-          className="font-display font-bold text-[20px] tracking-tight text-text-main"
-        >
-          ReservationGonzalo
-        </a>
+        <div className="container-main flex items-center justify-between h-full">
+          <a
+            href="#"
+            className="font-display font-bold text-[20px] tracking-tight text-text-main"
+          >
+            ReservationGonzalo
+          </a>
 
-        <div className="flex items-center gap-4">
-          {/* Language selector */}
-          <div ref={langRef} className="relative">
-            <button
-              onClick={() => setLangOpen((v) => !v)}
-              className="flex items-center gap-1 text-[14px] font-bold text-text-main hover:text-primary transition-colors"
-              aria-haspopup="listbox"
-              aria-expanded={langOpen}
-            >
-              {activeLang}
-              <span className="material-symbols-outlined text-[16px] leading-none">
-                {langOpen ? "expand_less" : "expand_more"}
-              </span>
-            </button>
-
-            {langOpen && (
-              <ul
-                role="listbox"
-                className="absolute right-0 mt-2 w-44 bg-white border border-surface rounded-lg shadow-md py-1 z-50"
+          <div className="flex items-center gap-4">
+            {/* Language selector */}
+            <div ref={langRef} className="relative">
+              <button
+                onClick={() => setLangOpen((v) => !v)}
+                className="flex items-center gap-1 text-[14px] font-bold text-text-main hover:text-primary transition-colors"
+                aria-haspopup="listbox"
+                aria-expanded={langOpen}
               >
-                {LANGUAGES.map((lang) => (
-                  <li key={lang.code} role="option" aria-selected={activeLang === lang.code}>
-                    <button
-                      onClick={() => handleSelectLang(lang.code)}
-                      className={`w-full flex items-center gap-2 px-3 py-2 text-[14px] hover:bg-surface transition-colors ${
-                        activeLang === lang.code
+                {activeLang}
+                <span className="material-symbols-outlined text-[16px] leading-none">
+                  {langOpen ? "expand_less" : "expand_more"}
+                </span>
+              </button>
+
+              {langOpen && (
+                <ul
+                  role="listbox"
+                  className="absolute right-0 mt-2 w-44 bg-white border border-surface rounded-lg shadow-md py-1 z-50"
+                >
+                  {LANGUAGES.map((lang) => (
+                    <li key={lang.code} role="option" aria-selected={activeLang === lang.code}>
+                      <button
+                        onClick={() => handleSelectLang(lang.code)}
+                        className={`w-full flex items-center gap-2 px-3 py-2 text-[14px] hover:bg-surface transition-colors ${activeLang === lang.code
                           ? "font-bold text-text-main"
                           : "text-text-muted"
-                      }`}
-                    >
-                      <span>{lang.flag}</span>
-                      <span>{lang.code}</span>
-                      <span className="text-text-muted font-normal">— {lang.label}</span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
+                          }`}
+                      >
+                        <span>{lang.flag}</span>
+                        <span>{lang.code}</span>
+                        <span className="text-text-muted font-normal">— {lang.label}</span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
 
-          {/* User menu */}
-          <UserMenu />
+            {/* User menu */}
+            <UserMenu />
+          </div>
         </div>
       </header>
 

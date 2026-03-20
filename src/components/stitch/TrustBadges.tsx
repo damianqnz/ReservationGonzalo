@@ -6,8 +6,8 @@ const badges = [
 
 export default function TrustBadges() {
   return (
-    <section className="mt-8 px-6">
-      <div className="flex overflow-x-auto hide-scrollbar gap-6 pb-4 snap-x">
+    <section className="mt-8 container-main">
+      <div className="flex overflow-x-auto hide-scrollbar gap-6 pb-4 snap-x pt-20">
         {badges.map((badge) => (
           <div
             key={badge.icon}

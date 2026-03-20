@@ -55,9 +55,19 @@ export default async function PropertyPage({ params, searchParams }: Props) {
       checkOutTime: true,
       cancellationPolicy: true,
       minNights: true,
+      hasRooms: true,
+      rooms: {
+        where: { status: "ACTIVE" },
+        orderBy: { order: "asc" },
+        include: {
+          images: {
+            orderBy: { order: "asc" },
+          },
+        },
+      },
       images: {
         select: { url: true, alt: true, order: true, isCover: true },
-        orderBy: { order: 'asc' },
+        orderBy: { order: "asc" },
       },
       amenities: {
         select: {
@@ -73,11 +83,11 @@ export default async function PropertyPage({ params, searchParams }: Props) {
           comment: true,
           createdAt: true,
         },
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
       },
       owner: { select: { name: true } },
     },
-  })
+  });
 
   if (!property) notFound()
 
