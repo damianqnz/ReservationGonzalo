@@ -96,3 +96,12 @@ body {
   background-color: #f5e6e6;
   color: #8b1a1a;
 }
+
+/* Container Utility for consistent horizontal padding */
+.container-main {
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding-left: clamp(1rem, 5vw, 15vw);
+  padding-right: clamp(1rem, 5vw, 15vw);
+}

@@ -92,6 +92,8 @@ model Property {
   minNights          Int                @default(1)
   maxNights          Int                @default(365)
   cancellationPolicy CancellationPolicy @default(FLEXIBLE)
+  hasRooms           Boolean            @default(false)
+  rooms              Room[]
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
   blockedDates       BlockedDate[]
@@ -161,6 +163,8 @@ model Booking {
   ownerNotes       String?
   source           BookingSource @default(DIRECT)
   expiresAt        DateTime?
+  roomId           String?
+  room             Room?         @relation(fields: [roomId], references: [id])
   createdAt        DateTime      @default(now())
   updatedAt        DateTime      @updatedAt
   property         Property      @relation(fields: [propertyId], references: [id])
@@ -224,6 +228,7 @@ enum PropertyType {
   VILLA
   STUDIO
   ROOM
+  
 }
 
 enum PropertyStatus {
@@ -339,4 +344,74 @@ enum CouponType {
   FIXED_AMOUNT
   FIRST_BOOKING
   MULTIPLE_USE
+}
+
+// ─── HABITACIONES ────────────────────────────────────────────────────────────
+
+model Room {
+  id            String     @id @default(cuid())
+  propertyId    String
+  name          String
+  description   String?    @db.Text
+  type          RoomType   @default(DOUBLE)
+  status        RoomStatus @default(ACTIVE)
+  maxGuests     Int        @default(1)
+  bedrooms      Int        @default(1)
+  bathrooms     Int        @default(1)
+  beds          Int        @default(1)
+  pricePerNight Float
+  order         Int        @default(0)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  property     Property      @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  images       RoomImage[]
+  bookings     Booking[]
+  blockedDates RoomBlockedDate[]
+
+  @@map("rooms")
+}
+
+model RoomImage {
+  id        String   @id @default(cuid())
+  roomId    String
+  url       String
+  publicId  String
+  alt       String?
+  order     Int      @default(0)
+  isCover   Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  room      Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@map("room_images")
+}
+
+model RoomBlockedDate {
+  id     String   @id @default(cuid())
+  roomId String
+  date   DateTime @db.Date
+  reason String?
+
+  room   Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@unique([roomId, date])
+  @@map("room_blocked_dates")
+}
+
+enum RoomType {
+  SINGLE
+  DOUBLE
+  TWIN
+  SUITE
+  JUNIOR_SUITE
+  FAMILY
+  STUDIO
+  ENTIRE_PLACE
+}
+
+enum RoomStatus {
+  ACTIVE
+  INACTIVE
+  MAINTENANCE
 }

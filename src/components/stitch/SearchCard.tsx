@@ -128,8 +128,8 @@ export default function SearchCard() {
 
   return (
     <>
-      <section className="relative z-10 px-6 -mt-20">
-        <div className="bg-white rounded-[0.75rem] p-4 shadow-soft">
+      <section className="relative z-10 px-4 md:px-6 -mt-10">
+        <div className="bg-white rounded-[1rem] p-4 md:px-8 shadow-soft max-w-[860px] mx-auto">
           <div className="space-y-3">
 
             {/* ── Dates ──────────────────────────────────────────────────── */}

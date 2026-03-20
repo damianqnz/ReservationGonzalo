@@ -1,6 +1,6 @@
 const navLinks = [
-  { label: "Sobre nós", href: "#" },
-  { label: "Os nossos alojamentos", href: "#" },
+  { label: "Sobre mim", href: "#" },
+  { label: "O meus alojamentos", href: "#" },
   { label: "Termos e Condições", href: "#" },
   { label: "Política de Privacidade", href: "#" },
   { label: "Contacto", href: "#" },
@@ -8,17 +8,17 @@ const navLinks = [
 
 export default function Footer() {
   return (
-    <footer className="bg-surface pt-12 pb-8 px-6 border-t border-gray-200">
-      <div className="flex flex-col gap-8">
+    <footer className="bg-surface pt-12 pb-8 border-t border-gray-200">
+      <div className="container-main flex flex-col gap-8">
         <div>
           <a
             href="#"
             className="font-display font-bold text-[20px] tracking-tight text-text-main mb-4 block"
           >
-            ReservationGonzalo
+            Reservation Gonzalo
           </a>
           <p className="text-[14px] text-text-muted max-w-[280px]">
-            Estadias exclusivas e memoráveis. Reserve diretamente connosco e
+            Estadias exclusivas e memoráveis. Reserve diretamente comigo e
             garanta as melhores tarifas.
           </p>
         </div>

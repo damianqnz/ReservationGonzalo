@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-import { getReservationById } from '@/lib/services/reservationService'
+import { getReservation } from '@/lib/services/reservationService'
 import { BookingStatus } from '@prisma/client'
 import PendingPolling from './PendingPolling'
 
@@ -69,7 +69,7 @@ function NotFoundCard() {
 function ConfirmedCard({
   booking,
 }: {
-  booking: Awaited<ReturnType<typeof getReservationById>>
+  booking: Awaited<ReturnType<typeof getReservation>>
 }) {
   if (!booking) return null
   return (
@@ -166,7 +166,7 @@ export default async function ConfirmacaoPage({ searchParams }: PageProps) {
     redirect('/')
   }
 
-  const booking = await getReservationById(bookingId)
+  const booking = await getReservation(bookingId)
 
   if (!booking) {
     return <NotFoundCard />

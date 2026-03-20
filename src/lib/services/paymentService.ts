@@ -126,7 +126,7 @@ export async function handleStripeWebhook(
       const paymentIntent = event.data.object as Stripe.PaymentIntent
       const bookingId = paymentIntent.metadata?.bookingId
       if (bookingId) {
-        await cancelReservation(bookingId, 'Pagamento falhou via Stripe')
+        await cancelReservation(bookingId)
       }
       break
     }

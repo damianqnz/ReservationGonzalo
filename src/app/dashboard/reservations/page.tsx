@@ -81,7 +81,18 @@ export default async function ReservationsPage({ searchParams }: PageProps) {
         checkOut: true,
         status: true,
         totalPrice: true,
-        property: { select: { title: true } },
+        property: {
+          select: {
+            title: true,
+            address: true,
+            city: true,
+          },
+        },
+        room: {
+          select: {
+            name: true,
+          },
+        },
       },
       orderBy: { createdAt: 'desc' },
       skip,
@@ -160,7 +171,21 @@ export default async function ReservationsPage({ searchParams }: PageProps) {
                         <div className="text-[10px]">{fmtDate(res.checkOut)}</div>
                       </td>
                       <td className="px-8 py-4 text-sm text-slate-500">
-                        {res.property?.title ?? '—'}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <h3 className="font-semibold text-text-main truncate">
+                              {res.property.title}
+                            </h3>
+                            {res.room && (
+                              <span className="px-2 py-0.5 rounded-md bg-slate-100 text-[11px] font-bold text-slate-500 uppercase tracking-wider shrink-0">
+                                {res.room.name}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[14px] text-text-muted truncate">
+                            {res.property.address}, {res.property.city}
+                          </p>
+                        </div>
                       </td>
                       <td className="px-8 py-4">
                         <span
