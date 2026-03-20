@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useSession, signOut } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
+import { BookOpen } from "lucide-react";
 
 // ---------------------------------------------------------------------------
 // Language selector
@@ -97,6 +98,16 @@ function UserMenu() {
               </div>
 
               <Link
+                href="/login"
+                role="menuitem"
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-2 px-4 py-2.5 text-[14px] text-text-main hover:bg-surface transition-colors"
+              >
+                <BookOpen size={18} />
+                As minhas reservas
+              </Link>
+
+              <Link
                 href="/mis-reservas"
                 role="menuitem"
                 onClick={() => setOpen(false)}
@@ -146,6 +157,16 @@ function UserMenu() {
             </>
           ) : (
             <>
+              <Link
+                href="/login"
+                role="menuitem"
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-2 px-4 py-2.5 text-[14px] text-text-main hover:bg-surface transition-colors"
+              >
+                <BookOpen size={18} />
+                As minhas reservas
+              </Link>
+
               <Link
                 href="/mis-reservas"
                 role="menuitem"
