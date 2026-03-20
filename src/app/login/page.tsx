@@ -1,5 +1,11 @@
-import LoginScreen from "@/components/stitch/LoginScreen";
+import Navbar from '@/components/stitch/Navbar'
+import LoginScreen from '@/components/stitch/LoginScreen'
 
 export default function LoginPage() {
-  return <LoginScreen />;
+  return (
+    <>
+      <Navbar />
+      <LoginScreen />
+    </>
+  )
 }

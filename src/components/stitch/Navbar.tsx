@@ -147,7 +147,7 @@ function UserMenu() {
                 role="menuitem"
                 onClick={() => {
                   setOpen(false);
-                  signOut({ redirectTo: "/login" });
+                  signOut({ callbackUrl: "/" });
                 }}
                 className="w-full flex items-center gap-2 px-4 py-2.5 text-[14px] text-[#8b1a1a] hover:bg-surface transition-colors"
               >
@@ -157,16 +157,6 @@ function UserMenu() {
             </>
           ) : (
             <>
-              <Link
-                href="/login"
-                role="menuitem"
-                onClick={() => setOpen(false)}
-                className="flex items-center gap-2 px-4 py-2.5 text-[14px] text-text-main hover:bg-surface transition-colors"
-              >
-                <BookOpen size={18} />
-                As minhas reservas
-              </Link>
-
               <Link
                 href="/mis-reservas"
                 role="menuitem"
@@ -249,7 +239,7 @@ export default function Navbar() {
       >
         <div className="container-main flex items-center justify-between h-full">
           <a
-            href="#"
+            href="/"
             className="font-display font-bold text-[20px] tracking-tight text-text-main"
           >
             ReservationGonzalo
