@@ -160,6 +160,71 @@ function formatShortDate(iso: string): string {
   return `${d.getUTCDate()} ${MONTHS_PT[d.getUTCMonth()]}`;
 }
 
+// ─── Country list ─────────────────────────────────────────────────────────────
+
+const PRIORITY_COUNTRIES = [
+  { code: "PT", label: "Portugal" },
+  { code: "ES", label: "España" },
+  { code: "FR", label: "França" },
+  { code: "DE", label: "Alemanha" },
+  { code: "GB", label: "Reino Unido" },
+  { code: "IT", label: "Itália" },
+  { code: "NL", label: "Países Baixos" },
+  { code: "BE", label: "Bélgica" },
+  { code: "CH", label: "Suíça" },
+  { code: "BR", label: "Brasil" },
+];
+
+const OTHER_COUNTRIES = [
+  { code: "AD", label: "Andorra" },
+  { code: "AO", label: "Angola" },
+  { code: "AR", label: "Argentina" },
+  { code: "AT", label: "Áustria" },
+  { code: "AU", label: "Austrália" },
+  { code: "CA", label: "Canadá" },
+  { code: "CL", label: "Chile" },
+  { code: "CN", label: "China" },
+  { code: "CO", label: "Colômbia" },
+  { code: "CV", label: "Cabo Verde" },
+  { code: "CZ", label: "República Checa" },
+  { code: "DK", label: "Dinamarca" },
+  { code: "EE", label: "Estónia" },
+  { code: "FI", label: "Finlândia" },
+  { code: "GR", label: "Grécia" },
+  { code: "HR", label: "Croácia" },
+  { code: "HU", label: "Hungria" },
+  { code: "IE", label: "Irlanda" },
+  { code: "IL", label: "Israel" },
+  { code: "IN", label: "Índia" },
+  { code: "IS", label: "Islândia" },
+  { code: "JP", label: "Japão" },
+  { code: "KR", label: "Coreia do Sul" },
+  { code: "LT", label: "Lituânia" },
+  { code: "LU", label: "Luxemburgo" },
+  { code: "LV", label: "Letónia" },
+  { code: "MA", label: "Marrocos" },
+  { code: "MX", label: "México" },
+  { code: "MZ", label: "Moçambique" },
+  { code: "NO", label: "Noruega" },
+  { code: "NZ", label: "Nova Zelândia" },
+  { code: "PE", label: "Peru" },
+  { code: "PL", label: "Polónia" },
+  { code: "RO", label: "Roménia" },
+  { code: "RU", label: "Rússia" },
+  { code: "SE", label: "Suécia" },
+  { code: "SG", label: "Singapura" },
+  { code: "SI", label: "Eslovénia" },
+  { code: "SK", label: "Eslováquia" },
+  { code: "ST", label: "São Tomé e Príncipe" },
+  { code: "TL", label: "Timor-Leste" },
+  { code: "TR", label: "Turquia" },
+  { code: "UA", label: "Ucrânia" },
+  { code: "US", label: "Estados Unidos" },
+  { code: "UY", label: "Uruguai" },
+  { code: "VE", label: "Venezuela" },
+  { code: "ZA", label: "África do Sul" },
+];
+
 // ─── Guest modal schema ───────────────────────────────────────────────────────
 
 const guestSchema = z.object({
@@ -168,6 +233,14 @@ const guestSchema = z.object({
   guestPhone: z.string().optional(),
   guestCount: z.number().int().min(1, "Mínimo 1 hóspede"),
   guestMessage: z.string().max(500, "Máximo 500 caracteres").optional(),
+  guestCountry: z.string().min(2, "País de residência é obrigatório"),
+  acceptedTerms: z.boolean().refine((v) => v === true, {
+    message: "Deve aceitar os Termos e Condições",
+  }),
+  acceptedPrivacy: z.boolean().refine((v) => v === true, {
+    message: "Deve aceitar a Política de Privacidade",
+  }),
+  acceptedMarketing: z.boolean().optional(),
 });
 type GuestFormValues = z.infer<typeof guestSchema>;
 
@@ -216,7 +289,13 @@ function GuestModal({
     formState: { errors, isSubmitting },
   } = useForm<GuestFormValues>({
     resolver: zodResolver(guestSchema),
-    defaultValues: { guestCount: defaultGuests },
+    defaultValues: {
+      guestCount: defaultGuests,
+      guestCountry: "PT",
+      acceptedTerms: false,
+      acceptedPrivacy: false,
+      acceptedMarketing: false,
+    },
   });
 
   async function onSubmit(values: GuestFormValues) {
@@ -235,6 +314,10 @@ function GuestModal({
           guestCount: values.guestCount,
           guestMessage: values.guestMessage || undefined,
           roomId: selectedRoomId,
+          guestCountry: values.guestCountry,
+          acceptedTerms: values.acceptedTerms,
+          acceptedPrivacy: values.acceptedPrivacy,
+          acceptedMarketing: values.acceptedMarketing ?? false,
         }),
       });
 
@@ -360,6 +443,92 @@ function GuestModal({
             {errors.guestMessage && (
               <p className="text-[12px] text-red-600 mt-1">{errors.guestMessage.message}</p>
             )}
+          </div>
+
+          {/* Country */}
+          <div>
+            <label className="block text-[13px] font-semibold text-text-main mb-1">
+              País de residência <span className="text-primary">*</span>
+            </label>
+            <select
+              {...register("guestCountry")}
+              className="w-full h-11 px-3 rounded-lg border border-surface bg-surface text-[14px] text-text-main focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition"
+            >
+              <option value="" disabled>Selecione o país…</option>
+              {PRIORITY_COUNTRIES.map((c) => (
+                <option key={c.code} value={c.code}>{c.label}</option>
+              ))}
+              <option disabled>──────────────</option>
+              {OTHER_COUNTRIES.map((c) => (
+                <option key={c.code} value={c.code}>{c.label}</option>
+              ))}
+            </select>
+            {errors.guestCountry && (
+              <p className="text-[12px] text-red-600 mt-1">{errors.guestCountry.message}</p>
+            )}
+          </div>
+
+          {/* RGPD checkboxes */}
+          <div className="space-y-3 pt-1">
+            <div className="flex items-start gap-3">
+              <input
+                {...register("acceptedTerms")}
+                id="acceptedTerms"
+                type="checkbox"
+                className="mt-0.5 w-4 h-4 shrink-0 rounded border-surface text-primary focus:ring-primary/30 cursor-pointer"
+              />
+              <label htmlFor="acceptedTerms" className="text-[13px] text-text-main leading-snug cursor-pointer">
+                Aceito os{" "}
+                <a
+                  href="/terms"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary underline hover:text-primary/80"
+                >
+                  Termos e Condições
+                </a>{" "}
+                <span className="text-primary">*</span>
+              </label>
+            </div>
+            {errors.acceptedTerms && (
+              <p className="text-[12px] text-red-600 -mt-1 ml-7">{errors.acceptedTerms.message}</p>
+            )}
+
+            <div className="flex items-start gap-3">
+              <input
+                {...register("acceptedPrivacy")}
+                id="acceptedPrivacy"
+                type="checkbox"
+                className="mt-0.5 w-4 h-4 shrink-0 rounded border-surface text-primary focus:ring-primary/30 cursor-pointer"
+              />
+              <label htmlFor="acceptedPrivacy" className="text-[13px] text-text-main leading-snug cursor-pointer">
+                Aceito a{" "}
+                <a
+                  href="/privacy"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary underline hover:text-primary/80"
+                >
+                  Política de Privacidade
+                </a>{" "}
+                <span className="text-primary">*</span>
+              </label>
+            </div>
+            {errors.acceptedPrivacy && (
+              <p className="text-[12px] text-red-600 -mt-1 ml-7">{errors.acceptedPrivacy.message}</p>
+            )}
+
+            <div className="flex items-start gap-3">
+              <input
+                {...register("acceptedMarketing")}
+                id="acceptedMarketing"
+                type="checkbox"
+                className="mt-0.5 w-4 h-4 shrink-0 rounded border-surface text-primary focus:ring-primary/30 cursor-pointer"
+              />
+              <label htmlFor="acceptedMarketing" className="text-[13px] text-text-muted leading-snug cursor-pointer">
+                Aceito receber ofertas e promoções por email
+              </label>
+            </div>
           </div>
 
           {apiError && (

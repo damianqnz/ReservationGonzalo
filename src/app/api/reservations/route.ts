@@ -18,6 +18,10 @@ const reservationSchema = z.object({
   guestPhone: z.string().optional(),
   guestCount: z.number().int().min(1, 'At least 1 guest required'),
   guestMessage: z.string().max(500, 'Message is too long').optional(),
+  guestCountry: z.string().min(2).max(2),
+  acceptedTerms: z.boolean().refine((v) => v === true, { message: 'Terms must be accepted' }),
+  acceptedPrivacy: z.boolean().refine((v) => v === true, { message: 'Privacy policy must be accepted' }),
+  acceptedMarketing: z.boolean().default(false),
 })
 
 const getQuerySchema = z.object({
@@ -57,6 +61,8 @@ export async function POST(req: Request) {
       ...validated,
       checkIn: new Date(validated.checkIn),
       checkOut: new Date(validated.checkOut),
+      acceptedTerms: validated.acceptedTerms,
+      acceptedPrivacy: validated.acceptedPrivacy,
     })
 
     return NextResponse.json(

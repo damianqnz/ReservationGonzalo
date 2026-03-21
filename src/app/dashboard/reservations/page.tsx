@@ -24,6 +24,10 @@ function initials(name: string): string {
   return name.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase()
 }
 
+function countryFlag(code: string): string {
+  return [...code.toUpperCase()].map((c) => String.fromCodePoint(c.charCodeAt(0) + 127397)).join('')
+}
+
 const STATUS_MAP: Record<string, { label: string; color: string }> = {
   PENDING: { label: 'Pendente', color: 'amber' },
   CONFIRMED: { label: 'Confirmado', color: 'emerald' },
@@ -77,6 +81,7 @@ export default async function ReservationsPage({ searchParams }: PageProps) {
         confirmationCode: true,
         guestName: true,
         guestEmail: true,
+        guestCountry: true,
         checkIn: true,
         checkOut: true,
         status: true,
@@ -161,7 +166,14 @@ export default async function ReservationsPage({ searchParams }: PageProps) {
                             {initials(res.guestName)}
                           </div>
                           <div>
-                            <p className="text-sm font-medium">{res.guestName}</p>
+                            <p className="text-sm font-medium flex items-center gap-1.5">
+                              {res.guestName}
+                              {res.guestCountry && (
+                                <span title={res.guestCountry} className="text-base leading-none">
+                                  {countryFlag(res.guestCountry)}
+                                </span>
+                              )}
+                            </p>
                             <p className="text-[10px] text-slate-400">{res.guestEmail}</p>
                           </div>
                         </div>

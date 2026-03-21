@@ -78,6 +78,10 @@ export interface CreateReservationInput {
   guestPhone?: string
   guestCount: number
   guestMessage?: string
+  guestCountry?: string
+  acceptedTerms?: boolean
+  acceptedPrivacy?: boolean
+  acceptedMarketing?: boolean
 }
 
 // ─── Service ──────────────────────────────────────────────────────────────────
@@ -197,6 +201,11 @@ export async function createReservation(input: CreateReservationInput) {
         currency: property.currency,
         status: BookingStatus.PENDING,
         expiresAt,
+        guestCountry: input.guestCountry,
+        acceptedTerms: input.acceptedTerms ?? false,
+        acceptedPrivacy: input.acceptedPrivacy ?? false,
+        acceptedMarketing: input.acceptedMarketing ?? false,
+        termsAcceptedAt: input.acceptedTerms ? new Date() : null,
       },
       select: BOOKING_SELECT,
     })
