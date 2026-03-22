@@ -2,11 +2,10 @@ import { db } from '@/lib/db'
 import { BookingStatus, PropertyStatus, NotificationType } from '@prisma/client'
 import { v4 as uuidv4 } from 'uuid'
 import { checkAvailability, checkRoomAvailability } from './availabilityService'
+import { calculateTotalPrice } from './pricingService'
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
-const LONG_STAY_MIN_NIGHTS = 7
-const LONG_STAY_DISCOUNT_RATE = 0.10 // 10% discount
 const PENDING_EXPIRY_MINUTES = 30
 
 const BOOKING_SELECT = {
@@ -99,11 +98,17 @@ export async function createReservation(input: CreateReservationInput) {
     throw new Error('Check-out must be after check-in')
   }
 
-  // Fetch property/room pricing constraints
+  // Fetch property constraints
   const property = await db.property.findUnique({
     where: { id: input.propertyId },
-    include: {
-      rooms: input.roomId ? { where: { id: input.roomId } } : false,
+    select: {
+      status: true,
+      maxGuests: true,
+      minNights: true,
+      maxNights: true,
+      cleaningFee: true,
+      securityDeposit: true,
+      currency: true,
     },
   })
 
@@ -111,7 +116,10 @@ export async function createReservation(input: CreateReservationInput) {
     throw new Error('Property not found')
   }
 
-  const room = input.roomId ? property.rooms[0] : null
+  const room = input.roomId
+    ? await db.room.findFirst({ where: { id: input.roomId, propertyId: input.propertyId }, select: { id: true, maxGuests: true, type: true } })
+    : null
+
   if (input.roomId && !room) {
     throw new Error('Room not found in this property')
   }
@@ -142,16 +150,16 @@ export async function createReservation(input: CreateReservationInput) {
     throw new Error('The selected option is not available for these dates')
   }
 
-  const basePrice = room ? room.pricePerNight : property.pricePerNight
+  // Pricing calculation via pricingService (handles seasonal prices, weekend markup, long-stay discount)
+  const pricing = await calculateTotalPrice(
+    input.propertyId,
+    input.roomId ?? null,
+    checkIn,
+    checkOut
+  )
 
-  // Pricing calculation
-  const effectivePricePerNight =
-    nights >= LONG_STAY_MIN_NIGHTS
-      ? basePrice * (1 - LONG_STAY_DISCOUNT_RATE)
-      : basePrice
-
-  const totalPrice =
-    effectivePricePerNight * nights + property.cleaningFee + property.securityDeposit
+  const effectivePricePerNight = pricing.pricePerNight
+  const totalPrice = pricing.totalPrice + property.cleaningFee + property.securityDeposit
 
   const expiresAt = new Date(Date.now() + PENDING_EXPIRY_MINUTES * 60 * 1000)
 
