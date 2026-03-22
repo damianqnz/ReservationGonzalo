@@ -6,9 +6,14 @@ export default async function FeaturedProperties() {
     where: {
       status: "ACTIVE",
     },
-    include: {
+    select: {
+      title: true,
+      slug: true,
+      city: true,
+      pricePerNight: true,
       images: {
         where: { isCover: true },
+        select: { url: true, publicId: true, alt: true },
         take: 1,
       },
       reviews: {
@@ -32,6 +37,7 @@ export default async function FeaturedProperties() {
       name: p.title,
       slug: p.slug,
       image: p.images[0]?.url || "/placeholder-property.jpg",
+      publicId: p.images[0]?.publicId,
       alt: p.images[0]?.alt || p.title,
       rating: avgRating,
       location: `${p.city}, Portugal`,
