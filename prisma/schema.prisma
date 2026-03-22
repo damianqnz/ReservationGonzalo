@@ -104,6 +104,7 @@ model Property {
   reviews            Review[]
   seasonalPrices     SeasonalPrice[]
   pricingRules       PricingRule[]
+  icalSyncs          ICalSync[]
 
   @@map("properties")
 }
@@ -372,7 +373,8 @@ model Room {
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @updatedAt
   seasonalPrices  SeasonalPrice[]
-  pricingRules    PricingRule[] 
+  pricingRules    PricingRule[]
+  icalSyncs       ICalSync[]
 
   property     Property      @relation(fields: [propertyId], references: [id], onDelete: Cascade)
   images       RoomImage[]
@@ -466,4 +468,22 @@ enum PricingRuleType {
   WEEKEND_MARKUP
   LONG_STAY_DISCOUNT
   MINIMUM_PRICE
+}
+
+// ─── ICAL SYNC ────────────────────────────────────────────────────────────────
+
+model ICalSync {
+  id           String    @id @default(cuid())
+  propertyId   String
+  roomId       String?
+  source       String
+  icalUrl      String
+  lastSyncedAt DateTime?
+  syncedDates  Int       @default(0)
+  createdAt    DateTime  @default(now())
+
+  property     Property  @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  room         Room?     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@map("ical_syncs")
 }

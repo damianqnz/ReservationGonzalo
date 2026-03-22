@@ -209,6 +209,13 @@ export default async function PropertiesPage() {
                       <span className="material-symbols-outlined text-sm">sell</span>
                       Preços
                     </Link>
+                    <Link
+                      href={`/dashboard/properties/${property.id}/ical`}
+                      className="flex-1 text-center text-xs font-bold text-slate-600 border border-slate-200 rounded-lg py-2 hover:bg-slate-50 transition-colors flex items-center justify-center gap-1"
+                    >
+                      <span className="material-symbols-outlined text-sm">calendar_month</span>
+                      iCal
+                    </Link>
                   </div>
                 </div>
               </div>
