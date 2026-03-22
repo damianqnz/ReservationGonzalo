@@ -194,6 +194,15 @@ export default async function PropertiesPage() {
                       Editar
                     </Link>
                   </div>
+                  <div className="flex items-center gap-2">
+                    <Link
+                      href={`/dashboard/properties/${property.id}/rooms`}
+                      className="flex-1 text-center text-xs font-bold text-slate-600 border border-slate-200 rounded-lg py-2 hover:bg-slate-50 transition-colors flex items-center justify-center gap-1"
+                    >
+                      <span className="material-symbols-outlined text-sm">bed</span>
+                      Quartos
+                    </Link>
+                  </div>
                 </div>
               </div>
             )

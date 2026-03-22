@@ -1,5 +1,9 @@
+import Link from "next/link";
+import { getImageUrl } from "@/lib/cloudinary";
+
 interface PropertyCardProps {
   image: string;
+  publicId?: string;
   alt: string;
   rating: string;
   name: string;
@@ -11,10 +15,9 @@ interface PropertyCardProps {
   guests?: number;
 }
 
-import Link from "next/link";
-
 export default function PropertyCard({
   image,
+  publicId,
   alt,
   rating,
   name,
@@ -34,6 +37,12 @@ export default function PropertyCard({
   const queryString = query.toString();
   const href = `/property/${slug}${queryString ? `?${queryString}` : ""}`;
 
+  // Resolve image: prefer Cloudinary publicId (contains "/"), otherwise fall back to stored url
+  const resolvedImage =
+    publicId && publicId.includes("/")
+      ? getImageUrl(publicId, { width: 600, height: 400 })
+      : image;
+
   return (
     <Link href={href} className="block group">
       <article className="bg-white rounded-[0.75rem] shadow-soft overflow-hidden cursor-pointer hover:shadow-lg transition-all duration-300">
@@ -41,7 +50,7 @@ export default function PropertyCard({
         <img
           alt={alt}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-          src={image}
+          src={resolvedImage}
         />
         <div className="absolute top-3 left-3 bg-white/90 backdrop-blur px-2.5 py-1 rounded-full flex items-center gap-1 shadow-sm">
           <span
