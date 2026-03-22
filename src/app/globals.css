@@ -105,3 +105,93 @@ body {
   padding-left: clamp(1rem, 5vw, 15vw);
   padding-right: clamp(1rem, 5vw, 15vw);
 }
+
+/* ─── Legal prose styles (privacy / terms / cookies pages) ─────────────────── */
+.prose-legal {
+  color: #374151;
+  line-height: 1.75;
+  font-size: 0.9375rem;
+}
+
+.prose-legal h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.prose-legal h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1a1a2e;
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.prose-legal p {
+  margin-bottom: 0.875rem;
+}
+
+.prose-legal ul {
+  list-style-type: disc;
+  padding-left: 1.5rem;
+  margin-bottom: 0.875rem;
+  space-y: 0.25rem;
+}
+
+.prose-legal ul li {
+  margin-bottom: 0.25rem;
+}
+
+.prose-legal a {
+  color: #8b1a1a;
+  text-decoration: underline;
+  text-decoration-color: #8b1a1a60;
+  transition: opacity 0.15s;
+}
+
+.prose-legal a:hover {
+  opacity: 0.75;
+}
+
+.prose-legal code {
+  font-family: ui-monospace, monospace;
+  font-size: 0.8125rem;
+  background: #f3f4f6;
+  padding: 0.125rem 0.375rem;
+  border-radius: 4px;
+  color: #1a1a2e;
+}
+
+.prose-legal table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+  margin-bottom: 1rem;
+}
+
+.prose-legal table th {
+  text-align: left;
+  padding: 0.625rem 0.875rem;
+  background: #f8fafc;
+  font-weight: 600;
+  color: #1a1a2e;
+  border: 1px solid #e2e8f0;
+  font-size: 0.8125rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.prose-legal table td {
+  padding: 0.625rem 0.875rem;
+  border: 1px solid #e2e8f0;
+  vertical-align: top;
+  color: #4b5563;
+}
+
+.prose-legal table tr:nth-child(even) td {
+  background: #f8fafc;
+}
