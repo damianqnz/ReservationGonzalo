@@ -10,7 +10,7 @@ const navItems = [
   { name: 'Reservas', icon: 'calendar_month', href: '/dashboard/reservations' },
   { name: 'Calendário', icon: 'calendar_today', href: '/dashboard/calendar' },
   { name: 'Propriedades', icon: 'domain', href: '/dashboard/properties' },
-  { name: 'Clientes', icon: 'group', href: '/dashboard/customers' },
+  { name: 'Clientes', icon: 'group', href: '/dashboard/clients' },
   { name: 'Análises', icon: 'leaderboard', href: '/dashboard/analytics' },
   { name: 'Cupões', icon: 'local_offer', href: '/dashboard/coupons' },
 ]
