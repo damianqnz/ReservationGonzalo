@@ -47,7 +47,16 @@ async function main() {
     },
   });
 
-  console.log("👤 Users created:", admin.email, owner.email);
+  const developer = await prisma.user.create({
+    data: {
+      name: 'Developer',
+      email: 'developer@reservationgonzalo.com',
+      role: Role.ADMIN,
+      emailVerified: new Date(),
+    },
+  });
+
+  console.log("👤 Users created:", admin.email, owner.email, developer.email);
 
   // ─── Amenities ───────────────────────────────────────────────────────────────
   const amenitiesData = [
@@ -633,7 +642,7 @@ async function main() {
   // ─── Summary ─────────────────────────────────────────────────────────────────
   console.log("\n✅ Seed completed successfully!");
   console.log("─────────────────────────────────────────");
-  console.log(`👤 Users:         2 (1 admin, 1 owner)`);
+  console.log(`👤 Users:         3 (2 admin, 1 owner)`);
   console.log(`🛎️  Amenities:     ${amenities.length}`);
   console.log(`🏠 Properties:    3 (Chiado, Algarve, Oporto)`);
   console.log(`🏨 Rooms:         4 (Chiado)`);
@@ -642,6 +651,11 @@ async function main() {
   console.log(`🔔 Notifications: 5`);
   console.log("─────────────────────────────────────────");
   console.log("\n🔑 Credentials: see prisma/seed.ts");
+}
+
+main()
+  .catch((e) => {
+    console.error("❌ Seed failed:", e);
     process.exit(1);
   })
   .finally(async () => {

@@ -23,10 +23,14 @@ export default async function PropertiesPage() {
   const session = await auth()
   if (!session?.user) redirect('/login')
 
-  const ownerId = session.user.id
+  const isAdmin = session.user.role === 'ADMIN'
 
   const properties = await db.property.findMany({
-    where: { ownerId, status: { not: PropertyStatus.ARCHIVED } },
+    where: {
+      status: { not: PropertyStatus.ARCHIVED },
+      // ADMIN sees all properties; OWNER sees only their own
+      ...(isAdmin ? {} : { ownerId: session.user.id }),
+    },
     select: {
       id: true,
       title: true,
@@ -169,12 +173,19 @@ export default async function PropertiesPage() {
                   </div>
 
                   {/* Actions */}
-                  <div className="pt-3 border-t border-slate-100 flex items-center gap-2 mt-auto">
+                  <div className="pt-3 border-t border-slate-100 flex items-center gap-2 mt-auto flex-wrap">
                     <Link
                       href={`/dashboard/reservations?propertyId=${property.id}`}
                       className="flex-1 text-center text-xs font-bold text-[#8b1a1a] border border-[#8b1a1a]/30 rounded-lg py-2 hover:bg-[#8b1a1a]/5 transition-colors"
                     >
                       Ver Reservas
+                    </Link>
+                    <Link
+                      href={`/dashboard/properties/${property.id}/images`}
+                      className="flex-1 text-center text-xs font-bold text-slate-600 border border-slate-200 rounded-lg py-2 hover:bg-slate-50 transition-colors flex items-center justify-center gap-1"
+                    >
+                      <span className="material-symbols-outlined text-sm">photo_library</span>
+                      Imagens
                     </Link>
                     <Link
                       href={`/dashboard/properties/${property.id}/edit`}

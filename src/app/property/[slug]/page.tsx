@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import { PropertyStatus } from '@prisma/client'
 import { db } from '@/lib/db'
 import { nightsBetween } from '@/lib/date'
+import { resolveImageUrl } from '@/lib/cloudinary'
 import PropertyDetailsClient from './PropertyDetailsClient'
 
 interface Props {
@@ -62,11 +63,12 @@ export default async function PropertyPage({ params, searchParams }: Props) {
         include: {
           images: {
             orderBy: { order: "asc" },
+            select: { url: true, publicId: true, alt: true, order: true, isCover: true },
           },
         },
       },
       images: {
-        select: { url: true, alt: true, order: true, isCover: true },
+        select: { url: true, publicId: true, alt: true, order: true, isCover: true },
         orderBy: { order: "asc" },
       },
       amenities: {
@@ -130,6 +132,19 @@ export default async function PropertyPage({ params, searchParams }: Props) {
         ) / 10
       : null
 
+  // Resolve Cloudinary URLs server-side (backward compat: Unsplash images use url as-is)
+  const resolvedImages = property.images.map((img) => ({
+    ...img,
+    url: resolveImageUrl(img, { width: 1200 }),
+  }))
+  const resolvedRooms = property.rooms.map((room) => ({
+    ...room,
+    images: room.images.map((img) => ({
+      ...img,
+      url: resolveImageUrl(img, { width: 800 }),
+    })),
+  }))
+
   // Serialize Date objects — Next.js passes props as JSON to client components
   const serializedReviews = property.reviews.map((r) => ({
     ...r,
@@ -138,7 +153,14 @@ export default async function PropertyPage({ params, searchParams }: Props) {
 
   return (
     <PropertyDetailsClient
-      property={{ ...property, reviews: serializedReviews, avgRating, reviewCount: property.reviews.length }}
+      property={{
+        ...property,
+        images: resolvedImages,
+        rooms: resolvedRooms,
+        reviews: serializedReviews,
+        avgRating,
+        reviewCount: property.reviews.length,
+      }}
       checkIn={checkIn?.toISOString()}
       checkOut={checkOut?.toISOString()}
       guests={guests}

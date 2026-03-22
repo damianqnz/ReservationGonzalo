@@ -33,7 +33,7 @@ const guestBookingSelect = {
       images: {
         where: { isCover: true },
         take: 1,
-        select: { url: true, alt: true },
+        select: { url: true, publicId: true, alt: true },
       },
     },
   },
@@ -69,7 +69,7 @@ export type GuestBooking = {
     checkInTime: string
     checkOutTime: string
     cancellationPolicy: import('@prisma/client').CancellationPolicy
-    images: Array<{ url: string; alt: string | null }>
+    images: Array<{ url: string; publicId: string; alt: string | null }>
   }
   room: { name: string; type: import('@prisma/client').RoomType } | null
 }
