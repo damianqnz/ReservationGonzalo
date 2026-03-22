@@ -32,6 +32,7 @@ interface Booking {
   status: string
   paymentStatus: string
   expiresAt: string | null
+  room?: { id: string; name: string; type: string } | null
   property: {
     id: string
     title: string
@@ -44,6 +45,17 @@ interface Booking {
     cancellationPolicy: string
     images: { url: string; alt: string | null }[]
   } | null
+}
+
+interface PriceBreakdown {
+  nights: number
+  baseSubtotal: number
+  weekendNights: number
+  weekendMarkup: number
+  subtotal: number
+  longStayDiscount: number
+  totalPrice: number
+  pricePerNight: number
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -437,7 +449,15 @@ function PaymentForm({
 
 // ─── Summary Panel ────────────────────────────────────────────────────────────
 
-function SummaryPanel({ booking, discount }: { booking: Booking; discount: number }) {
+function SummaryPanel({
+  booking,
+  discount,
+  pricing,
+}: {
+  booking: Booking
+  discount: number
+  pricing: PriceBreakdown | null
+}) {
   const { property } = booking
   const coverImage = property?.images[0] ?? null
 
@@ -510,15 +530,39 @@ function SummaryPanel({ booking, discount }: { booking: Booking; discount: numbe
 
         {/* Price breakdown */}
         <div className="space-y-2.5">
+          {pricing ? (
+            <>
+              <div className="flex justify-between text-[14px] text-text-muted">
+                <span>
+                  {formatCurrency(pricing.baseSubtotal / pricing.nights)} × {booking.nights} noite
+                  {booking.nights !== 1 ? 's' : ''}
+                </span>
+                <span>{formatCurrency(pricing.baseSubtotal)}</span>
+              </div>
+              {pricing.weekendMarkup > 0 && (
+                <div className="flex justify-between text-[14px] text-text-muted">
+                  <span>Suplemento fim de semana</span>
+                  <span>+{formatCurrency(pricing.weekendMarkup)}</span>
+                </div>
+              )}
+              {pricing.longStayDiscount > 0 && (
+                <div className="flex justify-between text-[14px] text-emerald-700">
+                  <span>Desconto estadia longa</span>
+                  <span>−{formatCurrency(pricing.longStayDiscount)}</span>
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="flex justify-between text-[14px] text-text-muted">
+              <span>
+                {formatCurrency(booking.pricePerNight)} × {booking.nights} noite
+                {booking.nights !== 1 ? 's' : ''}
+              </span>
+              <span>{formatCurrency(booking.pricePerNight * booking.nights)}</span>
+            </div>
+          )}
           <div className="flex justify-between text-[14px] text-text-muted">
-            <span>
-              {formatCurrency(booking.pricePerNight)} × {booking.nights} noite
-              {booking.nights !== 1 ? 's' : ''}
-            </span>
-            <span>{formatCurrency(booking.pricePerNight * booking.nights)}</span>
-          </div>
-          <div className="flex justify-between text-[14px] text-text-muted">
-            <span>Gastos de limpeza</span>
+            <span>Taxa de limpeza</span>
             <span>{formatCurrency(booking.cleaningFee)}</span>
           </div>
           {booking.securityDeposit > 0 && (
@@ -586,6 +630,7 @@ function CheckoutInner() {
 
   const [expired, setExpired] = useState(false)
   const [appliedDiscount, setAppliedDiscount] = useState(0)
+  const [pricing, setPricing] = useState<PriceBreakdown | null>(null)
 
   // Guard against double-calling the payment init in StrictMode
   const paymentInitRef = useRef(false)
@@ -635,6 +680,22 @@ function CheckoutInner() {
         }
 
         setBooking(b)
+
+        // Fetch pricing breakdown for detailed display
+        if (b.property) {
+          const p = new URLSearchParams({
+            propertyId: b.property.id,
+            checkIn: b.checkIn.split('T')[0],
+            checkOut: b.checkOut.split('T')[0],
+          })
+          if (b.room?.id) p.set('roomId', b.room.id)
+          fetch(`/api/pricing?${p.toString()}`)
+            .then((r) => r.json())
+            .then((pj: { data: PriceBreakdown | null; error: string | null }) => {
+              if (pj.data) setPricing(pj.data)
+            })
+            .catch(() => {}) // degrade gracefully — totalPrice from booking remains authoritative
+        }
       })
       .catch(() => setBookingError('Erro ao carregar reserva.'))
       .finally(() => setLoadingBooking(false))
@@ -839,7 +900,7 @@ function CheckoutInner() {
             {/* ── RIGHT: sticky summary ──────────────────────────────────── */}
             <div className="lg:col-span-5">
               <div className="lg:sticky lg:top-24">
-                <SummaryPanel booking={booking} discount={appliedDiscount} />
+                <SummaryPanel booking={booking} discount={appliedDiscount} pricing={pricing} />
               </div>
             </div>
           </div>

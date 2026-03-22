@@ -102,6 +102,8 @@ model Property {
   amenities          PropertyAmenity[]
   images             PropertyImage[]
   reviews            Review[]
+  seasonalPrices     SeasonalPrice[]
+  pricingRules       PricingRule[]
 
   @@map("properties")
 }
@@ -369,6 +371,8 @@ model Room {
   order         Int        @default(0)
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @updatedAt
+  seasonalPrices  SeasonalPrice[]
+  pricingRules    PricingRule[] 
 
   property     Property      @relation(fields: [propertyId], references: [id], onDelete: Cascade)
   images       RoomImage[]
@@ -420,4 +424,46 @@ enum RoomStatus {
   ACTIVE
   INACTIVE
   MAINTENANCE
+}
+
+// ─── PRECIOS DINÁMICOS ───────────────────────────────────────────────────────
+
+model SeasonalPrice {
+  id            String    @id @default(cuid())
+  propertyId    String
+  roomId        String?
+  name          String
+  startDate     DateTime  @db.Date
+  endDate       DateTime  @db.Date
+  pricePerNight Float
+  minNights     Int?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  property      Property  @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  room          Room?     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@map("seasonal_prices")
+}
+
+model PricingRule {
+  id            String      @id @default(cuid())
+  propertyId    String
+  roomId        String?
+  type          PricingRuleType
+  value         Float
+  isPercentage  Boolean     @default(true)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  property      Property    @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  room          Room?       @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@map("pricing_rules")
+}
+
+enum PricingRuleType {
+  WEEKEND_MARKUP
+  LONG_STAY_DISCOUNT
+  MINIMUM_PRICE
 }
