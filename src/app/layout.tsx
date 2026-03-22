@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Plus_Jakarta_Sans, Outfit } from 'next/font/google'
 import './globals.css'
 import { Providers } from '@/components/providers'
+import CookieBanner from '@/components/CookieBanner'
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   variable: '--font-display',
@@ -41,6 +42,7 @@ export default function RootLayout({
       <body className={`${plusJakartaSans.variable} ${outfit.variable} font-body text-text-main antialiased`}>
         <Providers>
           {children}
+          <CookieBanner />
         </Providers>
       </body>
     </html>
