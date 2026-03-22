@@ -11,6 +11,7 @@ const postSchema = z.object({
   slug: z.string().min(3).max(200).regex(/^[a-z0-9-]+$/, 'Slug must be lowercase alphanumeric with hyphens'),
   description: z.string().min(10).max(5000),
   type: z.nativeEnum(PropertyType).optional(),
+  status: z.nativeEnum(PropertyStatus).optional(),
   address: z.string().min(5).max(300),
   city: z.string().min(2).max(100),
   country: z.string().length(2).optional(),
@@ -22,6 +23,13 @@ const postSchema = z.object({
   area: z.number().positive().optional(),
   pricePerNight: z.number().positive(),
   cleaningFee: z.number().min(0).optional(),
+  securityDeposit: z.number().min(0).optional(),
+  checkInTime: z.string().optional(),
+  checkOutTime: z.string().optional(),
+  minNights: z.number().int().min(1).optional(),
+  maxNights: z.number().int().min(1).optional(),
+  cancellationPolicy: z.enum(['FLEXIBLE', 'MODERATE', 'STRICT']).optional(),
+  hasRooms: z.boolean().optional(),
   latitude: z.number().optional(),
   longitude: z.number().optional(),
 })
@@ -80,7 +88,7 @@ export async function POST(req: NextRequest) {
   if (!session?.user) {
     return NextResponse.json({ data: null, error: 'Unauthorized.' }, { status: 401 })
   }
-  if (session.user.role !== 'OWNER') {
+  if (session.user.role !== 'OWNER' && session.user.role !== 'ADMIN') {
     return NextResponse.json({ data: null, error: 'Forbidden.' }, { status: 403 })
   }
 
@@ -105,7 +113,13 @@ export async function POST(req: NextRequest) {
         ...result.data,
         ownerId: session.user.id,
         cleaningFee: result.data.cleaningFee ?? 0,
+        securityDeposit: result.data.securityDeposit ?? 0,
         country: result.data.country ?? 'PT',
+        checkInTime: result.data.checkInTime ?? '15:00',
+        checkOutTime: result.data.checkOutTime ?? '11:00',
+        minNights: result.data.minNights ?? 1,
+        maxNights: result.data.maxNights ?? 365,
+        hasRooms: result.data.hasRooms ?? false,
       },
       select: {
         id: true,

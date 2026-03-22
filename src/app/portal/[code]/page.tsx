@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { ArrowLeft, Calendar, MapPin, Users, Download } from 'lucide-react'
 import { findGuestBookingByCode } from '@/lib/services/guestService'
 import type { GuestBooking } from '@/lib/services/guestService'
+import { resolveImageUrl } from '@/lib/cloudinary'
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -179,7 +180,7 @@ function BookingDetail({ booking }: { booking: GuestBooking }) {
         {coverImage && (
           <div className="aspect-video w-full overflow-hidden rounded-xl mb-6">
             <img
-              src={coverImage.url}
+              src={resolveImageUrl(coverImage, { width: 900 })}
               alt={coverImage.alt ?? booking.property.title}
               className="w-full h-full object-cover"
             />

@@ -47,7 +47,16 @@ async function main() {
     },
   });
 
-  console.log("👤 Users created:", admin.email, owner.email);
+  const developer = await prisma.user.create({
+    data: {
+      name: 'Nelson Damian Quiñonez',
+      email: 'ing.damianqnz@gmail.com',
+      role: Role.ADMIN,
+      emailVerified: new Date(),
+    },
+  });
+
+  console.log("👤 Users created:", admin.email, owner.email, developer.email);
 
   // ─── Amenities ───────────────────────────────────────────────────────────────
   const amenitiesData = [
@@ -633,7 +642,7 @@ async function main() {
   // ─── Summary ─────────────────────────────────────────────────────────────────
   console.log("\n✅ Seed completed successfully!");
   console.log("─────────────────────────────────────────");
-  console.log(`👤 Users:         2 (1 admin, 1 owner)`);
+  console.log(`👤 Users:         3 (2 admin, 1 owner)`);
   console.log(`🛎️  Amenities:     ${amenities.length}`);
   console.log(`🏠 Properties:    3 (Chiado, Algarve, Oporto)`);
   console.log(`🏨 Rooms:         4 (Chiado)`);
@@ -644,6 +653,7 @@ async function main() {
   console.log("\n🔑 Credentials:");
   console.log("   Admin → admin@reservationgonzalo.com / Admin1234!");
   console.log("   Owner → gonzalo@reservationgonzalo.com / Owner1234!");
+  console.log("   Developer → ing.damianqnz@gmail.com (ADMIN, no password — Google login)");
 }
 
 main()
