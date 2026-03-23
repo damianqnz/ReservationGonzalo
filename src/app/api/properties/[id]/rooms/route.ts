@@ -5,16 +5,19 @@ import { auth } from '@/lib/auth'
 import { db } from '@/lib/db'
 
 const postSchema = z.object({
-  name: z.string().min(1).max(200),
-  description: z.string().max(2000).optional(),
-  type: z.nativeEnum(RoomType).optional(),
-  status: z.nativeEnum(RoomStatus).optional(),
-  maxGuests: z.number().int().min(1).max(20),
-  bedrooms: z.number().int().min(0).max(20),
-  bathrooms: z.number().int().min(0).max(20),
-  beds: z.number().int().min(1).max(20),
+  name:          z.string().min(1).max(200),
+  description:   z.string().max(2000).optional(),
+  type:          z.nativeEnum(RoomType).optional(),
+  status:        z.nativeEnum(RoomStatus).optional(),
+  maxGuests:     z.number().int().min(1).max(20),
+  bedrooms:      z.number().int().min(0).max(20),
+  bathrooms:     z.number().int().min(0).max(20),
+  bathroomType:  z.string().optional(),
+  beds:          z.number().int().min(1).max(20),
+  bedsList:      z.string().optional(),
+  services:      z.string().optional(),
   pricePerNight: z.number().positive(),
-  order: z.number().int().min(0).optional(),
+  order:         z.number().int().min(0).optional(),
 })
 
 // ─── GET /api/properties/[id]/rooms ──────────────────────────────────────────
