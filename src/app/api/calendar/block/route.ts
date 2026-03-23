@@ -3,14 +3,32 @@ import { z } from 'zod'
 import { auth } from '@/lib/auth'
 import { db } from '@/lib/db'
 
+// ─── Validation ───────────────────────────────────────────────────────────────
+
 const bodySchema = z.object({
   propertyId: z.string().min(1),
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be YYYY-MM-DD'),
-  reason: z.string().max(200).optional(),
-  roomId: z.string().optional(),
+  startDate:  z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'startDate must be YYYY-MM-DD'),
+  endDate:    z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'endDate must be YYYY-MM-DD'),
+  reason:     z.string().max(200).optional(),
+  roomId:     z.string().optional(),
 })
 
-/** POST /api/calendar/block — block a date for a property or room */
+// ─── Helper ───────────────────────────────────────────────────────────────────
+
+function eachDateInRange(startStr: string, endStr: string): Date[] {
+  const dates: Date[] = []
+  const cursor = new Date(startStr + 'T00:00:00Z')
+  const end    = new Date(endStr   + 'T00:00:00Z')
+  if (end < cursor) return dates
+  while (cursor <= end) {
+    dates.push(new Date(cursor))
+    cursor.setUTCDate(cursor.getUTCDate() + 1)
+  }
+  return dates
+}
+
+// ─── POST /api/calendar/block — block a date range for a property or room ─────
+
 export async function POST(req: NextRequest) {
   const session = await auth()
   if (!session?.user) {
@@ -30,11 +48,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ data: null, error: result.error.flatten().fieldErrors }, { status: 400 })
   }
 
-  const { propertyId, date, reason, roomId } = result.data
+  const { propertyId, startDate, endDate, reason, roomId } = result.data
+
+  if (endDate < startDate) {
+    return NextResponse.json(
+      { data: null, error: 'endDate must be on or after startDate.' },
+      { status: 400 },
+    )
+  }
 
   // Verify ownership
   const property = await db.property.findUnique({
-    where: { id: propertyId },
+    where:  { id: propertyId },
     select: { ownerId: true },
   })
   if (!property) {
@@ -45,26 +70,26 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const blockDate = new Date(date + 'T00:00:00Z')
+    const dates = eachDateInRange(startDate, endDate)
 
+    let count = 0
     if (roomId) {
-      const blocked = await db.roomBlockedDate.create({
-        data: { roomId, date: blockDate, reason: reason ?? null },
-        select: { id: true, date: true, reason: true, roomId: true },
+      const created = await db.roomBlockedDate.createMany({
+        data:           dates.map((d) => ({ roomId, date: d, reason: reason ?? null })),
+        skipDuplicates: true,
       })
-      return NextResponse.json({ data: { ...blocked, type: 'room' }, error: null }, { status: 201 })
+      count = created.count
+    } else {
+      const created = await db.blockedDate.createMany({
+        data:           dates.map((d) => ({ propertyId, date: d, reason: reason ?? null })),
+        skipDuplicates: true,
+      })
+      count = created.count
     }
 
-    const blocked = await db.blockedDate.create({
-      data: { propertyId, date: blockDate, reason: reason ?? null },
-      select: { id: true, date: true, reason: true, propertyId: true },
-    })
-    return NextResponse.json({ data: { ...blocked, type: 'property' }, error: null }, { status: 201 })
+    return NextResponse.json({ data: { count }, error: null }, { status: 201 })
   } catch (error) {
     console.error('[calendar/block/POST]', error)
-    if (error instanceof Error && 'code' in error && (error as { code: string }).code === 'P2002') {
-      return NextResponse.json({ data: null, error: 'Date already blocked.' }, { status: 409 })
-    }
     return NextResponse.json({ data: null, error: 'An unexpected error occurred.' }, { status: 500 })
   }
 }
