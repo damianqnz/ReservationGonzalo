@@ -7,7 +7,9 @@
       "Bash(npx tsc:*)",
       "Bash(find d:/developer/proyectos/ReservationGonzalo/src/app/api/ical d:/developer/proyectos/ReservationGonzalo/src/app/dashboard/properties/[id]/ical d:/developer/proyectos/ReservationGonzalo/src/lib/services -name *.ts -o -name *.tsx)",
       "Bash(npx tsx:*)",
-      "Bash(ls -la d:developerproyectosReservationGonzalosrcappdashboardproperties[id]rooms)"
+      "Bash(ls -la d:developerproyectosReservationGonzalosrcappdashboardproperties[id]rooms)",
+      "Bash(find d:/developer/proyectos/ReservationGonzalo/src/app/dashboard/properties/*/rooms/* -maxdepth 1 -type f)",
+      "Bash(find d:/developer/proyectos/ReservationGonzalo/src/app/dashboard/properties/*/rooms/[roomId] -type f)"
     ]
   }
 }
