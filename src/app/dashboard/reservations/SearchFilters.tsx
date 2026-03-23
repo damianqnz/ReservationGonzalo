@@ -1,20 +1,21 @@
 'use client'
 
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useCallback } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { Filter, X } from 'lucide-react'
 
 const STATUS_OPTIONS = [
-  { value: '',           label: 'Estado: Todos'   },
-  { value: 'CONFIRMED',  label: 'Confirmado'       },
-  { value: 'PENDING',    label: 'Pendente'          },
-  { value: 'COMPLETED',  label: 'Concluído'         },
-  { value: 'CANCELLED',  label: 'Cancelado'         },
+  { value: '',           label: 'Todos'      },
+  { value: 'CONFIRMED',  label: 'Confirmado' },
+  { value: 'PENDING',    label: 'Pendente'   },
+  { value: 'COMPLETED',  label: 'Concluído'  },
+  { value: 'CANCELLED',  label: 'Cancelado'  },
 ]
 
 const DATE_OPTIONS = [
-  { value: '',       label: 'Período: Todos'   },
-  { value: 'week',   label: 'Esta semana'       },
-  { value: 'month',  label: 'Este mês'          },
+  { value: '',       label: 'Todos'       },
+  { value: 'week',   label: 'Esta semana' },
+  { value: 'month',  label: 'Este mês'    },
 ]
 
 interface SearchFiltersProps {
@@ -35,6 +36,36 @@ export default function SearchFilters({
   const router       = useRouter()
   const searchParams = useSearchParams()
 
+  // Panel state
+  const [open,    setOpen]    = useState(false)
+  // Draft values (edited inside panel, applied on "Aplicar")
+  const [dStatus,   setDStatus]   = useState(currentStatus)
+  const [dProperty, setDProperty] = useState(currentPropertyId)
+  const [dDate,     setDDate]     = useState(currentDateRange)
+
+  const panelRef = useRef<HTMLDivElement>(null)
+  const btnRef   = useRef<HTMLButtonElement>(null)
+
+  // Sync drafts when props change (e.g. after navigation)
+  useEffect(() => { setDStatus(currentStatus) },     [currentStatus])
+  useEffect(() => { setDProperty(currentPropertyId) }, [currentPropertyId])
+  useEffect(() => { setDDate(currentDateRange) },    [currentDateRange])
+
+  // Close on outside click
+  useEffect(() => {
+    if (!open) return
+    function onDown(e: MouseEvent) {
+      if (
+        panelRef.current && !panelRef.current.contains(e.target as Node) &&
+        btnRef.current   && !btnRef.current.contains(e.target as Node)
+      ) {
+        setOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', onDown)
+    return () => document.removeEventListener('mousedown', onDown)
+  }, [open])
+
   const push = useCallback(
     (updates: Record<string, string>) => {
       const sp = new URLSearchParams(searchParams.toString())
@@ -48,70 +79,147 @@ export default function SearchFilters({
     [router, searchParams],
   )
 
+  function apply() {
+    push({ status: dStatus, propertyId: dProperty, dateRange: dDate })
+    setOpen(false)
+  }
+
+  function clear() {
+    setDStatus('')
+    setDProperty('')
+    setDDate('')
+    push({ status: '', search: '', propertyId: '', dateRange: '' })
+    setOpen(false)
+  }
+
+  const activeCount = [currentStatus, currentPropertyId, currentDateRange].filter(Boolean).length
+
   return (
-    <div className="p-6 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3">
-      <div className="flex flex-wrap items-center gap-3">
-        {/* Search */}
-        <div className="relative">
-          <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">
-            search
-          </span>
-          <input
-            type="text"
-            placeholder="Nome ou código..."
-            defaultValue={currentSearch}
-            className="pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:ring-[#8b1a1a] focus:border-[#8b1a1a] outline-none w-52"
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') push({ search: (e.target as HTMLInputElement).value })
-            }}
-          />
-        </div>
-
-        {/* Status */}
-        <select
-          value={currentStatus}
-          onChange={(e) => push({ status: e.target.value })}
-          className="text-sm border-slate-200 rounded-lg focus:ring-[#8b1a1a] focus:border-[#8b1a1a] py-2 outline-none"
-        >
-          {STATUS_OPTIONS.map((o) => (
-            <option key={o.value} value={o.value}>{o.label}</option>
-          ))}
-        </select>
-
-        {/* Property — only show if > 1 property */}
-        {properties.length > 1 && (
-          <select
-            value={currentPropertyId}
-            onChange={(e) => push({ propertyId: e.target.value })}
-            className="text-sm border-slate-200 rounded-lg focus:ring-[#8b1a1a] focus:border-[#8b1a1a] py-2 outline-none"
-          >
-            <option value="">Propriedade: Todas</option>
-            {properties.map((p) => (
-              <option key={p.id} value={p.id}>{p.title}</option>
-            ))}
-          </select>
-        )}
-
-        {/* Date range */}
-        <select
-          value={currentDateRange}
-          onChange={(e) => push({ dateRange: e.target.value })}
-          className="text-sm border-slate-200 rounded-lg focus:ring-[#8b1a1a] focus:border-[#8b1a1a] py-2 outline-none"
-        >
-          {DATE_OPTIONS.map((o) => (
-            <option key={o.value} value={o.value}>{o.label}</option>
-          ))}
-        </select>
+    <div className="p-6 border-b border-slate-200 flex items-center gap-3">
+      {/* Search */}
+      <div className="relative flex-1 max-w-xs">
+        <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg pointer-events-none">
+          search
+        </span>
+        <input
+          type="text"
+          placeholder="Nome ou código..."
+          defaultValue={currentSearch}
+          className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:ring-[#8b1a1a] focus:border-[#8b1a1a] outline-none"
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') push({ search: (e.target as HTMLInputElement).value })
+          }}
+        />
       </div>
 
-      {/* Clear */}
-      <button
-        onClick={() => push({ status: '', search: '', propertyId: '', dateRange: '' })}
-        className="p-2 border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-500 text-sm"
-        title="Limpar filtros"
-      >
-        <span className="material-symbols-outlined">filter_list_off</span>
-      </button>
+      {/* Filter button + panel */}
+      <div className="relative">
+        <button
+          ref={btnRef}
+          onClick={() => setOpen((v) => !v)}
+          className={`relative flex items-center gap-2 px-3 py-2 border rounded-lg text-sm font-medium transition-colors ${
+            open || activeCount > 0
+              ? 'border-[#8b1a1a] text-[#8b1a1a] bg-red-50'
+              : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+          }`}
+        >
+          <Filter size={15} />
+          <span>Filtros</span>
+          {activeCount > 0 && (
+            <span className="absolute -top-1.5 -right-1.5 w-4 h-4 flex items-center justify-center bg-[#8b1a1a] text-white text-[10px] font-bold rounded-full">
+              {activeCount}
+            </span>
+          )}
+        </button>
+
+        {open && (
+          <div
+            ref={panelRef}
+            className="absolute right-0 top-full mt-2 w-[280px] bg-white border border-slate-200 rounded-xl shadow-lg z-40"
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
+              <span className="text-sm font-bold text-[#1a1a2e]">Filtros</span>
+              <button
+                onClick={() => setOpen(false)}
+                className="text-slate-400 hover:text-slate-600 transition-colors"
+              >
+                <X size={15} />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="p-4 space-y-4">
+              {/* Estado */}
+              <div>
+                <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1.5">
+                  Estado
+                </label>
+                <select
+                  value={dStatus}
+                  onChange={(e) => setDStatus(e.target.value)}
+                  className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-[#8b1a1a] focus:border-[#8b1a1a] outline-none"
+                >
+                  {STATUS_OPTIONS.map((o) => (
+                    <option key={o.value} value={o.value}>{o.label}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Propriedade */}
+              {properties.length > 1 && (
+                <div>
+                  <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1.5">
+                    Propriedade
+                  </label>
+                  <select
+                    value={dProperty}
+                    onChange={(e) => setDProperty(e.target.value)}
+                    className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-[#8b1a1a] focus:border-[#8b1a1a] outline-none"
+                  >
+                    <option value="">Todas</option>
+                    {properties.map((p) => (
+                      <option key={p.id} value={p.id}>{p.title}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {/* Período */}
+              <div>
+                <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1.5">
+                  Período
+                </label>
+                <select
+                  value={dDate}
+                  onChange={(e) => setDDate(e.target.value)}
+                  className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-[#8b1a1a] focus:border-[#8b1a1a] outline-none"
+                >
+                  {DATE_OPTIONS.map((o) => (
+                    <option key={o.value} value={o.value}>{o.label}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="flex items-center justify-between px-4 py-3 border-t border-slate-100 gap-2">
+              <button
+                onClick={clear}
+                className="flex-1 py-2 text-sm font-semibold text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
+              >
+                Limpar
+              </button>
+              <button
+                onClick={apply}
+                className="flex-1 py-2 text-sm font-semibold text-white bg-[#1a1a2e] rounded-lg hover:opacity-90 transition-opacity"
+              >
+                Aplicar
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
