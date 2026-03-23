@@ -17,7 +17,6 @@ const navItems = [
 
 const bottomNavItems = [
   { name: 'Configurações', icon: 'settings', href: '/dashboard/settings' },
-  { name: 'Suporte', icon: 'help_center', href: '/dashboard/support' },
 ]
 
 export default function DashboardSidebar() {
