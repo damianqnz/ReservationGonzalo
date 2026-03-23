@@ -4,6 +4,7 @@ import { db } from '@/lib/db'
 import { BookingStatus, PropertyStatus } from '@prisma/client'
 import Link from 'next/link'
 import PropertyManageButton from '@/components/dashboard/PropertyManageButton'
+import DeletePropertyButton from '@/components/dashboard/DeletePropertyButton'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -125,12 +126,15 @@ export default async function PropertiesPage() {
 
                 {/* Card body */}
                 <div className="p-5 flex flex-col gap-4 flex-1">
-                  <div>
-                    <h3 className="font-bold text-[#1a1a2e] text-base truncate">{property.title}</h3>
-                    <p className="text-xs text-slate-500 mt-0.5 flex items-center gap-1">
-                      <span className="material-symbols-outlined text-sm">location_on</span>
-                      {property.city}
-                    </p>
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <h3 className="font-bold text-[#1a1a2e] text-base truncate">{property.title}</h3>
+                      <p className="text-xs text-slate-500 mt-0.5 flex items-center gap-1">
+                        <span className="material-symbols-outlined text-sm">location_on</span>
+                        {property.city}
+                      </p>
+                    </div>
+                    <DeletePropertyButton property={{ id: property.id, title: property.title }} />
                   </div>
 
                   {/* Stats row */}

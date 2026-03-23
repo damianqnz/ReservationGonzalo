@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { PropertyStatus, PropertyType } from '@prisma/client'
+import { BookingStatus, PropertyStatus, PropertyType } from '@prisma/client'
 import { auth } from '@/lib/auth'
 import { db } from '@/lib/db'
+import { deleteImage } from '@/lib/cloudinary'
 
 // ─── Validation schemas ───────────────────────────────────────────────────────
 
@@ -152,7 +153,7 @@ export async function PATCH(
   }
 }
 
-// ─── DELETE /api/properties/[id] — owner auth, soft-archive ──────────────────
+// ─── DELETE /api/properties/[id] — owner or admin, hard delete ───────────────
 
 export async function DELETE(
   _req: NextRequest,
@@ -162,7 +163,7 @@ export async function DELETE(
   if (!session?.user) {
     return NextResponse.json({ data: null, error: 'Unauthorized.' }, { status: 401 })
   }
-  if (session.user.role !== 'OWNER') {
+  if (session.user.role !== 'OWNER' && session.user.role !== 'ADMIN') {
     return NextResponse.json({ data: null, error: 'Forbidden.' }, { status: 403 })
   }
 
@@ -178,17 +179,55 @@ export async function DELETE(
       return NextResponse.json({ data: null, error: 'Property not found.' }, { status: 404 })
     }
 
-    if (existing.ownerId !== session.user.id) {
+    if (session.user.role === 'OWNER' && existing.ownerId !== session.user.id) {
       return NextResponse.json({ data: null, error: 'Forbidden.' }, { status: 403 })
     }
 
-    // Soft-delete: archive instead of hard delete to preserve booking history
-    await db.property.update({
-      where: { id },
-      data: { status: PropertyStatus.ARCHIVED },
+    // Guard: block deletion if active bookings exist
+    const activeCount = await db.booking.count({
+      where: {
+        propertyId: id,
+        status: { in: [BookingStatus.CONFIRMED, BookingStatus.PENDING] },
+      },
     })
 
-    return NextResponse.json({ data: { id }, error: null })
+    if (activeCount > 0) {
+      return NextResponse.json(
+        {
+          data: null,
+          error:
+            'Não é possível eliminar uma propriedade com reservas ativas. Cancele as reservas primeiro.',
+        },
+        { status: 409 },
+      )
+    }
+
+    // Collect all Cloudinary publicIds before deletion
+    const [propertyImages, roomImages] = await Promise.all([
+      db.propertyImage.findMany({
+        where: { propertyId: id },
+        select: { publicId: true },
+      }),
+      db.roomImage.findMany({
+        where: { room: { propertyId: id } },
+        select: { publicId: true },
+      }),
+    ])
+
+    const publicIds = [
+      ...propertyImages.map((i) => i.publicId),
+      ...roomImages.map((i) => i.publicId),
+    ].filter((pid) => pid && pid.includes('/')) // only real Cloudinary paths
+
+    // Hard delete — DB cascades handle rooms, images, amenities, pricing, etc.
+    await db.property.delete({ where: { id } })
+
+    // Clean up Cloudinary assets (non-blocking — don't fail the request if this errors)
+    if (publicIds.length > 0) {
+      void Promise.allSettled(publicIds.map((pid) => deleteImage(pid)))
+    }
+
+    return NextResponse.json({ data: { deleted: true }, error: null })
   } catch (error) {
     console.error('[properties/[id]/DELETE]', error)
     return NextResponse.json({ data: null, error: 'An unexpected error occurred.' }, { status: 500 })
