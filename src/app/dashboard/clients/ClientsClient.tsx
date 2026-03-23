@@ -18,6 +18,13 @@ const COUNTRY_NAMES: Record<string, string> = {
   CA: 'Canadá',         AU: 'Austrália',
 }
 
+const SOURCE_CONFIG: Record<string, { label: string; bg: string; text: string }> = {
+  DIRECT:  { label: 'Website',  bg: 'bg-emerald-50', text: 'text-emerald-700' },
+  AIRBNB:  { label: 'Airbnb',   bg: 'bg-orange-50',  text: 'text-orange-700'  },
+  BOOKING: { label: 'Booking',  bg: 'bg-blue-50',    text: 'text-blue-700'    },
+  MANUAL:  { label: 'Manual',   bg: 'bg-slate-100',  text: 'text-slate-600'   },
+}
+
 const COUNTRY_FLAGS: Record<string, string> = {
   PT: '🇵🇹', ES: '🇪🇸', FR: '🇫🇷', DE: '🇩🇪', GB: '🇬🇧',
   IT: '🇮🇹', BR: '🇧🇷', NL: '🇳🇱', BE: '🇧🇪', US: '🇺🇸',
@@ -288,6 +295,7 @@ export default function ClientsClient({ initialClients, properties }: Props) {
                     <Th>Cliente</Th>
                     <Th>País</Th>
                     <Th>Telefone</Th>
+                    <Th>Canal</Th>
                     <Th>Reservas</Th>
                     <Th>Total Gasto</Th>
                     <Th>Última Reserva</Th>
@@ -372,6 +380,25 @@ function ClientRow({ client: c }: { client: ClientRow }) {
       {/* Telefone */}
       <td className="px-6 py-4 text-sm text-slate-600 whitespace-nowrap">
         {c.guestPhone ?? <span className="text-slate-300">—</span>}
+      </td>
+
+      {/* Canal */}
+      <td className="px-6 py-4 whitespace-nowrap">
+        {(() => {
+          const cfg = SOURCE_CONFIG[c.primarySource] ?? SOURCE_CONFIG.MANUAL
+          return (
+            <span className="inline-flex items-center gap-1.5">
+              <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold ${cfg.bg} ${cfg.text}`}>
+                {cfg.label}
+              </span>
+              {c.sourceCount > 1 && (
+                <span className="text-[10px] font-semibold text-slate-400">
+                  +{c.sourceCount - 1}
+                </span>
+              )}
+            </span>
+          )
+        })()}
       </td>
 
       {/* Reservas */}
