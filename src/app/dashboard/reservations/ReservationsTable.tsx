@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import CheckInModal from '@/components/dashboard/CheckInModal'
+import BookingDetailModal from '@/components/dashboard/BookingDetailModal'
 import type { BookingRow } from './page'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -119,8 +120,9 @@ export default function ReservationsTable({
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
 
-  const [checkInBooking, setCheckInBooking] = useState<BookingRow | null>(null)
-  const [localStatuses, setLocalStatuses]   = useState<Record<string, string>>({})
+  const [checkInBooking, setCheckInBooking]   = useState<BookingRow | null>(null)
+  const [detailBooking,  setDetailBooking]    = useState<BookingRow | null>(null)
+  const [localStatuses,  setLocalStatuses]    = useState<Record<string, string>>({})
 
   function paginationHref(p: number) {
     const sp = new URLSearchParams()
@@ -171,6 +173,15 @@ export default function ReservationsTable({
           isOpen={true}
           onClose={() => setCheckInBooking(null)}
           onConfirm={handleCheckInConfirm}
+        />
+      )}
+
+      {/* Booking detail modal */}
+      {detailBooking && (
+        <BookingDetailModal
+          booking={detailBooking}
+          isOpen={true}
+          onClose={() => setDetailBooking(null)}
         />
       )}
 
@@ -268,13 +279,13 @@ export default function ReservationsTable({
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-1.5">
                         {/* Ver */}
-                        <Link
-                          href={`/confirmacion?bookingId=${res.id}`}
+                        <button
+                          onClick={() => setDetailBooking(res)}
                           className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-[#1a1a2e] transition-all"
                           title="Ver reserva"
                         >
                           <span className="material-symbols-outlined text-lg">visibility</span>
-                        </Link>
+                        </button>
 
                         {/* Check-in */}
                         {actions.checkin && (

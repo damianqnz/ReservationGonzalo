@@ -23,6 +23,10 @@ export interface BookingRow {
   nights:           number
   status:           string
   source:           string
+  totalPrice:       number
+  paymentStatus:    string
+  guestMessage:     string | null
+  couponCode:       string | null
   checkedInAt:      string | null
   checkedOutAt:     string | null
   property: {
@@ -124,8 +128,14 @@ export default async function ReservationsPage({ searchParams }: PageProps) {
         nights:           true,
         status:           true,
         source:           true,
+        totalPrice:       true,
+        paymentStatus:    true,
+        guestMessage:     true,
         checkedInAt:      true,
         checkedOutAt:     true,
+        couponUsage: {
+          select: { coupon: { select: { code: true } } },
+        },
         property: {
           select: {
             id:                 true,
@@ -162,12 +172,14 @@ export default async function ReservationsPage({ searchParams }: PageProps) {
   // Serialize Dates → ISO strings for client component
   const bookings: BookingRow[] = rawBookings.map((b) => ({
     ...b,
-    status:       b.status  as string,
-    source:       b.source  as string,
-    checkIn:      b.checkIn.toISOString(),
-    checkOut:     b.checkOut.toISOString(),
-    checkedInAt:  b.checkedInAt  ? b.checkedInAt.toISOString()  : null,
-    checkedOutAt: b.checkedOutAt ? b.checkedOutAt.toISOString() : null,
+    status:        b.status        as string,
+    source:        b.source        as string,
+    paymentStatus: b.paymentStatus as string,
+    checkIn:       b.checkIn.toISOString(),
+    checkOut:      b.checkOut.toISOString(),
+    checkedInAt:   b.checkedInAt  ? b.checkedInAt.toISOString()  : null,
+    checkedOutAt:  b.checkedOutAt ? b.checkedOutAt.toISOString() : null,
+    couponCode:    b.couponUsage?.coupon.code ?? null,
     property: { ...b.property, type: b.property.type as string },
     room: b.room ? { ...b.room, type: b.room.type as string } : null,
   }))
