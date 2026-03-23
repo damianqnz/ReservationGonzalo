@@ -3,6 +3,7 @@ import { auth } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { BookingStatus, PropertyStatus } from '@prisma/client'
 import Link from 'next/link'
+import PropertyManageButton from '@/components/dashboard/PropertyManageButton'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -34,6 +35,7 @@ export default async function PropertiesPage() {
     select: {
       id: true,
       title: true,
+      slug: true,
       type: true,
       status: true,
       pricePerNight: true,
@@ -173,57 +175,10 @@ export default async function PropertiesPage() {
                   </div>
 
                   {/* Actions */}
-                  <div className="pt-3 border-t border-slate-100 flex items-center gap-2 mt-auto flex-wrap">
-                    <Link
-                      href={`/dashboard/reservations?propertyId=${property.id}`}
-                      className="flex-1 text-center text-xs font-bold text-[#8b1a1a] border border-[#8b1a1a]/30 rounded-lg py-2 hover:bg-[#8b1a1a]/5 transition-colors"
-                    >
-                      Ver Reservas
-                    </Link>
-                    <Link
-                      href={`/dashboard/properties/${property.id}/images`}
-                      className="flex-1 text-center text-xs font-bold text-slate-600 border border-slate-200 rounded-lg py-2 hover:bg-slate-50 transition-colors flex items-center justify-center gap-1"
-                    >
-                      <span className="material-symbols-outlined text-sm">photo_library</span>
-                      Imagens
-                    </Link>
-                    <Link
-                      href={`/dashboard/properties/${property.id}/edit`}
-                      className="flex-1 text-center text-xs font-bold text-slate-600 border border-slate-200 rounded-lg py-2 hover:bg-slate-50 transition-colors flex items-center justify-center gap-1"
-                    >
-                      <span className="material-symbols-outlined text-sm">edit</span>
-                      Editar
-                    </Link>
-                    <Link
-                      href={`/dashboard/properties/${property.id}/edit#access`}
-                      className="flex-1 text-center text-xs font-bold text-[#8b1a1a] border border-[#e8c4c4] rounded-lg py-2 hover:bg-red-50 transition-colors flex items-center justify-center gap-1"
-                    >
-                      <span className="material-symbols-outlined text-sm">key</span>
-                      Acesso
-                    </Link>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Link
-                      href={`/dashboard/properties/${property.id}/rooms`}
-                      className="flex-1 text-center text-xs font-bold text-slate-600 border border-slate-200 rounded-lg py-2 hover:bg-slate-50 transition-colors flex items-center justify-center gap-1"
-                    >
-                      <span className="material-symbols-outlined text-sm">bed</span>
-                      Quartos
-                    </Link>
-                    <Link
-                      href={`/dashboard/properties/${property.id}/pricing`}
-                      className="flex-1 text-center text-xs font-bold text-slate-600 border border-slate-200 rounded-lg py-2 hover:bg-slate-50 transition-colors flex items-center justify-center gap-1"
-                    >
-                      <span className="material-symbols-outlined text-sm">sell</span>
-                      Preços
-                    </Link>
-                    <Link
-                      href={`/dashboard/properties/${property.id}/ical`}
-                      className="flex-1 text-center text-xs font-bold text-slate-600 border border-slate-200 rounded-lg py-2 hover:bg-slate-50 transition-colors flex items-center justify-center gap-1"
-                    >
-                      <span className="material-symbols-outlined text-sm">calendar_month</span>
-                      iCal
-                    </Link>
+                  <div className="pt-3 border-t border-slate-100 mt-auto">
+                    <PropertyManageButton
+                      property={{ id: property.id, title: property.title, slug: property.slug }}
+                    />
                   </div>
                 </div>
               </div>
