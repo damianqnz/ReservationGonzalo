@@ -7,9 +7,10 @@ import Link from 'next/link'
 
 interface DashboardTopbarProps {
   unreadCount?: number
+  collapsed?:   boolean
 }
 
-export default function DashboardTopbar({ unreadCount = 0 }: DashboardTopbarProps) {
+export default function DashboardTopbar({ unreadCount = 0, collapsed = false }: DashboardTopbarProps) {
   const { data: session } = useSession()
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [signingOut, setSigningOut] = useState(false)
@@ -38,7 +39,7 @@ export default function DashboardTopbar({ unreadCount = 0 }: DashboardTopbarProp
   const initial = userName.charAt(0).toUpperCase()
 
   return (
-    <header className="fixed top-0 right-0 left-64 h-16 border-b border-slate-200 bg-white/80 backdrop-blur-md flex justify-between items-center px-8 z-20">
+    <header className={`fixed top-0 right-0 h-16 border-b border-slate-200 bg-white/80 backdrop-blur-md flex justify-between items-center px-8 z-20 transition-all duration-300 ${collapsed ? 'left-16' : 'left-64'}`}>
       <div className="flex items-center gap-4 flex-1">
         <div className="relative w-full max-w-md focus-within:ring-2 focus-within:ring-[#1a1a2e]/20 rounded-lg transition-all">
           <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xl">
