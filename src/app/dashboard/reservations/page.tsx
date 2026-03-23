@@ -1,10 +1,11 @@
 import { redirect } from 'next/navigation'
 import { auth } from '@/lib/auth'
 import { db } from '@/lib/db'
-import { BookingStatus } from '@prisma/client'
+import { BookingStatus, PropertyStatus, RoomStatus } from '@prisma/client'
 import { Suspense } from 'react'
 import SearchFilters from './SearchFilters'
 import ReservationsTable from './ReservationsTable'
+import AddBookingButton from '@/components/dashboard/AddBookingButton'
 
 const PAGE_SIZE = 20
 
@@ -112,7 +113,7 @@ export default async function ReservationsPage({ searchParams }: PageProps) {
       : {}),
   }
 
-  const [rawBookings, total, properties] = await Promise.all([
+  const [rawBookings, total, properties, modalProperties] = await Promise.all([
     db.booking.findMany({
       where,
       select: {
@@ -167,6 +168,26 @@ export default async function ReservationsPage({ searchParams }: PageProps) {
       select:  { id: true, title: true },
       orderBy: { title: 'asc' },
     }),
+    db.property.findMany({
+      where: {
+        ...(isAdmin ? {} : { ownerId }),
+        status: PropertyStatus.ACTIVE,
+      },
+      select: {
+        id:              true,
+        title:           true,
+        hasRooms:        true,
+        pricePerNight:   true,
+        cleaningFee:     true,
+        securityDeposit: true,
+        rooms: {
+          where:   { status: RoomStatus.ACTIVE },
+          select:  { id: true, name: true, type: true, pricePerNight: true },
+          orderBy: { order: 'asc' },
+        },
+      },
+      orderBy: { title: 'asc' },
+    }),
   ])
 
   // Serialize Dates → ISO strings for client component
@@ -186,6 +207,12 @@ export default async function ReservationsPage({ searchParams }: PageProps) {
 
   const totalPages = Math.ceil(total / PAGE_SIZE)
 
+  // Serialize for client component (rooms type cast to string)
+  const propertiesForModal = modalProperties.map((p) => ({
+    ...p,
+    rooms: p.rooms.map((r) => ({ ...r, type: r.type as string })),
+  }))
+
   // ─── Render ───────────────────────────────────────────────────────────────
   return (
     <div className="space-y-8">
@@ -196,6 +223,7 @@ export default async function ReservationsPage({ searchParams }: PageProps) {
             {total} reserva{total !== 1 ? 's' : ''} encontrada{total !== 1 ? 's' : ''}
           </p>
         </div>
+        <AddBookingButton properties={propertiesForModal} />
       </div>
 
       <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">

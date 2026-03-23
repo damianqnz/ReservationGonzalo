@@ -1,5 +1,5 @@
 import { db } from '@/lib/db'
-import { BookingStatus, PropertyStatus, NotificationType } from '@prisma/client'
+import { BookingStatus, BookingSource, PaymentStatus, PropertyStatus, NotificationType } from '@prisma/client'
 import { v4 as uuidv4 } from 'uuid'
 import { checkAvailability, checkRoomAvailability } from './availabilityService'
 import { calculateTotalPrice } from './pricingService'
@@ -327,6 +327,132 @@ export async function updateReservation(id: string, data: any) {
     where: { id },
     data,
     select: BOOKING_SELECT,
+  })
+}
+
+// ─── Manual booking ──────────────────────────────────────────────────────────
+
+export interface CreateManualBookingInput {
+  propertyId:      string
+  roomId?:         string
+  guestName:       string
+  guestEmail:      string
+  guestPhone?:     string
+  guestCountry?:   string
+  guestCount:      number
+  checkIn:         Date
+  checkOut:        Date
+  pricePerNight:   number
+  cleaningFee:     number
+  securityDeposit: number
+  paymentStatus:   'PAID' | 'UNPAID'
+  guestMessage?:   string
+  ownerNotes?:     string
+}
+
+/**
+ * Creates a manual booking (CONFIRMED, source: MANUAL, no Stripe payment).
+ * Confirmation code format: RG-XXXXXX.
+ */
+export async function createManualBooking(input: CreateManualBookingInput) {
+  const checkIn  = normalizeDate(input.checkIn)
+  const checkOut = normalizeDate(input.checkOut)
+  const nights   = nightsBetween(checkIn, checkOut)
+
+  if (nights <= 0) {
+    throw new Error('A data de check-out deve ser posterior à de check-in.')
+  }
+
+  // Check availability
+  const available = input.roomId
+    ? await checkRoomAvailability(input.roomId, checkIn, checkOut)
+    : await checkAvailability(input.propertyId, checkIn, checkOut)
+
+  if (!available) {
+    throw new Error('Não há disponibilidade para as datas selecionadas.')
+  }
+
+  const totalPrice =
+    input.pricePerNight * nights + input.cleaningFee + input.securityDeposit
+
+  // Generate RG-XXXXXX confirmation code
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+  function genCode() {
+    let c = 'RG-'
+    for (let i = 0; i < 6; i++) c += chars.charAt(Math.floor(Math.random() * chars.length))
+    return c
+  }
+
+  let confirmationCode = genCode()
+  for (let i = 0; i < 5; i++) {
+    const exists = await db.booking.findUnique({ where: { confirmationCode }, select: { id: true } })
+    if (!exists) break
+    confirmationCode = genCode()
+  }
+
+  return db.$transaction(async (tx) => {
+    // Hard re-check inside transaction
+    const conflict = await tx.booking.findFirst({
+      where: {
+        ...(input.roomId
+          ? { roomId: input.roomId }
+          : { propertyId: input.propertyId, roomId: null }),
+        status: { in: [BookingStatus.PENDING, BookingStatus.CONFIRMED] },
+        checkIn:  { lt: checkOut },
+        checkOut: { gt: checkIn },
+      },
+      select: { id: true },
+    })
+    if (conflict) throw new Error('Não há disponibilidade para as datas selecionadas.')
+
+    const booking = await tx.booking.create({
+      data: {
+        propertyId:      input.propertyId,
+        roomId:          input.roomId          ?? null,
+        confirmationCode,
+        guestName:       input.guestName,
+        guestEmail:      input.guestEmail,
+        guestPhone:      input.guestPhone       ?? null,
+        guestCountry:    input.guestCountry     ?? null,
+        guestCount:      input.guestCount,
+        guestMessage:    input.guestMessage     ?? null,
+        ownerNotes:      input.ownerNotes       ?? null,
+        checkIn,
+        checkOut,
+        nights,
+        pricePerNight:   input.pricePerNight,
+        cleaningFee:     input.cleaningFee,
+        securityDeposit: input.securityDeposit,
+        totalPrice,
+        status:          BookingStatus.CONFIRMED,
+        paymentStatus:   input.paymentStatus as PaymentStatus,
+        source:          BookingSource.MANUAL,
+        expiresAt:       null,
+        acceptedTerms:   false,
+        acceptedPrivacy: false,
+      },
+      select: {
+        id: true,
+        confirmationCode: true,
+        guestName: true,
+        checkIn: true,
+        checkOut: true,
+        nights: true,
+        totalPrice: true,
+        status: true,
+        source: true,
+      },
+    })
+
+    // Block other rooms if ENTIRE_PLACE
+    if (input.roomId) {
+      const room = await tx.room.findUnique({ where: { id: input.roomId }, select: { type: true } })
+      if (room?.type === 'ENTIRE_PLACE') {
+        await blockAllRoomsForDates(tx, input.propertyId, input.roomId, checkIn, checkOut)
+      }
+    }
+
+    return booking
   })
 }
 

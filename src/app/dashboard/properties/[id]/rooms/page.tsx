@@ -2,8 +2,8 @@ import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
 import { auth } from '@/lib/auth'
 import { db } from '@/lib/db'
-import { RoomStatus } from '@prisma/client'
 import { resolveImageUrl } from '@/lib/cloudinary'
+import DeleteRoomButton from '@/components/dashboard/DeleteRoomButton'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -154,11 +154,14 @@ export default async function PropertyRoomsPage({ params }: Props) {
 
                 {/* Card body */}
                 <div className="p-5 flex flex-col gap-3 flex-1">
-                  <div>
-                    <h3 className="font-bold text-[#1a1a2e] text-base truncate">{room.name}</h3>
-                    <p className="text-xs text-slate-500 mt-0.5">
-                      {ROOM_TYPE_LABEL[room.type] ?? room.type}
-                    </p>
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <h3 className="font-bold text-[#1a1a2e] text-base truncate">{room.name}</h3>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        {ROOM_TYPE_LABEL[room.type] ?? room.type}
+                      </p>
+                    </div>
+                    <DeleteRoomButton room={{ id: room.id, name: room.name }} />
                   </div>
 
                   {/* Stats */}
@@ -203,10 +206,11 @@ export default async function PropertyRoomsPage({ params }: Props) {
                       Imagens
                     </Link>
                     <Link
-                      href={`/dashboard/reservations?roomId=${room.id}`}
-                      className="flex-1 text-center text-xs font-bold text-[#8b1a1a] border border-[#8b1a1a]/30 rounded-lg py-2 hover:bg-[#8b1a1a]/5 transition-colors"
+                      href={`/dashboard/properties/${id}/rooms/${room.id}/edit`}
+                      className="flex-1 text-center text-xs font-bold text-[#8b1a1a] border border-[#8b1a1a]/30 rounded-lg py-2 hover:bg-[#8b1a1a]/5 transition-colors flex items-center justify-center gap-1"
                     >
-                      Ver Reservas
+                      <span className="material-symbols-outlined text-sm">edit</span>
+                      Editar Quarto
                     </Link>
                   </div>
                 </div>
