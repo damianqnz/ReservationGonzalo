@@ -93,7 +93,7 @@ export async function GET(req: NextRequest) {
       })
       propertyIds = props.map((p) => p.id)
       if (propertyIds.length === 0) {
-        return new NextResponse('Nome,Email,Telefone,País,Reservas,Total Gasto (EUR),Primeira Reserva,Última Reserva,Aceitou Marketing\r\n', {
+        return new NextResponse('Nome,Email,Telefone,País,Canal,Reservas,Total Gasto (EUR),Primeira Reserva,Última Reserva,Aceitou Marketing\r\n', {
           headers: {
             'Content-Type': 'text/csv; charset=utf-8',
             'Content-Disposition': `attachment; filename="clientes-${format(new Date(), 'yyyy-MM-dd')}.csv"`,
@@ -134,6 +134,7 @@ export async function GET(req: NextRequest) {
         acceptedMarketing: true,
         totalPrice:        true,
         checkIn:           true,
+        source:            true,
         property:          { select: { title: true } },
       },
       orderBy: { checkIn: 'desc' },
@@ -145,6 +146,7 @@ export async function GET(req: NextRequest) {
       guestCountry: string | null; acceptedMarketing: boolean
       totalBookings: number; totalSpent: number
       lastBooking: string; firstBooking: string
+      _srcCounts: Record<string, number>
     }
 
     const map = new Map<string, AggRow>()
@@ -152,6 +154,7 @@ export async function GET(req: NextRequest) {
     for (const b of bookings) {
       const email = b.guestEmail.toLowerCase()
       const checkInDate = toYMD(b.checkIn)
+      const src = b.source as string
 
       if (!map.has(email)) {
         map.set(email, {
@@ -164,6 +167,7 @@ export async function GET(req: NextRequest) {
           totalSpent:        b.totalPrice,
           lastBooking:       checkInDate,
           firstBooking:      checkInDate,
+          _srcCounts:        { [src]: 1 },
         })
       } else {
         const existing = map.get(email)!
@@ -178,15 +182,27 @@ export async function GET(req: NextRequest) {
         existing.totalBookings += 1
         existing.totalSpent    += b.totalPrice
         existing.acceptedMarketing = existing.acceptedMarketing || b.acceptedMarketing
+        existing._srcCounts[src] = (existing._srcCounts[src] ?? 0) + 1
       }
     }
 
-    const clients = Array.from(map.values()).sort(
-      (a, b) => b.lastBooking.localeCompare(a.lastBooking),
-    )
+    const SOURCE_LABELS: Record<string, string> = {
+      DIRECT: 'Website', AIRBNB: 'Airbnb', BOOKING: 'Booking', MANUAL: 'Manual',
+    }
+
+    const clients = Array.from(map.values())
+      .sort((a, b) => b.lastBooking.localeCompare(a.lastBooking))
+      .map(({ _srcCounts, ...rest }) => {
+        let primarySource = 'DIRECT'
+        let maxCount = 0
+        for (const [src, count] of Object.entries(_srcCounts)) {
+          if (count > maxCount) { maxCount = count; primarySource = src }
+        }
+        return { ...rest, primarySource }
+      })
 
     // ── Build CSV ───────────────────────────────────────────────────────────
-    const headers = ['Nome', 'Email', 'Telefone', 'País', 'Reservas',
+    const headers = ['Nome', 'Email', 'Telefone', 'País', 'Canal', 'Reservas',
                      'Total Gasto (EUR)', 'Primeira Reserva', 'Última Reserva', 'Aceitou Marketing']
 
     const rows = [
@@ -197,6 +213,7 @@ export async function GET(req: NextRequest) {
           c.guestEmail,
           c.guestPhone ?? '',
           countryName(c.guestCountry),
+          SOURCE_LABELS[c.primarySource] ?? c.primarySource,
           c.totalBookings,
           c.totalSpent.toFixed(2),
           c.firstBooking,

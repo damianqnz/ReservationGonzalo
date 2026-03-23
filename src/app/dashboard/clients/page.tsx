@@ -48,17 +48,22 @@ export default async function ClientsPage() {
       acceptedMarketing: true,
       totalPrice:        true,
       checkIn:           true,
+      source:            true,
       property:          { select: { title: true } },
     },
     orderBy: { checkIn: 'desc' },
   })
 
   // ── Group by email ────────────────────────────────────────────────────────
-  const map = new Map<string, ClientRow>()
+  type AggRow = Omit<ClientRow, 'primarySource' | 'sourceCount'> & {
+    _srcCounts: Record<string, number>
+  }
+  const map = new Map<string, AggRow>()
 
   for (const b of bookings) {
     const email = b.guestEmail.toLowerCase()
     const checkInDate = b.checkIn.toISOString().split('T')[0]
+    const src = b.source as string
 
     if (!map.has(email)) {
       map.set(email, {
@@ -72,6 +77,7 @@ export default async function ClientsPage() {
         lastBooking:       checkInDate,
         firstBooking:      checkInDate,
         properties:        [b.property.title],
+        _srcCounts:        { [src]: 1 },
       })
     } else {
       const existing = map.get(email)!
@@ -89,12 +95,20 @@ export default async function ClientsPage() {
       if (!existing.properties.includes(b.property.title)) {
         existing.properties.push(b.property.title)
       }
+      existing._srcCounts[src] = (existing._srcCounts[src] ?? 0) + 1
     }
   }
 
-  const initialClients = Array.from(map.values()).sort(
-    (a, b) => b.lastBooking.localeCompare(a.lastBooking),
-  )
+  const initialClients: ClientRow[] = Array.from(map.values())
+    .sort((a, b) => b.lastBooking.localeCompare(a.lastBooking))
+    .map(({ _srcCounts, ...rest }) => {
+      let primarySource = 'DIRECT'
+      let maxCount = 0
+      for (const [src, count] of Object.entries(_srcCounts)) {
+        if (count > maxCount) { maxCount = count; primarySource = src }
+      }
+      return { ...rest, primarySource, sourceCount: Object.keys(_srcCounts).length }
+    })
 
   return (
     <ClientsClient
