@@ -55,7 +55,7 @@ function getActions(id: string) {
       icon:        'key',
       title:       'Acesso',
       description: 'Dados de acesso e WiFi',
-      href:        `/dashboard/properties/${id}/edit#access`,
+      href:        `/dashboard/properties/${id}/access`,
     },
   ]
 }
