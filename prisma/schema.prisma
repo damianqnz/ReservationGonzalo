@@ -94,6 +94,13 @@ model Property {
   cancellationPolicy CancellationPolicy @default(FLEXIBLE)
   hasRooms           Boolean            @default(false)
   rooms              Room[]
+  // Access data
+  accessCode         String?
+  wifiName           String?
+  wifiPassword       String?
+  floor              String?
+  accessInstructions String? @db.Text
+  contactPhone       String?
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
   blockedDates       BlockedDate[]
@@ -105,6 +112,7 @@ model Property {
   seasonalPrices     SeasonalPrice[]
   pricingRules       PricingRule[]
   icalSyncs          ICalSync[]
+  searchEvents       SearchEvent[]
 
   @@map("properties")
 }
@@ -173,6 +181,8 @@ model Booking {
   acceptedPrivacy   Boolean   @default(false)
   acceptedMarketing Boolean   @default(false)
   termsAcceptedAt   DateTime?
+  checkedInAt       DateTime?
+  checkedOutAt      DateTime?
   createdAt        DateTime      @default(now())
   updatedAt        DateTime      @updatedAt
   property         Property      @relation(fields: [propertyId], references: [id])
@@ -180,6 +190,7 @@ model Booking {
   guestAccessLogs  GuestAccess[]
   couponUsage      CouponUsage?
   discountAmount   Float?        @default(0)
+  searchEvents     SearchEvent[]
 
   @@map("bookings")
 }
@@ -380,6 +391,7 @@ model Room {
   images       RoomImage[]
   bookings     Booking[]
   blockedDates RoomBlockedDate[]
+  searchEvents SearchEvent[]
 
   @@map("rooms")
 }
@@ -486,4 +498,29 @@ model ICalSync {
   room         Room?     @relation(fields: [roomId], references: [id], onDelete: Cascade)
 
   @@map("ical_syncs")
+}
+
+// ─── SEARCH EVENT TRACKING ────────────────────────────────────────────────────
+
+model SearchEvent {
+  id                 String    @id @default(cuid())
+  propertyId         String?
+  roomId             String?
+  checkIn            DateTime?
+  checkOut           DateTime?
+  guests             Int?
+  sessionId          String
+  ipAddress          String?
+  convertedToBooking Boolean   @default(false)
+  bookingId          String?
+  createdAt          DateTime  @default(now())
+
+  property  Property? @relation(fields: [propertyId], references: [id], onDelete: SetNull)
+  room      Room?     @relation(fields: [roomId], references: [id], onDelete: SetNull)
+  booking   Booking?  @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+
+  @@index([sessionId])
+  @@index([propertyId])
+  @@index([createdAt])
+  @@map("search_events")
 }

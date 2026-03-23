@@ -189,9 +189,17 @@ export default async function PropertiesPage() {
                     </Link>
                     <Link
                       href={`/dashboard/properties/${property.id}/edit`}
-                      className="flex-1 text-center text-xs font-bold text-slate-600 border border-slate-200 rounded-lg py-2 hover:bg-slate-50 transition-colors"
+                      className="flex-1 text-center text-xs font-bold text-slate-600 border border-slate-200 rounded-lg py-2 hover:bg-slate-50 transition-colors flex items-center justify-center gap-1"
                     >
+                      <span className="material-symbols-outlined text-sm">edit</span>
                       Editar
+                    </Link>
+                    <Link
+                      href={`/dashboard/properties/${property.id}/edit#access`}
+                      className="flex-1 text-center text-xs font-bold text-[#8b1a1a] border border-[#e8c4c4] rounded-lg py-2 hover:bg-red-50 transition-colors flex items-center justify-center gap-1"
+                    >
+                      <span className="material-symbols-outlined text-sm">key</span>
+                      Acesso
                     </Link>
                   </div>
                   <div className="flex items-center gap-2">

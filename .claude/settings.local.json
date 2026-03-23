@@ -5,7 +5,8 @@
       "Bash(npx prisma:*)",
       "Bash(node -e \"console.log\\(require\\(''crypto''\\).randomBytes\\(32\\).toString\\(''base64''\\)\\)\")",
       "Bash(npx tsc:*)",
-      "Bash(find d:/developer/proyectos/ReservationGonzalo/src/app/api/ical d:/developer/proyectos/ReservationGonzalo/src/app/dashboard/properties/[id]/ical d:/developer/proyectos/ReservationGonzalo/src/lib/services -name *.ts -o -name *.tsx)"
+      "Bash(find d:/developer/proyectos/ReservationGonzalo/src/app/api/ical d:/developer/proyectos/ReservationGonzalo/src/app/dashboard/properties/[id]/ical d:/developer/proyectos/ReservationGonzalo/src/lib/services -name *.ts -o -name *.tsx)",
+      "Bash(npx tsx:*)"
     ]
   }
 }

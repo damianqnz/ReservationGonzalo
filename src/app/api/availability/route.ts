@@ -6,6 +6,7 @@ import {
   getUnavailableDates,
   getUnavailableDatesForRoom,
 } from '@/lib/services/availabilityService'
+import { db } from '@/lib/db'
 
 // ─── Schema: check a specific date range ──────────────────────────────────────
 const rangeSchema = z.object({
@@ -104,7 +105,26 @@ export async function GET(req: NextRequest) {
       )
     }
 
-    return NextResponse.json({ data: { available }, error: null })
+    // Silent background SearchEvent save — never blocks the response
+    const sessionId = req.cookies.get('rg-session-id')?.value ?? crypto.randomUUID()
+    const ipAddress = req.headers.get('x-forwarded-for')?.split(',')[0].trim() ?? req.headers.get('x-real-ip') ?? undefined
+    const response = NextResponse.json({ data: { available }, error: null })
+    response.cookies.set('rg-session-id', sessionId, { httpOnly: true, maxAge: 86400, path: '/' })
+
+    void Promise.allSettled([
+      db.searchEvent.create({
+        data: {
+          propertyId: propertyId ?? null,
+          roomId: roomId ?? null,
+          checkIn: startDate,
+          checkOut: endDate,
+          sessionId,
+          ipAddress: ipAddress ?? null,
+        },
+      }),
+    ])
+
+    return response
   } catch (error) {
     console.error('[availability/GET range]', error)
     return NextResponse.json(
