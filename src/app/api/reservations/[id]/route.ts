@@ -11,13 +11,19 @@ import {
 
 const patchSchema = z
   .object({
-    status: z.nativeEnum(BookingStatus).optional(),
-    ownerNotes: z.string().max(1000).optional(),
+    status:        z.nativeEnum(BookingStatus).optional(),
+    ownerNotes:    z.string().max(1000).optional(),
     paymentStatus: z.nativeEnum(PaymentStatus).optional(),
+    action:        z.enum(['checkin', 'checkout']).optional(),
   })
-  .refine((d) => d.status !== undefined || d.ownerNotes !== undefined || d.paymentStatus !== undefined, {
-    message: 'At least one field (status, ownerNotes, paymentStatus) must be provided.',
-  })
+  .refine(
+    (d) =>
+      d.status !== undefined ||
+      d.ownerNotes !== undefined ||
+      d.paymentStatus !== undefined ||
+      d.action !== undefined,
+    { message: 'At least one field (status, ownerNotes, paymentStatus, action) must be provided.' },
+  )
 
 // ─── GET /api/reservations/[id] ───────────────────────────────────────────────
 
@@ -50,18 +56,17 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  // Auth — owner only
+  // Auth — owner or admin
   const session = await auth()
   if (!session?.user) {
     return NextResponse.json({ data: null, error: 'Unauthorized.' }, { status: 401 })
   }
-  if (session.user.role !== 'OWNER') {
+  if (session.user.role !== 'OWNER' && session.user.role !== 'ADMIN') {
     return NextResponse.json({ data: null, error: 'Forbidden.' }, { status: 403 })
   }
 
   const { id } = await params
 
-  // Validate body
   let body: unknown
   try {
     body = await req.json()
@@ -78,7 +83,18 @@ export async function PATCH(
   }
 
   try {
-    const booking = await updateReservation(id, result.data)
+    const { action, ...rest } = result.data
+
+    // Build update payload — translate special actions to field updates
+    const updateData: Record<string, unknown> = { ...rest }
+    if (action === 'checkin') {
+      updateData.checkedInAt = new Date()
+    } else if (action === 'checkout') {
+      updateData.checkedOutAt = new Date()
+      updateData.status       = BookingStatus.COMPLETED
+    }
+
+    const booking = await updateReservation(id, updateData)
     return NextResponse.json({ data: booking, error: null }, { status: 200 })
   } catch (error) {
     console.error('[reservations/[id]/PATCH]', error)

@@ -81,6 +81,7 @@ export interface CreateReservationInput {
   acceptedTerms?: boolean
   acceptedPrivacy?: boolean
   acceptedMarketing?: boolean
+  sessionId?: string
 }
 
 // ─── Service ──────────────────────────────────────────────────────────────────
@@ -223,6 +224,24 @@ export async function createReservation(input: CreateReservationInput) {
       await blockAllRoomsForDates(tx, input.propertyId, room.id, checkIn, checkOut)
     }
 
+    return booking
+  }).then((booking) => {
+    // Fire-and-forget: mark matching SearchEvents as converted
+    if (input.sessionId) {
+      void Promise.allSettled([
+        db.searchEvent.updateMany({
+          where: {
+            sessionId: input.sessionId,
+            convertedToBooking: false,
+            propertyId: input.propertyId,
+          },
+          data: {
+            convertedToBooking: true,
+            bookingId: booking.id,
+          },
+        }),
+      ])
+    }
     return booking
   })
 }

@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import {
   createReservation,
@@ -32,7 +32,7 @@ const getQuerySchema = z.object({
 
 // ─── Handlers ─────────────────────────────────────────────────────────────────
 
-export async function GET(req: Request) {
+export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url)
     const filters = getQuerySchema.parse(Object.fromEntries(searchParams))
@@ -52,10 +52,11 @@ export async function GET(req: Request) {
   }
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
     const validated = reservationSchema.parse(body)
+    const sessionId = req.cookies.get('rg-session-id')?.value
 
     const reservation = await createReservation({
       ...validated,
@@ -63,6 +64,7 @@ export async function POST(req: Request) {
       checkOut: new Date(validated.checkOut),
       acceptedTerms: validated.acceptedTerms,
       acceptedPrivacy: validated.acceptedPrivacy,
+      sessionId,
     })
 
     return NextResponse.json(

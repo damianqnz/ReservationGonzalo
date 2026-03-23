@@ -24,6 +24,13 @@ const patchSchema = z
     cleaningFee: z.number().min(0).optional(),
     latitude: z.number().optional(),
     longitude: z.number().optional(),
+    // Access data
+    accessCode:          z.string().max(100).nullish(),
+    wifiName:            z.string().max(100).nullish(),
+    wifiPassword:        z.string().max(100).nullish(),
+    floor:               z.string().max(50).nullish(),
+    accessInstructions:  z.string().max(2000).nullish(),
+    contactPhone:        z.string().max(30).nullish(),
   })
   .refine((d) => Object.keys(d).length > 0, { message: 'At least one field must be provided.' })
 
