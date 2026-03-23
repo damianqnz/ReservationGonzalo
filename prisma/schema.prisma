@@ -378,7 +378,10 @@ model Room {
   maxGuests     Int        @default(1)
   bedrooms      Int        @default(1)
   bathrooms     Int        @default(1)
+  bathroomType  String?    @default("private")
   beds          Int        @default(1)
+  bedsList      String?    @db.Text
+  services      String?    @db.Text
   pricePerNight Float
   order         Int        @default(0)
   createdAt     DateTime   @default(now())

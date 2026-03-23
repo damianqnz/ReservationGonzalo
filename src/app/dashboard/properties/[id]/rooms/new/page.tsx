@@ -3,56 +3,71 @@
 import { useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
+import BedPicker from './BedPicker'
+import ServicesChecklist from './ServicesChecklist'
+
+// ─── Constants ────────────────────────────────────────────────────────────────
 
 const ROOM_TYPES = [
-  { value: 'SINGLE',       label: 'Individual' },
-  { value: 'DOUBLE',       label: 'Duplo' },
-  { value: 'TWIN',         label: 'Twin' },
-  { value: 'SUITE',        label: 'Suite' },
-  { value: 'JUNIOR_SUITE', label: 'Suite Junior' },
-  { value: 'FAMILY',       label: 'Familiar' },
-  { value: 'STUDIO',       label: 'Estúdio' },
+  { value: 'SINGLE',       label: 'Individual'          },
+  { value: 'DOUBLE',       label: 'Duplo'               },
+  { value: 'TWIN',         label: 'Twin'                },
+  { value: 'SUITE',        label: 'Suite'               },
+  { value: 'JUNIOR_SUITE', label: 'Suite Junior'        },
+  { value: 'FAMILY',       label: 'Familiar'            },
+  { value: 'STUDIO',       label: 'Estúdio'             },
   { value: 'ENTIRE_PLACE', label: 'Alojamento completo' },
 ]
 
 const ROOM_STATUSES = [
-  { value: 'ACTIVE',      label: 'Ativo' },
-  { value: 'INACTIVE',    label: 'Inativo' },
-  { value: 'MAINTENANCE', label: 'Em manutenção' },
+  { value: 'ACTIVE',      label: 'Ativo'           },
+  { value: 'INACTIVE',    label: 'Inativo'         },
+  { value: 'MAINTENANCE', label: 'Em manutenção'   },
 ]
 
+const BATHROOM_TYPES = [
+  { value: 'private', label: 'Casa de banho privada'    },
+  { value: 'shared',  label: 'Casa de banho partilhada' },
+]
+
+// ─── Form state ───────────────────────────────────────────────────────────────
+
 interface FormState {
-  name: string
-  description: string
-  type: string
-  status: string
-  maxGuests: number
-  bedrooms: number
-  bathrooms: number
-  beds: number
+  name:          string
+  description:   string
+  type:          string
+  status:        string
+  maxGuests:     number
+  bedrooms:      number
+  bathrooms:     number
+  bathroomType:  string
   pricePerNight: number
-  order: number
+  order:         number
 }
 
+// ─── Page ─────────────────────────────────────────────────────────────────────
+
 export default function NewRoomPage() {
-  const router = useRouter()
-  const params = useParams<{ id: string }>()
+  const router     = useRouter()
+  const params     = useParams<{ id: string }>()
   const propertyId = params.id
 
   const [form, setForm] = useState<FormState>({
-    name: '',
-    description: '',
-    type: 'DOUBLE',
-    status: 'ACTIVE',
-    maxGuests: 2,
-    bedrooms: 1,
-    bathrooms: 1,
-    beds: 1,
+    name:          '',
+    description:   '',
+    type:          'DOUBLE',
+    status:        'ACTIVE',
+    maxGuests:     2,
+    bedrooms:      1,
+    bathrooms:     1,
+    bathroomType:  'private',
     pricePerNight: 0,
-    order: 0,
+    order:         0,
   })
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [bedsList,  setBedsList]  = useState<string[]>([])
+  const [services,  setServices]  = useState<string[]>([])
+  const [loading,   setLoading]   = useState(false)
+  const [error,     setError]     = useState<string | null>(null)
 
   function set<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((prev) => ({ ...prev, [key]: value }))
@@ -65,26 +80,26 @@ export default function NewRoomPage() {
 
     try {
       const res = await fetch(`/api/properties/${propertyId}/rooms`, {
-        method: 'POST',
+        method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...form,
           pricePerNight: Number(form.pricePerNight),
-          maxGuests: Number(form.maxGuests),
-          bedrooms: Number(form.bedrooms),
-          bathrooms: Number(form.bathrooms),
-          beds: Number(form.beds),
-          order: Number(form.order),
+          maxGuests:     Number(form.maxGuests),
+          bedrooms:      Number(form.bedrooms),
+          bathrooms:     Number(form.bathrooms),
+          order:         Number(form.order),
+          // beds derived from bedsList; fallback to 1
+          beds:          Math.max(1, bedsList.length),
+          bedsList:      bedsList.length > 0 ? JSON.stringify(bedsList) : undefined,
+          services:      services.length  > 0 ? JSON.stringify(services) : undefined,
         }),
       })
 
       const json = await res.json()
 
       if (!res.ok) {
-        const errMsg = typeof json.error === 'string'
-          ? json.error
-          : JSON.stringify(json.error)
-        setError(errMsg)
+        setError(typeof json.error === 'string' ? json.error : JSON.stringify(json.error))
         return
       }
 
@@ -113,147 +128,158 @@ export default function NewRoomPage() {
         </div>
       </div>
 
-      {/* Form */}
-      <form onSubmit={handleSubmit} className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-6">
 
-        {/* Name */}
-        <div>
-          <label className="block text-sm font-semibold text-slate-700 mb-1.5">
-            Nome do quarto <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="text"
-            required
-            value={form.name}
-            onChange={(e) => set('name', e.target.value)}
-            placeholder="ex: Quarto Duplo Vista Mar"
-            className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#8b1a1a]/30 focus:border-[#8b1a1a]"
-          />
-        </div>
+        {/* ── Informações gerais ──────────────────────────────────────── */}
+        <Section title="Informações gerais" icon="info">
 
-        {/* Description */}
-        <div>
-          <label className="block text-sm font-semibold text-slate-700 mb-1.5">Descrição</label>
-          <textarea
-            rows={3}
-            value={form.description}
-            onChange={(e) => set('description', e.target.value)}
-            placeholder="Descrição opcional do quarto..."
-            className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#8b1a1a]/30 focus:border-[#8b1a1a] resize-none"
-          />
-        </div>
-
-        {/* Type + Status */}
-        <div className="grid grid-cols-2 gap-4">
+          {/* Name */}
           <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-1.5">
-              Tipo <span className="text-red-500">*</span>
-            </label>
-            <select
+            <Label required>Nome do quarto</Label>
+            <input
+              type="text"
               required
-              value={form.type}
-              onChange={(e) => set('type', e.target.value)}
-              className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#8b1a1a]/30 focus:border-[#8b1a1a] bg-white"
-            >
-              {ROOM_TYPES.map((t) => (
-                <option key={t.value} value={t.value}>{t.label}</option>
-              ))}
-            </select>
+              value={form.name}
+              onChange={(e) => set('name', e.target.value)}
+              placeholder="ex: Quarto Duplo Vista Mar"
+              className={inputCls}
+            />
           </div>
-          <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-1.5">Estado</label>
-            <select
-              value={form.status}
-              onChange={(e) => set('status', e.target.value)}
-              className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#8b1a1a]/30 focus:border-[#8b1a1a] bg-white"
-            >
-              {ROOM_STATUSES.map((s) => (
-                <option key={s.value} value={s.value}>{s.label}</option>
-              ))}
-            </select>
-          </div>
-        </div>
 
-        {/* Guests + Price */}
-        <div className="grid grid-cols-2 gap-4">
+          {/* Description */}
           <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-1.5">
-              Hóspedes máx. <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="number"
-              required
-              min={1}
-              max={20}
-              value={form.maxGuests}
-              onChange={(e) => set('maxGuests', Number(e.target.value))}
-              className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#8b1a1a]/30 focus:border-[#8b1a1a]"
+            <Label>Descrição</Label>
+            <textarea
+              rows={3}
+              value={form.description}
+              onChange={(e) => set('description', e.target.value)}
+              placeholder="Descrição opcional do quarto..."
+              className={`${inputCls} resize-none`}
             />
           </div>
-          <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-1.5">
-              Preço por noite (€) <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="number"
-              required
-              min={0}
-              step={0.01}
-              value={form.pricePerNight}
-              onChange={(e) => set('pricePerNight', Number(e.target.value))}
-              className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#8b1a1a]/30 focus:border-[#8b1a1a]"
-            />
-          </div>
-        </div>
 
-        {/* Bedrooms + Bathrooms + Beds */}
-        <div className="grid grid-cols-3 gap-4">
-          <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-1.5">Quartos</label>
-            <input
-              type="number"
-              min={0}
-              max={20}
-              value={form.bedrooms}
-              onChange={(e) => set('bedrooms', Number(e.target.value))}
-              className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#8b1a1a]/30 focus:border-[#8b1a1a]"
-            />
+          {/* Type + Status */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label required>Tipo</Label>
+              <select
+                required
+                value={form.type}
+                onChange={(e) => set('type', e.target.value)}
+                className={`${inputCls} bg-white`}
+              >
+                {ROOM_TYPES.map((t) => (
+                  <option key={t.value} value={t.value}>{t.label}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <Label>Estado</Label>
+              <select
+                value={form.status}
+                onChange={(e) => set('status', e.target.value)}
+                className={`${inputCls} bg-white`}
+              >
+                {ROOM_STATUSES.map((s) => (
+                  <option key={s.value} value={s.value}>{s.label}</option>
+                ))}
+              </select>
+            </div>
           </div>
-          <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-1.5">WC</label>
-            <input
-              type="number"
-              min={0}
-              max={20}
-              value={form.bathrooms}
-              onChange={(e) => set('bathrooms', Number(e.target.value))}
-              className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#8b1a1a]/30 focus:border-[#8b1a1a]"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-1.5">Camas</label>
-            <input
-              type="number"
-              min={1}
-              max={20}
-              value={form.beds}
-              onChange={(e) => set('beds', Number(e.target.value))}
-              className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#8b1a1a]/30 focus:border-[#8b1a1a]"
-            />
-          </div>
-        </div>
 
-        {/* Order */}
-        <div className="w-1/3">
-          <label className="block text-sm font-semibold text-slate-700 mb-1.5">Ordem de exibição</label>
-          <input
-            type="number"
-            min={0}
-            value={form.order}
-            onChange={(e) => set('order', Number(e.target.value))}
-            className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#8b1a1a]/30 focus:border-[#8b1a1a]"
-          />
-        </div>
+          {/* Guests + Price */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label required>Hóspedes máx.</Label>
+              <input
+                type="number"
+                required
+                min={1}
+                max={20}
+                value={form.maxGuests}
+                onChange={(e) => set('maxGuests', Number(e.target.value))}
+                className={inputCls}
+              />
+            </div>
+            <div>
+              <Label required>Preço por noite (€)</Label>
+              <input
+                type="number"
+                required
+                min={0}
+                step={0.01}
+                value={form.pricePerNight}
+                onChange={(e) => set('pricePerNight', Number(e.target.value))}
+                className={inputCls}
+              />
+            </div>
+          </div>
+
+          {/* Bedrooms + Order */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label>Quartos</Label>
+              <input
+                type="number"
+                min={0}
+                max={20}
+                value={form.bedrooms}
+                onChange={(e) => set('bedrooms', Number(e.target.value))}
+                className={inputCls}
+              />
+            </div>
+            <div>
+              <Label>Ordem de exibição</Label>
+              <input
+                type="number"
+                min={0}
+                value={form.order}
+                onChange={(e) => set('order', Number(e.target.value))}
+                className={inputCls}
+              />
+            </div>
+          </div>
+        </Section>
+
+        {/* ── WC ──────────────────────────────────────────────────────── */}
+        <Section title="Casa de banho" icon="bathtub">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label required>Tipo</Label>
+              <select
+                required
+                value={form.bathroomType}
+                onChange={(e) => set('bathroomType', e.target.value)}
+                className={`${inputCls} bg-white`}
+              >
+                {BATHROOM_TYPES.map((b) => (
+                  <option key={b.value} value={b.value}>{b.label}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <Label>Nº de casas de banho</Label>
+              <input
+                type="number"
+                min={0}
+                max={20}
+                value={form.bathrooms}
+                onChange={(e) => set('bathrooms', Number(e.target.value))}
+                className={inputCls}
+              />
+            </div>
+          </div>
+        </Section>
+
+        {/* ── Camas ───────────────────────────────────────────────────── */}
+        <Section title="Camas" icon="bed">
+          <BedPicker value={bedsList} onChange={setBedsList} />
+        </Section>
+
+        {/* ── Serviços incluídos ──────────────────────────────────────── */}
+        <Section title="Serviços incluídos" icon="check_circle">
+          <ServicesChecklist value={services} onChange={setServices} />
+        </Section>
 
         {/* Error */}
         {error && (
@@ -263,7 +289,7 @@ export default function NewRoomPage() {
         )}
 
         {/* Submit */}
-        <div className="flex gap-3 pt-2">
+        <div className="flex gap-3 pb-8">
           <button
             type="submit"
             disabled={loading}
@@ -279,6 +305,36 @@ export default function NewRoomPage() {
           </Link>
         </div>
       </form>
+    </div>
+  )
+}
+
+// ─── Sub-components ───────────────────────────────────────────────────────────
+
+const inputCls =
+  'w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#8b1a1a]/30 focus:border-[#8b1a1a]'
+
+function Label({ children, required }: { children: React.ReactNode; required?: boolean }) {
+  return (
+    <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+      {children}
+      {required && <span className="text-red-500 ml-0.5">*</span>}
+    </label>
+  )
+}
+
+function Section({
+  title, icon, children,
+}: {
+  title: string; icon: string; children: React.ReactNode
+}) {
+  return (
+    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-5">
+      <h3 className="font-bold text-[#1a1a2e] flex items-center gap-2 text-sm uppercase tracking-wider">
+        <span className="material-symbols-outlined text-[#8b1a1a] text-lg">{icon}</span>
+        {title}
+      </h3>
+      {children}
     </div>
   )
 }
