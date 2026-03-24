@@ -172,7 +172,7 @@ model Booking {
   paymentIntentId  String?
   guestMessage     String?
   ownerNotes       String?
-  source           BookingSource @default(DIRECT)
+  source           BookingSource @default(WEBSITE)
   expiresAt        DateTime?
   roomId           String?
   room             Room?         @relation(fields: [roomId], references: [id])
@@ -291,7 +291,7 @@ enum PaymentStatus {
 }
 
 enum BookingSource {
-  DIRECT
+  WEBSITE
   AIRBNB
   BOOKING
   MANUAL

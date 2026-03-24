@@ -172,7 +172,7 @@ export async function GET(req: NextRequest) {
     const clients: ClientRow[] = Array.from(map.values())
       .sort((a, b) => b.lastBooking.localeCompare(a.lastBooking))
       .map(({ _srcCounts, ...rest }) => {
-        let primarySource = 'DIRECT'
+        let primarySource = 'WEBSITE'
         let maxCount = 0
         for (const [src, count] of Object.entries(_srcCounts)) {
           if (count > maxCount) { maxCount = count; primarySource = src }
