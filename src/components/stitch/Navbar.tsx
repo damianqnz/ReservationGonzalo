@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useSession, signOut } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
-import { BookOpen } from "lucide-react";
+import { BookOpen, Info, HelpCircle } from "lucide-react";
 
 // ---------------------------------------------------------------------------
 // Language selector
@@ -98,7 +98,7 @@ function UserMenu() {
               </div>
 
               <Link
-                href="/login"
+                href="/login?tab=guest"
                 role="menuitem"
                 onClick={() => setOpen(false)}
                 className="flex items-center gap-2 px-4 py-2.5 text-[14px] text-text-main hover:bg-surface transition-colors"
@@ -158,7 +158,17 @@ function UserMenu() {
           ) : (
             <>
               <Link
-                href="/mis-reservas"
+                href="/about"
+                role="menuitem"
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-2 px-4 py-2.5 text-[14px] text-text-main hover:bg-surface transition-colors"
+              >
+                <Info size={18} />
+                Sobre nós
+              </Link>
+
+              <Link
+                href="/login?tab=guest"
                 role="menuitem"
                 onClick={() => setOpen(false)}
                 className="flex items-center gap-2 px-4 py-2.5 text-[14px] text-text-main hover:bg-surface transition-colors"
@@ -246,6 +256,15 @@ export default function Navbar() {
           </a>
 
           <div className="flex items-center gap-4">
+            {/* Ajuda */}
+            <Link
+              href="/faq"
+              className="flex items-center gap-1.5 text-sm text-gray-600 hover:text-gray-900 transition-colors"
+            >
+              <HelpCircle size={16} />
+              <span className="hidden sm:inline">Ajuda</span>
+            </Link>
+
             {/* Language selector */}
             <div ref={langRef} className="relative">
               <button
