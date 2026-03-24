@@ -29,43 +29,52 @@ const faqCategories: FaqCategory[] = [
     defaultOpen: true,
     questions: [
       {
-        q: "¿Dónde puedo encontrar mi código de reserva o PIN?",
-        a: "Tu reserva está asociada a tu dirección de correo electrónico. Has recibido una confirmación de reserva por correo electrónico que incluye tu ID de reserva y tu código PIN.",
+        q: "¿Onde posso encontrar o meu código de reserva ou PIN?",
+        a: "A sua reserva está associada ao seu endereço de e-mail. Você recebeu uma confirmação de reserva por e-mail que inclui o seu ID de reserva e o seu código PIN.",
       },
-      { q: "¿Cómo puedo ponerme en contacto con ustedes?" },
-      { q: "¿Cómo puedo ampliar mi reserva?" },
-      { q: "¿Cómo puedo anular mi reserva?" },
+      {
+        q: "¿Cómo posso entrar em contato com vocês?",
+        a: "Você pode entrar em contato conosco através do nosso site, e-mail ou telefone.",
+      },
+      {
+        q: "¿Cómo posso estender a minha reserva?",
+        a: "Se tiver as datas disponiveis que deseja estender, pode fazer uma nova reserva. Caso contrario não é possível",
+      },
+      {
+        q: "¿Cómo posso cancelar a minha reserva?",
+        a: "Sua reserva pode ser cancelada até 5 dias antes do check-in. Caso contrario nao e possivel",
+      },
     ],
   },
   {
     type: "content",
     title: "Precios y descuentos",
     content:
-      "Información detallada sobre nuestras políticas de precios, descuentos por larga estancia y promociones de temporada.",
+      "Informacao detalhada sobre nossas políticas de preços, descontos por longa estadia e promociones de temporada.",
   },
   {
     type: "content",
     title: "Llegada y salida",
     content:
-      "Protocolos de check-in, horarios de check-out y acceso mediante cerraduras inteligentes o llaves físicas.",
+      "Protocolos de check-in, horarios de check-out e acesso mediante fechaduras inteligentes ou chaves físicas.",
   },
   {
     type: "content",
     title: "Pagos y devoluciones",
     content:
-      "Métodos de pago aceptados, cronogramas de facturación y política de reembolsos ante cancelaciones.",
+      "Métodos de pagamento aceites, cronogramas de facturação e política de reembolsos ante cancelaciones.",
   },
   {
     type: "content",
     title: "Características y servicios de la propiedad",
     content:
-      "Detalles sobre WiFi, electrodomésticos, servicios de limpieza y suministros incluidos en la propiedad.",
+      "Detalhes sobre WiFi, eletrodomésticos, serviços de limpeza e suministros incluídos na propriedade.",
   },
   {
     type: "content",
     title: "Iniciar sesión o Crear una cuenta",
     content:
-      "Guía para gestionar tu perfil personal, ver historial de reservas y guardar tus propiedades favoritas.",
+      "Guia para gerenciar seu perfil pessoal, ver histórico de reservas e salvar suas propriedades favoritas.",
   },
 ];
 
