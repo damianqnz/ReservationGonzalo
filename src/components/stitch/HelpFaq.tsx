@@ -78,44 +78,9 @@ export default function HelpFaq() {
 
   return (
     <div className="bg-white text-text-main antialiased">
-      {/* Navbar */}
-      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-100">
-        <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-          <span className="text-xl font-bold tracking-tight font-display">
-            ReservationGonzalo
-          </span>
-          <div className="flex items-center gap-6">
-            <div className="hidden md:flex items-center gap-6 mr-2">
-              <a
-                href="#"
-                className="text-sm font-medium hover:text-primary transition-colors"
-              >
-                Ayuda
-              </a>
-              <div className="flex items-center gap-2 text-xs font-semibold text-text-muted border-x border-gray-100 px-6">
-                <button className="hover:text-primary transition-colors">
-                  PT
-                </button>
-                <span className="text-gray-300">|</span>
-                <button className="text-text-main">EN</button>
-                <span className="text-gray-300">|</span>
-                <button className="hover:text-primary transition-colors">
-                  ES
-                </button>
-              </div>
-            </div>
-            <button className="p-2 hover:bg-surface rounded-lg transition-colors">
-              <span className="material-symbols-outlined align-middle">
-                menu
-              </span>
-            </button>
-          </div>
-        </nav>
-      </header>
-
       <main>
         {/* Hero Section */}
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="bg-accent/10 rounded-[2.5rem] p-8 md:p-16 flex flex-col md:flex-row items-center justify-between gap-12">
             <div className="max-w-2xl text-center md:text-left order-2 md:order-1">
               <span className="text-xs font-bold tracking-widest uppercase text-text-muted mb-4 block">
