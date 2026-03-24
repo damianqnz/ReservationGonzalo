@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { signIn } from 'next-auth/react'
 import { Ticket, Mail, ArrowRight, AlertCircle } from 'lucide-react'
 
@@ -10,9 +10,13 @@ type GuestSubTab = 'code' | 'email'
 
 export default function LoginScreen() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const tabParam = searchParams.get('tab')
 
   // Main tabs
-  const [activeTab, setActiveTab] = useState<Tab>('owner')
+  const [activeTab, setActiveTab] = useState<Tab>(
+    tabParam === 'guest' ? 'guest' : 'owner'
+  )
 
   // Tab 1 — credentials login
   const [ownerEmail, setOwnerEmail] = useState('')
