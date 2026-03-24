@@ -68,44 +68,9 @@ function StarRow({ count = 5 }: { count?: number }) {
 export default function AboutUs() {
   return (
     <div className="bg-white text-text-main antialiased overflow-x-hidden">
-      {/* TopNavBar */}
-      <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-100 h-20">
-        <div className="max-w-7xl mx-auto px-6 h-full flex items-center justify-between">
-          <span className="text-xl font-bold tracking-tight font-display">
-            ReservationGonzalo
-          </span>
-          <div className="flex items-center gap-6">
-            <div className="hidden md:flex items-center gap-6 mr-2">
-              <a
-                href="#"
-                className="text-sm font-medium hover:text-primary transition-colors"
-              >
-                Ayuda
-              </a>
-              <div className="flex items-center gap-2 text-xs font-semibold text-text-muted border-x border-gray-100 px-6">
-                <button className="hover:text-primary transition-colors">
-                  PT
-                </button>
-                <span className="text-gray-300">|</span>
-                <button className="text-text-main">EN</button>
-                <span className="text-gray-300">|</span>
-                <button className="hover:text-primary transition-colors">
-                  ES
-                </button>
-              </div>
-            </div>
-            <button className="p-2 hover:bg-surface rounded-lg transition-colors">
-              <span className="material-symbols-outlined align-middle">
-                menu
-              </span>
-            </button>
-          </div>
-        </div>
-      </nav>
-
       <main>
         {/* Hero Section */}
-        <section className="py-20 lg:py-32 px-6 overflow-hidden">
+        <section className="py-5 px-6 overflow-hidden">
           <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-16 items-center">
             <div className="space-y-8">
               <h1 className="font-display text-5xl lg:text-7xl font-extrabold leading-[1.1] tracking-tight">
