@@ -1,4 +1,4 @@
-import { PrismaClient, Role, PropertyType, PropertyStatus, CancellationPolicy, AmenityCategory, BookingStatus, PaymentStatus, BookingSource, NotificationType, RoomType, RoomStatus } from "@prisma/client";
+import { PrismaClient, Role, PropertyType, PropertyStatus, CancellationPolicy, AmenityCategory, BookingStatus, PaymentStatus, BookingSource, NotificationType, RoomType } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
@@ -10,6 +10,9 @@ async function main() {
   await prisma.searchEvent.deleteMany();
   await prisma.notification.deleteMany();
   await prisma.review.deleteMany();
+  await prisma.guestAccess.deleteMany();
+  await prisma.couponUsage.deleteMany();
+  await prisma.coupon.deleteMany();
   await prisma.booking.deleteMany();
   await prisma.blockedDate.deleteMany();
   await prisma.propertyAmenity.deleteMany();
@@ -441,7 +444,7 @@ async function main() {
       paymentStatus: PaymentStatus.PAID,
       paymentIntentId: "pi_test_001",
       guestMessage: "Venimos a Lisboa por vacaciones, somos una pareja.",
-      source: BookingSource.DIRECT,
+      source: BookingSource.WEBSITE,
     },
   });
 
@@ -465,7 +468,7 @@ async function main() {
       paymentStatus: PaymentStatus.PAID,
       paymentIntentId: "pi_test_002",
       guestMessage: "Celebración familiar, somos 6 adultos.",
-      source: BookingSource.DIRECT,
+      source: BookingSource.BOOKING,
     },
   });
 
@@ -490,7 +493,7 @@ async function main() {
       paymentStatus: PaymentStatus.PAID,
       paymentIntentId: "pi_test_003",
       guestMessage: "Visitamos Lisboa por primera vez. ¿Hay aparcamiento cerca?",
-      source: BookingSource.DIRECT,
+      source: BookingSource.WEBSITE,
     },
   });
 
@@ -512,7 +515,7 @@ async function main() {
       currency: "EUR",
       status: BookingStatus.PENDING,
       paymentStatus: PaymentStatus.UNPAID,
-      source: BookingSource.DIRECT,
+      source: BookingSource.WEBSITE,
     },
   });
 
@@ -536,7 +539,7 @@ async function main() {
       status: BookingStatus.CANCELLED,
       paymentStatus: PaymentStatus.REFUNDED,
       paymentIntentId: "pi_test_005",
-      source: BookingSource.DIRECT,
+      source: BookingSource.AIRBNB,
     },
   });
 
@@ -572,7 +575,7 @@ async function main() {
         createdAt: new Date('2025-06-02'),
       },
       {
-        // B08 — property2 direct, DIRECT, FR, Sep 2025, 10 nights, 30-day lead
+        // B08 — property2 WEBSITE, AIRBNB, FR, Sep 2025, 10 nights, 30-day lead
         propertyId: property2.id,
         confirmationCode: 'CONF-2025-008',
         guestName: 'Claire Dubois', guestEmail: 'claire.dubois@email.fr',
@@ -580,7 +583,7 @@ async function main() {
         checkIn: new Date('2025-09-12'), checkOut: new Date('2025-09-22'), nights: 10,
         pricePerNight: 350, cleaningFee: 80, securityDeposit: 500, totalPrice: 4080,
         currency: 'EUR', status: BookingStatus.COMPLETED, paymentStatus: PaymentStatus.PAID,
-        paymentIntentId: 'pi_test_008', source: BookingSource.DIRECT,
+        paymentIntentId: 'pi_test_008', source: BookingSource.AIRBNB,
         createdAt: new Date('2025-08-13'),
       },
       {
@@ -596,7 +599,7 @@ async function main() {
         createdAt: new Date('2025-09-28'),
       },
       {
-        // B10 — property3 direct, DIRECT, ES, Nov 2025, 4 nights, 20-day lead
+        // B10 — property3 WEBSITE, WEBSITE, ES, Nov 2025, 4 nights, 20-day lead
         propertyId: property3.id,
         confirmationCode: 'CONF-2025-010',
         guestName: 'Pablo Sánchez', guestEmail: 'pablo.sanchez@email.es',
@@ -604,7 +607,7 @@ async function main() {
         checkIn: new Date('2025-11-15'), checkOut: new Date('2025-11-19'), nights: 4,
         pricePerNight: 75, cleaningFee: 25, securityDeposit: 100, totalPrice: 425,
         currency: 'EUR', status: BookingStatus.COMPLETED, paymentStatus: PaymentStatus.PAID,
-        paymentIntentId: 'pi_test_010', source: BookingSource.DIRECT,
+        paymentIntentId: 'pi_test_010', source: BookingSource.WEBSITE,
         createdAt: new Date('2025-10-26'),
       },
 
@@ -622,7 +625,7 @@ async function main() {
         createdAt: new Date('2025-12-09'),
       },
       {
-        // B12 — room4 (ENTIRE_PLACE), DIRECT, DE, Feb 2026, 5 nights, 14-day lead
+        // B12 — room4 (ENTIRE_PLACE), BOOKING, DE, Feb 2026, 5 nights, 14-day lead
         propertyId: property1.id, roomId: room4.id,
         confirmationCode: 'CONF-2026-012',
         guestName: 'Lukas Weber', guestEmail: 'lukas.weber@email.de',
@@ -630,11 +633,11 @@ async function main() {
         checkIn: new Date('2026-02-14'), checkOut: new Date('2026-02-19'), nights: 5,
         pricePerNight: 250, cleaningFee: 35, securityDeposit: 200, totalPrice: 1485,
         currency: 'EUR', status: BookingStatus.COMPLETED, paymentStatus: PaymentStatus.PAID,
-        paymentIntentId: 'pi_test_012', source: BookingSource.DIRECT,
+        paymentIntentId: 'pi_test_012', source: BookingSource.BOOKING,
         createdAt: new Date('2026-01-31'),
       },
       {
-        // B13 — property2 direct, BOOKING, NL, Mar 2026, 7 nights, 30-day lead (upcoming)
+        // B13 — property2 WEBSITE, BOOKING, NL, Mar 2026, 7 nights, 30-day lead (upcoming)
         propertyId: property2.id,
         confirmationCode: 'CONF-2026-013',
         guestName: 'Marta van der Berg', guestEmail: 'm.vanderberg@email.nl',
@@ -646,7 +649,7 @@ async function main() {
         createdAt: new Date('2026-02-23'),
       },
       {
-        // B14 — room1 (DOUBLE), DIRECT, IT, Feb 2026, 3 nights, 21-day lead
+        // B14 — room1 (DOUBLE), WEBSITE, IT, Feb 2026, 3 nights, 21-day lead
         propertyId: property1.id, roomId: room1.id,
         confirmationCode: 'CONF-2026-014',
         guestName: 'Francesca Romano', guestEmail: 'f.romano@email.it',
@@ -654,7 +657,7 @@ async function main() {
         checkIn: new Date('2026-02-22'), checkOut: new Date('2026-02-25'), nights: 3,
         pricePerNight: 80, cleaningFee: 35, securityDeposit: 200, totalPrice: 475,
         currency: 'EUR', status: BookingStatus.COMPLETED, paymentStatus: PaymentStatus.PAID,
-        paymentIntentId: 'pi_test_014', source: BookingSource.DIRECT,
+        paymentIntentId: 'pi_test_014', source: BookingSource.WEBSITE,
         createdAt: new Date('2026-02-01'),
       },
       {
@@ -670,7 +673,7 @@ async function main() {
         createdAt: new Date('2026-03-11'),
       },
       {
-        // B16 — property2 direct, DIRECT, ES, May 2026, 8 nights, 50-day lead
+        // B16 — property2 WEBSITE, WEBSITE, ES, May 2026, 8 nights, 50-day lead
         propertyId: property2.id,
         confirmationCode: 'CONF-2026-016',
         guestName: 'Javier López', guestEmail: 'j.lopez@email.es',
@@ -678,7 +681,7 @@ async function main() {
         checkIn: new Date('2026-05-03'), checkOut: new Date('2026-05-11'), nights: 8,
         pricePerNight: 350, cleaningFee: 80, securityDeposit: 500, totalPrice: 3380,
         currency: 'EUR', status: BookingStatus.CONFIRMED, paymentStatus: PaymentStatus.PAID,
-        paymentIntentId: 'pi_test_016', source: BookingSource.DIRECT,
+        paymentIntentId: 'pi_test_016', source: BookingSource.WEBSITE,
         createdAt: new Date('2026-03-14'),
       },
       {
@@ -694,7 +697,7 @@ async function main() {
         createdAt: new Date('2026-04-21'),
       },
       {
-        // B18 — room2 (SUITE), DIRECT, FR, Jul 2026, 3 nights, 45-day lead
+        // B18 — room2 (SUITE), AIRBNB, FR, Jul 2026, 3 nights, 45-day lead
         propertyId: property1.id, roomId: room2.id,
         confirmationCode: 'CONF-2026-018',
         guestName: 'Emma Leroy', guestEmail: 'e.leroy@email.fr',
@@ -702,7 +705,7 @@ async function main() {
         checkIn: new Date('2026-07-05'), checkOut: new Date('2026-07-08'), nights: 3,
         pricePerNight: 120, cleaningFee: 35, securityDeposit: 200, totalPrice: 595,
         currency: 'EUR', status: BookingStatus.CONFIRMED, paymentStatus: PaymentStatus.PAID,
-        paymentIntentId: 'pi_test_018', source: BookingSource.DIRECT,
+        paymentIntentId: 'pi_test_018', source: BookingSource.AIRBNB,
         createdAt: new Date('2026-05-21'),
       },
       {
@@ -718,7 +721,7 @@ async function main() {
         createdAt: new Date('2026-06-30'),
       },
       {
-        // B20 — property2 direct, BOOKING, BR, Aug 2026, 14 nights, 90-day lead
+        // B20 — property2 WEBSITE, BOOKING, BR, Aug 2026, 14 nights, 90-day lead
         propertyId: property2.id,
         confirmationCode: 'CONF-2026-020',
         guestName: 'Rafael Oliveira', guestEmail: 'r.oliveira@email.com.br',
@@ -730,7 +733,7 @@ async function main() {
         createdAt: new Date('2026-05-03'),
       },
       {
-        // B21 — room1 (DOUBLE), BOOKING, ES, Sep 2026, 4 nights — CANCELLED
+        // B21 — room1 (DOUBLE), MANUAL, ES, Sep 2026, 4 nights — CANCELLED
         propertyId: property1.id, roomId: room1.id,
         confirmationCode: 'CONF-2026-021',
         guestName: 'Alejandro Torres', guestEmail: 'a.torres@email.es',
@@ -738,11 +741,11 @@ async function main() {
         checkIn: new Date('2026-09-10'), checkOut: new Date('2026-09-14'), nights: 4,
         pricePerNight: 80, cleaningFee: 35, securityDeposit: 200, totalPrice: 555,
         currency: 'EUR', status: BookingStatus.CANCELLED, paymentStatus: PaymentStatus.REFUNDED,
-        paymentIntentId: 'pi_test_021', source: BookingSource.BOOKING,
+        paymentIntentId: 'pi_test_021', source: BookingSource.MANUAL,
         createdAt: new Date('2026-08-11'),
       },
       {
-        // B22 — room4 (ENTIRE_PLACE), DIRECT, NL, Aug 2026, 6 nights, 60-day lead
+        // B22 — room4 (ENTIRE_PLACE), WEBSITE, NL, Aug 2026, 6 nights, 60-day lead
         propertyId: property1.id, roomId: room4.id,
         confirmationCode: 'CONF-2026-022',
         guestName: 'Lars Jansen', guestEmail: 'l.jansen@email.nl',
@@ -750,11 +753,11 @@ async function main() {
         checkIn: new Date('2026-08-20'), checkOut: new Date('2026-08-26'), nights: 6,
         pricePerNight: 250, cleaningFee: 35, securityDeposit: 200, totalPrice: 1735,
         currency: 'EUR', status: BookingStatus.CONFIRMED, paymentStatus: PaymentStatus.PAID,
-        paymentIntentId: 'pi_test_022', source: BookingSource.DIRECT,
+        paymentIntentId: 'pi_test_022', source: BookingSource.WEBSITE,
         createdAt: new Date('2026-06-21'),
       },
       {
-        // B23 — property3 direct, DIRECT, IT, Jun 2026, 3 nights — CANCELLED (unpaid)
+        // B23 — property3 WEBSITE, BOOKING, IT, Jun 2026, 3 nights — CANCELLED (unpaid)
         propertyId: property3.id,
         confirmationCode: 'CONF-2026-023',
         guestName: 'Giulia Conti', guestEmail: 'g.conti@email.it',
@@ -762,7 +765,7 @@ async function main() {
         checkIn: new Date('2026-06-05'), checkOut: new Date('2026-06-08'), nights: 3,
         pricePerNight: 75, cleaningFee: 25, securityDeposit: 100, totalPrice: 350,
         currency: 'EUR', status: BookingStatus.CANCELLED, paymentStatus: PaymentStatus.UNPAID,
-        source: BookingSource.DIRECT,
+        source: BookingSource.BOOKING,
         createdAt: new Date('2026-05-16'),
       },
       {
@@ -778,7 +781,7 @@ async function main() {
         createdAt: new Date('2026-09-10'),
       },
       {
-        // B25 — property3 direct, DIRECT, GB, Dec 2026, 5 nights, 60-day lead
+        // B25 — property3 WEBSITE, WEBSITE, GB, Dec 2026, 5 nights, 60-day lead
         propertyId: property3.id,
         confirmationCode: 'CONF-2026-025',
         guestName: 'William Taylor', guestEmail: 'w.taylor@email.co.uk',
@@ -786,7 +789,7 @@ async function main() {
         checkIn: new Date('2026-12-23'), checkOut: new Date('2026-12-28'), nights: 5,
         pricePerNight: 75, cleaningFee: 25, securityDeposit: 100, totalPrice: 500,
         currency: 'EUR', status: BookingStatus.CONFIRMED, paymentStatus: PaymentStatus.PAID,
-        paymentIntentId: 'pi_test_025', source: BookingSource.DIRECT,
+        paymentIntentId: 'pi_test_025', source: BookingSource.WEBSITE,
         createdAt: new Date('2026-10-24'),
       },
     ],

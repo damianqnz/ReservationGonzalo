@@ -187,13 +187,13 @@ export async function GET(req: NextRequest) {
     }
 
     const SOURCE_LABELS: Record<string, string> = {
-      DIRECT: 'Website', AIRBNB: 'Airbnb', BOOKING: 'Booking', MANUAL: 'Manual',
+      WEBSITE: 'Website', AIRBNB: 'Airbnb', BOOKING: 'Booking', MANUAL: 'Manual',
     }
 
     const clients = Array.from(map.values())
       .sort((a, b) => b.lastBooking.localeCompare(a.lastBooking))
       .map(({ _srcCounts, ...rest }) => {
-        let primarySource = 'DIRECT'
+        let primarySource = 'WEBSITE'
         let maxCount = 0
         for (const [src, count] of Object.entries(_srcCounts)) {
           if (count > maxCount) { maxCount = count; primarySource = src }

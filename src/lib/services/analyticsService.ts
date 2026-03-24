@@ -116,13 +116,13 @@ const COUNTRY_NAMES: Record<string, string> = {
 const REVENUE_STATUSES: BookingStatus[] = [BookingStatus.CONFIRMED, BookingStatus.COMPLETED]
 
 const FEE_RATES: Record<string, number> = {
-  DIRECT:  0.03,
+  WEBSITE: 0.03,
   AIRBNB:  0.15,
   BOOKING: 0.15,
   MANUAL:  0.00,
 }
 const FEE_LABELS: Record<string, string> = {
-  DIRECT: '3%', AIRBNB: '15%', BOOKING: '15%', MANUAL: '0%',
+  WEBSITE: '3%', AIRBNB: '15%', BOOKING: '15%', MANUAL: '0%',
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -317,7 +317,7 @@ export async function computeAnalytics(
   // ── bySource ───────────────────────────────────────────────────────────────
   const sourceMap = new Map<string, number>()
   for (const b of revenueBookings) {
-    const s = b.source ?? 'DIRECT'
+    const s = b.source ?? 'WEBSITE'
     sourceMap.set(s, (sourceMap.get(s) ?? 0) + 1)
   }
   const bySource = [...sourceMap.entries()].map(([source, count]) => ({ source, count }))
@@ -474,7 +474,7 @@ export async function computeAnalytics(
   // ── netAdrByChannel ────────────────────────────────────────────────────────
   const channelMap = new Map<string, { bookings: number; grossRevenue: number; totalNights: number }>()
   for (const b of revenueBookings) {
-    const s = b.source ?? 'DIRECT'
+    const s = b.source ?? 'WEBSITE'
     const e = channelMap.get(s) ?? { bookings: 0, grossRevenue: 0, totalNights: 0 }
     e.bookings++
     e.grossRevenue += b.totalPrice
@@ -503,7 +503,7 @@ export async function computeAnalytics(
   // ── cancellationByChannel ──────────────────────────────────────────────────
   const cancChannelMap = new Map<string, { total: number; cancelled: number }>()
   for (const b of allBookings) {
-    const s = b.source ?? 'DIRECT'
+    const s = b.source ?? 'WEBSITE'
     const e = cancChannelMap.get(s) ?? { total: 0, cancelled: 0 }
     e.total++
     if (b.status === BookingStatus.CANCELLED) e.cancelled++

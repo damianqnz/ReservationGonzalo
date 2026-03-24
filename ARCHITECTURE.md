@@ -9,7 +9,7 @@ booking system. Built to scale to multiple properties in the future.
 
 Target market: Portugal (EUR, Portuguese/English bilingual)
 Legal context: Alojamento Local (AL) — Portuguese short-term rental law
-Tax context: IVA 23% on accommodation services
+Tax context: IVA 6% on accommodation services
 
 ---
 
