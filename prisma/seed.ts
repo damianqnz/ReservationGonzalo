@@ -869,7 +869,7 @@ async function main() {
         userId: owner.id,
         type: NotificationType.NEW_BOOKING,
         title: "Nueva reserva confirmada",
-        message: `Sophie Müller ha reservado el Apartamento Chiado del 20 al 25 de marzo.`,
+        message: "Sophie Müller ha reservado el Apartamento Chiado del 20 al 25 de marzo.",
         data: { bookingId: booking3.id, propertyId: property1.id },
         isRead: false,
       },
@@ -885,7 +885,7 @@ async function main() {
         userId: owner.id,
         type: NotificationType.NEW_BOOKING,
         title: "Reserva pendiente de pago",
-        message: `Luca Rossi ha iniciado una reserva para el Estudio Oporto del 28 al 31 de marzo.`,
+        message: "Luca Rossi ha iniciado una reserva para el Estudio Oporto del 28 al 31 de marzo.",
         data: { bookingId: booking4.id, propertyId: property3.id },
         isRead: false,
       },
@@ -939,12 +939,12 @@ async function main() {
   // ─── Summary ─────────────────────────────────────────────────────────────────
   console.log("\n✅ Seed completed successfully!");
   console.log("─────────────────────────────────────────");
-  console.log(`👤 Users:         3 (2 admin, 1 owner)`);
-  console.log(`🛎️  Amenities:     ${amenities.length}`);
-  console.log(`🏠 Properties:    3 (Chiado, Algarve, Oporto)`);
-  console.log(`🏨 Rooms:         4 (Chiado)`);
-  console.log(`📅 Bookings:      25 (5 original + 20 analytics)`);
-  console.log(`⭐ Reviews:       2`);
+  console.log(`👤 Users: 3 (2 admin, 1 owner)`);
+  console.log(`🛎️  Amenities: ${amenities.length}`);
+  console.log(`🏠 Properties: 3 (Chiado, Algarve, Oporto)`);
+  console.log(`🏨 Rooms: 4 (Chiado)`);
+  console.log(`📅 Bookings: 25 (5 original + 20 analytics)`);
+  console.log(`⭐ Reviews: 2`);
   console.log(`🔔 Notifications: 5`);
   console.log(`🔍 Search events: 15 (look-to-book tracking)`);
   console.log("─────────────────────────────────────────");
