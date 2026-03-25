@@ -36,6 +36,8 @@ export default async function PropertyEditPage({ params }: PageProps) {
       floor:              true,
       accessInstructions: true,
       contactPhone:       true,
+      latitude:           true,
+      longitude:          true,
     },
   })
 

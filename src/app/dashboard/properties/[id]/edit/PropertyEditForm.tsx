@@ -2,6 +2,14 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import dynamic from 'next/dynamic'
+
+const PropertyMapWrapper = dynamic(() => import('@/components/ui/PropertyMapWrapper'), {
+  ssr: false,
+  loading: () => (
+    <div className="h-[200px] bg-slate-100 rounded-lg animate-pulse" />
+  ),
+})
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -24,6 +32,8 @@ interface PropertyData {
   floor:              string | null
   accessInstructions: string | null
   contactPhone:       string | null
+  latitude:           number | null
+  longitude:          number | null
 }
 
 interface Props {
@@ -38,6 +48,8 @@ export default function PropertyEditForm({ property: initial }: Props) {
   const [saving, setSaving] = useState(false)
   const [toast, setToast]  = useState<'success' | 'error' | null>(null)
   const [showWifiPass, setShowWifiPass] = useState(false)
+  const [geocoding, setGeocoding] = useState(false)
+  const [geocodeError, setGeocodeError] = useState<string | null>(null)
 
   function field(name: keyof PropertyData) {
     return {
@@ -75,6 +87,8 @@ export default function PropertyEditForm({ property: initial }: Props) {
           floor:              form.floor              || null,
           accessInstructions: form.accessInstructions || null,
           contactPhone:       form.contactPhone       || null,
+          latitude:           form.latitude  ?? null,
+          longitude:          form.longitude ?? null,
         }),
       })
 
@@ -89,6 +103,30 @@ export default function PropertyEditForm({ property: initial }: Props) {
     } finally {
       setSaving(false)
       setTimeout(() => setToast(null), 4000)
+    }
+  }
+
+  async function handleGeocode() {
+    setGeocoding(true)
+    setGeocodeError(null)
+    try {
+      const params = new URLSearchParams({
+        address: form.address,
+        city: form.city,
+      })
+      const res = await fetch(`/api/geocode?${params.toString()}`)
+      const json = await res.json()
+      if (!res.ok || !json.data) {
+        setGeocodeError(
+          typeof json.error === 'string' ? json.error : 'Endereço não encontrado.',
+        )
+        return
+      }
+      setForm((prev) => ({ ...prev, latitude: json.data.lat, longitude: json.data.lng }))
+    } catch {
+      setGeocodeError('Erro de ligação. Tente novamente.')
+    } finally {
+      setGeocoding(false)
     }
   }
 
@@ -219,6 +257,62 @@ export default function PropertyEditForm({ property: initial }: Props) {
             />
           </div>
         </div>
+      </section>
+
+      {/* ── Localização ────────────────────────────────────────────────────── */}
+      <section>
+        <div className="flex items-center gap-2 mb-4">
+          <span className="material-symbols-outlined text-[#8b1a1a]">location_on</span>
+          <h2 className="text-lg font-bold text-[#1a1a2e]">Localização no Mapa</h2>
+        </div>
+        <p className="text-sm text-slate-500 mb-6">
+          As coordenadas são usadas para mostrar a localização aproximada aos hóspedes.
+          A morada exata nunca é revelada publicamente.
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <div>
+            <Label>Latitude</Label>
+            <input
+              type="number"
+              step="any"
+              readOnly
+              value={form.latitude ?? ''}
+              placeholder="Ex: 38.7169"
+              className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm bg-slate-50 text-slate-500 outline-none cursor-not-allowed"
+            />
+          </div>
+          <div>
+            <Label>Longitude</Label>
+            <input
+              type="number"
+              step="any"
+              readOnly
+              value={form.longitude ?? ''}
+              placeholder="Ex: -9.1399"
+              className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm bg-slate-50 text-slate-500 outline-none cursor-not-allowed"
+            />
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={handleGeocode}
+          disabled={geocoding || !form.city}
+          className="flex items-center gap-2 px-4 py-2 text-sm font-semibold bg-slate-100 hover:bg-slate-200 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed mb-4"
+        >
+          <span className="material-symbols-outlined text-base">my_location</span>
+          {geocoding ? 'A geocodificar...' : 'Geocodificar endereço'}
+        </button>
+        {geocodeError && (
+          <p className="text-sm text-red-600 mb-4">{geocodeError}</p>
+        )}
+        {form.latitude && form.longitude && (
+          <PropertyMapWrapper
+            lat={form.latitude}
+            lng={form.longitude}
+            propertyTitle={form.title}
+            radius={300}
+          />
+        )}
       </section>
 
       {/* ── Submit ─────────────────────────────────────────────────────────── */}
