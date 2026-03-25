@@ -4,7 +4,15 @@ import { useEffect, useRef, useState } from "react";
 import { useSession, signOut } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
-import { BookOpen, Info, HelpCircle } from "lucide-react";
+import {
+  BookOpen,
+  Info,
+  HelpCircle,
+  LayoutDashboard,
+  Settings,
+  LogOut,
+  UserCircle,
+} from "lucide-react";
 
 // ---------------------------------------------------------------------------
 // Language selector
@@ -22,8 +30,17 @@ type LangCode = (typeof LANGUAGES)[number]["code"];
 // User avatar helpers
 // ---------------------------------------------------------------------------
 
-function UserAvatar({ image, name }: { image?: string | null; name?: string | null }) {
+function UserAvatar({
+  image,
+  name,
+  role,
+}: {
+  image?: string | null;
+  name?: string | null;
+  role?: string | null;
+}) {
   const initial = name?.charAt(0).toUpperCase() ?? "?";
+  const isOwnerOrAdmin = role === "OWNER" || role === "ADMIN";
 
   if (image) {
     return (
@@ -37,8 +54,16 @@ function UserAvatar({ image, name }: { image?: string | null; name?: string | nu
     );
   }
 
+  if (!role) {
+    return <UserCircle className="w-8 h-8 text-gray-600" />;
+  }
+
   return (
-    <span className="w-8 h-8 rounded-full bg-primary text-white text-[13px] font-bold flex items-center justify-center">
+    <span
+      className={`w-8 h-8 rounded-full ${
+        isOwnerOrAdmin ? "bg-[#8b1a1a]" : "bg-gray-400"
+      } text-white text-[13px] font-bold flex items-center justify-center`}
+    >
       {initial}
     </span>
   );
@@ -63,7 +88,14 @@ function UserMenu() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const isOwner = session?.user?.role === "OWNER";
+  const role = session?.user?.role;
+  const isOwnerOrAdmin = role === "OWNER" || role === "ADMIN";
+  const isGuest = role === "GUEST";
+  const isLoggedIn = !!session;
+  const userName = session?.user?.name ?? "";
+  const userEmail = session?.user?.email ?? "";
+  const badgeLabel =
+    role === "OWNER" ? "Proprietário" : role === "ADMIN" ? "Admin" : null;
 
   return (
     <div ref={ref} className="relative">
@@ -72,14 +104,21 @@ function UserMenu() {
         aria-label="Menú de usuario"
         aria-haspopup="menu"
         aria-expanded={open}
-        className="flex items-center gap-1 text-text-main hover:text-primary transition-colors"
+        className="flex items-center gap-2 text-text-main hover:text-primary transition-colors"
       >
-        {session ? (
-          <UserAvatar image={session.user?.image} name={session.user?.name} />
-        ) : (
-          <span className="flex items-center gap-0.5">
-            <span className="material-symbols-outlined text-[24px]">account_circle</span>
-            <span className="material-symbols-outlined text-[16px]">menu</span>
+        <UserAvatar
+          image={session?.user?.image}
+          name={session?.user?.name}
+          role={role}
+        />
+        {badgeLabel && (
+          <span className="hidden sm:inline text-[10px] font-medium bg-[#8b1a1a]/10 text-[#8b1a1a] px-2 py-0.5 rounded-full">
+            {badgeLabel}
+          </span>
+        )}
+        {!isLoggedIn && (
+          <span className="material-symbols-outlined text-[16px] leading-none">
+            menu
           </span>
         )}
       </button>
@@ -87,75 +126,54 @@ function UserMenu() {
       {open && (
         <div
           role="menu"
-          className="absolute right-0 mt-2 min-w-[180px] bg-white border border-surface rounded-lg shadow-md py-1 z-50
+          className="absolute right-0 mt-2 min-w-[200px] bg-white border border-surface rounded-lg shadow-md py-1 z-50
             animate-in fade-in slide-in-from-top-1 duration-150"
         >
-          {session ? (
+          {/* User display name — only when logged in */}
+          {isLoggedIn && (
+            <div className="px-4 py-2 text-[12px] text-text-muted font-medium truncate border-b border-surface">
+              {userName || userEmail}
+            </div>
+          )}
+
+          {/* ── OWNER / ADMIN menu ─────────────────────────────────────────── */}
+          {isOwnerOrAdmin && (
             <>
-              {/* Nombre del usuario */}
-              <div className="px-4 py-2 text-[12px] text-text-muted font-medium truncate border-b border-surface">
-                {session.user?.name ?? session.user?.email}
-              </div>
-
               <Link
-                href="/login?tab=guest"
+                href="/dashboard"
                 role="menuitem"
                 onClick={() => setOpen(false)}
                 className="flex items-center gap-2 px-4 py-2.5 text-[14px] text-text-main hover:bg-surface transition-colors"
               >
-                <BookOpen size={18} />
-                As minhas reservas
+                <LayoutDashboard size={18} />
+                Dashboard
               </Link>
-
               <Link
-                href="/mis-reservas"
+                href="/dashboard/settings"
                 role="menuitem"
                 onClick={() => setOpen(false)}
                 className="flex items-center gap-2 px-4 py-2.5 text-[14px] text-text-main hover:bg-surface transition-colors"
               >
-                <span className="material-symbols-outlined text-[18px]">calendar_month</span>
-                Mis reservas
+                <Settings size={18} />
+                O meu perfil
               </Link>
-
-              {isOwner && (
-                <Link
-                  href="/dashboard/settings"
-                  role="menuitem"
-                  onClick={() => setOpen(false)}
-                  className="flex items-center gap-2 px-4 py-2.5 text-[14px] text-text-main hover:bg-surface transition-colors"
-                >
-                  <span className="material-symbols-outlined text-[18px]">manage_accounts</span>
-                  Perfil
-                </Link>
-              )}
-
-              {isOwner && (
-                <Link
-                  href="/dashboard"
-                  role="menuitem"
-                  onClick={() => setOpen(false)}
-                  className="flex items-center gap-2 px-4 py-2.5 text-[14px] text-text-main hover:bg-surface transition-colors"
-                >
-                  <span className="material-symbols-outlined text-[18px]">dashboard</span>
-                  Dashboard
-                </Link>
-              )}
-
               <div className="border-t border-surface my-1" />
-
               <button
                 role="menuitem"
                 onClick={() => {
                   setOpen(false);
-                  signOut({ callbackUrl: "/" });
+                  void signOut({ callbackUrl: "/login" });
                 }}
                 className="w-full flex items-center gap-2 px-4 py-2.5 text-[14px] text-[#8b1a1a] hover:bg-surface transition-colors"
               >
-                <span className="material-symbols-outlined text-[18px]">logout</span>
-                Cerrar sesión
+                <LogOut size={18} />
+                Sair
               </button>
             </>
-          ) : (
+          )}
+
+          {/* ── GUEST / NOT LOGGED IN menu ─────────────────────────────────── */}
+          {(isGuest || !isLoggedIn) && (
             <>
               <Link
                 href="/about"
@@ -166,28 +184,46 @@ function UserMenu() {
                 <Info size={18} />
                 Sobre nós
               </Link>
-
               <Link
-                href="/login?tab=guest"
+                href={
+                  isGuest
+                    ? `/portal?email=${encodeURIComponent(userEmail)}`
+                    : "/login?tab=guest"
+                }
                 role="menuitem"
                 onClick={() => setOpen(false)}
                 className="flex items-center gap-2 px-4 py-2.5 text-[14px] text-text-main hover:bg-surface transition-colors"
               >
-                <span className="material-symbols-outlined text-[18px]">calendar_month</span>
-                Minhas reservas
+                <BookOpen size={18} />
+                As minhas reservas
               </Link>
-
               <div className="border-t border-surface my-1" />
-
-              <Link
-                href="/login"
-                role="menuitem"
-                onClick={() => setOpen(false)}
-                className="flex items-center gap-2 px-4 py-2.5 text-[14px] text-text-main hover:bg-surface transition-colors"
-              >
-                <span className="material-symbols-outlined text-[18px]">login</span>
-                Iniciar sessão
-              </Link>
+              {!isLoggedIn && (
+                <Link
+                  href="/login"
+                  role="menuitem"
+                  onClick={() => setOpen(false)}
+                  className="flex items-center gap-2 px-4 py-2.5 text-[14px] text-text-main hover:bg-surface transition-colors"
+                >
+                  <span className="material-symbols-outlined text-[18px]">
+                    login
+                  </span>
+                  Iniciar sessão
+                </Link>
+              )}
+              {isGuest && (
+                <button
+                  role="menuitem"
+                  onClick={() => {
+                    setOpen(false);
+                    void signOut({ callbackUrl: "/" });
+                  }}
+                  className="w-full flex items-center gap-2 px-4 py-2.5 text-[14px] text-[#8b1a1a] hover:bg-surface transition-colors"
+                >
+                  <LogOut size={18} />
+                  Sair
+                </button>
+              )}
             </>
           )}
         </div>
