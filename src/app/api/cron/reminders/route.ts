@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { BookingStatus } from '@prisma/client'
+import { BookingStatus, NotificationType } from '@prisma/client'
 import { db } from '@/lib/db'
 import {
   EMAIL_BOOKING_SELECT,
@@ -8,6 +8,8 @@ import {
   sendCheckOutReminderToOwner,
   sendReviewInvitationToGuest,
 } from '@/lib/services/emailService'
+import { notifyAllOwnerAdmins } from '@/lib/services/notificationService'
+import { sendPushToOwner } from '@/lib/webPush'
 
 // ─── GET /api/cron/reminders ──────────────────────────────────────────────────
 //
@@ -120,6 +122,51 @@ export async function GET(req: NextRequest) {
         errors++
         console.error('[cron/reminders] review invitation failed', result.error)
       }
+    }
+
+    // ── 4. Monthly summary (runs only on the 1st of each month) ──────────────
+    if (now.getDate() === 1) {
+      const lastMonthEnd   = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999)
+      const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1, 0, 0, 0, 0)
+
+      const [totalBookings, revenueAgg] = await db.$transaction([
+        db.booking.count({
+          where: {
+            status:   { in: [BookingStatus.CONFIRMED, BookingStatus.COMPLETED] },
+            checkIn:  { gte: lastMonthStart, lte: lastMonthEnd },
+          },
+        }),
+        db.booking.aggregate({
+          where: {
+            status:   { in: [BookingStatus.CONFIRMED, BookingStatus.COMPLETED] },
+            checkIn:  { gte: lastMonthStart, lte: lastMonthEnd },
+          },
+          _sum: { totalPrice: true },
+        }),
+      ])
+
+      const totalRevenue = revenueAgg._sum.totalPrice ?? 0
+      const monthName    = lastMonthStart.toLocaleDateString('pt-PT', { month: 'long', year: 'numeric' })
+      const avgValue     = totalBookings > 0 ? (totalRevenue / totalBookings).toFixed(0) : '0'
+
+      const summaryTitle   = `📊 Resumo do mês de ${monthName}`
+      const summaryMessage = `Tiveste ${totalBookings} reserva${totalBookings !== 1 ? 's' : ''} e €${totalRevenue.toFixed(0)} de receita em ${monthName}. Valor médio por reserva: €${avgValue}.`
+
+      await Promise.allSettled([
+        notifyAllOwnerAdmins({
+          type:    NotificationType.SYSTEM,
+          title:   summaryTitle,
+          message: summaryMessage,
+          data:    { month: monthName, totalBookings, totalRevenue },
+        }),
+        sendPushToOwner({
+          title: summaryTitle,
+          body:  summaryMessage,
+          url:   '/dashboard/analytics',
+        }),
+      ])
+
+      processed++
     }
 
     return NextResponse.json({ data: { processed, errors }, error: null })

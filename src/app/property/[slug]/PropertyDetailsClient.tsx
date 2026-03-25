@@ -7,6 +7,10 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import PropertyMapWrapper from "@/components/ui/PropertyMapWrapper";
+import { DayPicker } from "react-day-picker";
+import type { DateRange } from "react-day-picker";
+import "react-day-picker/dist/style.css";
+import { pt } from "date-fns/locale";
 import {
   Wifi,
   Wind,

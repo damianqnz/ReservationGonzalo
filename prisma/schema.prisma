@@ -18,10 +18,11 @@ model User {
   role           Role           @default(GUEST)
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
-  accounts       Account[]
-  notifications  Notification[]
-  properties     Property[]
-  sessions       Session[]
+  accounts           Account[]
+  notifications      Notification[]
+  properties         Property[]
+  sessions           Session[]
+  pushSubscriptions  PushSubscription[]
 
   @@map("users")
 }
@@ -526,4 +527,17 @@ model SearchEvent {
   @@index([propertyId])
   @@index([createdAt])
   @@map("search_events")
+}
+// ─── WEB PUSH ─────────────────────────────────────────────────────────────────
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("push_subscriptions")
 }
