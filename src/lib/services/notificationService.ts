@@ -1,6 +1,39 @@
 import { NotificationType, Role } from '@prisma/client'
 import { db } from '@/lib/db'
 
+// ─── Notify all OWNER + ADMIN users ──────────────────────────────────────────
+
+/**
+ * Creates a notification for every user with role OWNER or ADMIN.
+ * Useful for system-wide alerts and monthly summaries.
+ *
+ * @param data - Notification payload.
+ */
+export async function notifyAllOwnerAdmins(data: CreateNotificationInput) {
+  try {
+    const admins = await db.user.findMany({
+      where: { role: { in: [Role.OWNER, Role.ADMIN] } },
+      select: { id: true },
+    })
+
+    if (!admins.length) return
+
+    await db.notification.createMany({
+      data: admins.map((u) => ({
+        userId:  u.id,
+        type:    data.type,
+        title:   data.title,
+        message: data.message,
+        data:    data.data ? (data.data as object) : undefined,
+      })),
+      skipDuplicates: true,
+    })
+  } catch (error) {
+    console.error('[NotificationService/notifyAllOwnerAdmins]', error)
+    throw error
+  }
+}
+
 // ─── Input types ─────────────────────────────────────────────────────────────
 
 export interface CreateNotificationInput {

@@ -26,7 +26,7 @@ export default function DashboardLayout({ children, unreadCount = 0, userName }:
 
   return (
     <div className="min-h-screen bg-[#fbfbfb]">
-      <DashboardSidebar collapsed={collapsed} onToggle={toggleSidebar} />
+      <DashboardSidebar collapsed={collapsed} onToggle={toggleSidebar} unreadCount={unreadCount} />
       <div
         className={`flex flex-col min-h-screen transition-all duration-300 ${
           collapsed ? 'pl-16' : 'pl-64'

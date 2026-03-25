@@ -12,7 +12,8 @@
       "Bash(find d:/developer/proyectos/ReservationGonzalo/src/app/dashboard/properties/*/rooms/[roomId] -type f)",
       "Bash(git -C \"d:/developer/proyectos/ReservationGonzalo\" log --oneline -5)",
       "Bash(git -C \"d:/developer/proyectos/ReservationGonzalo\" status --short)",
-      "Bash(git -C \"d:/developer/proyectos/ReservationGonzalo\" diff HEAD -- \"src/app/property/[slug]/PropertyDetailsClient.tsx\")"
+      "Bash(git -C \"d:/developer/proyectos/ReservationGonzalo\" diff HEAD -- \"src/app/property/[slug]/PropertyDetailsClient.tsx\")",
+      "Bash(xargs grep:*)"
     ]
   }
 }
