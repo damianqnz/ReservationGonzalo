@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import PropertyMapWrapper from "@/components/ui/PropertyMapWrapper";
 import {
   Wifi,
   Wind,
@@ -59,6 +60,8 @@ interface PropertyData {
   owner: { name: string | null };
   avgRating: number | null;
   reviewCount: number;
+  lat: number | null;
+  lng: number | null;
   hasRooms: boolean;
   rooms: {
     id: string;
@@ -998,17 +1001,24 @@ export default function PropertyDetailsClient({
           </>
         )}
 
-        {/* ── Location placeholder ─────────────────────────────────────────── */}
-        <section className="px-4 py-6 space-y-4">
+        {/* ── Location ─────────────────────────────────────────────────────── */}
+        <section className="px-4 py-6 space-y-2">
           <h3 className="text-[18px] font-display font-bold">Localização</h3>
-          <div className="bg-surface rounded-2xl h-48 flex items-center justify-center">
-            <div className="text-center text-text-muted">
-              <span className="material-symbols-outlined text-[48px]">map</span>
-              <p className="text-[13px] mt-2">
-                {property.city}, {property.country}
-              </p>
+          <p className="text-[13px] text-text-muted mb-4">
+            {property.city}, {property.country}
+          </p>
+          {property.lat && property.lng ? (
+            <PropertyMapWrapper
+              lat={property.lat}
+              lng={property.lng}
+              propertyTitle={property.title}
+              radius={300}
+            />
+          ) : (
+            <div className="h-[200px] bg-gray-50 rounded-xl flex items-center justify-center text-gray-400">
+              <p className="text-[14px]">Localização não disponível</p>
             </div>
-          </div>
+          )}
         </section>
       </main>
 

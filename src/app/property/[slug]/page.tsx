@@ -57,6 +57,8 @@ export default async function PropertyPage({ params, searchParams }: Props) {
       cancellationPolicy: true,
       minNights: true,
       hasRooms: true,
+      latitude: true,
+      longitude: true,
       rooms: {
         where: { status: "ACTIVE" },
         orderBy: { order: "asc" },
@@ -160,6 +162,8 @@ export default async function PropertyPage({ params, searchParams }: Props) {
         reviews: serializedReviews,
         avgRating,
         reviewCount: property.reviews.length,
+        lat: property.latitude ?? null,
+        lng: property.longitude ?? null,
       }}
       checkIn={checkIn?.toISOString()}
       checkOut={checkOut?.toISOString()}
