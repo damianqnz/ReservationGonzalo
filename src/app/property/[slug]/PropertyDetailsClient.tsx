@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ComponentType } from "react";
+import { useState, useEffect, type ComponentType } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -163,6 +163,18 @@ function formatShortDate(iso: string): string {
   return `${d.getUTCDate()} ${MONTHS_PT[d.getUTCMonth()]}`;
 }
 
+function formatDayMonth(d: Date): string {
+  return `${d.getDate()} ${MONTHS_PT[d.getMonth()]}`;
+}
+
+/** Returns YYYY-MM-DD using local time (avoids UTC off-by-one in negative-offset zones). */
+function localDateStr(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
 // ─── Country list ─────────────────────────────────────────────────────────────
 
 const PRIORITY_COUNTRIES = [
@@ -260,6 +272,139 @@ function StarRating({ rating, size = 14 }: { rating: number; size?: number }) {
           stroke={i < Math.round(rating) ? "#F59E0B" : "#D1D5DB"}
         />
       ))}
+    </div>
+  );
+}
+
+// ─── Date Range Picker Card (shared by body section + overlay panel) ─────────
+
+interface DateRangePickerCardProps {
+  localCheckIn: Date | null;
+  localCheckOut: Date | null;
+  unavailableDates: Date[];
+  onSelect: (range: DateRange | undefined) => void;
+  onConfirm: () => void;
+  onClear: () => void;
+}
+
+function DateRangePickerCard({
+  localCheckIn,
+  localCheckOut,
+  unavailableDates,
+  onSelect,
+  onConfirm,
+  onClear,
+}: DateRangePickerCardProps) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const localNights =
+    localCheckIn && localCheckOut
+      ? Math.round(
+        (localCheckOut.getTime() - localCheckIn.getTime()) / 86_400_000,
+      )
+      : null;
+
+  const statusText = !localCheckIn
+    ? "Selecione o check-in"
+    : !localCheckOut
+      ? "Agora selecione o check-out"
+      : `Check-in: ${formatDayMonth(localCheckIn)} → Check-out: ${formatDayMonth(localCheckOut)} · ${localNights} noite${localNights !== 1 ? "s" : ""}`;
+
+  return (
+    <div className="space-y-4">
+      <div className="flex justify-center overflow-x-auto">
+        <DayPicker
+          mode="range"
+          selected={{
+            from: localCheckIn ?? undefined,
+            to: localCheckOut ?? undefined,
+          }}
+          onSelect={onSelect}
+          disabled={[{ before: today }, ...unavailableDates]}
+          locale={pt}
+          showOutsideDays={false}
+        />
+      </div>
+      <p
+        className={`text-center text-[14px] min-h-[20px] ${localCheckIn && localCheckOut
+            ? "text-green-700 font-medium"
+            : "text-text-muted"
+          }`}
+      >
+        {statusText}
+      </p>
+      <div className="flex gap-3">
+        <button
+          type="button"
+          onClick={onClear}
+          className="flex-1 h-11 border border-surface rounded-lg text-[14px] font-medium text-text-muted hover:bg-surface transition-colors"
+        >
+          Limpar
+        </button>
+        <button
+          type="button"
+          onClick={onConfirm}
+          disabled={!localCheckIn || !localCheckOut}
+          className="flex-1 h-11 bg-primary hover:bg-primary/90 text-white rounded-lg text-[14px] font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          Confirmar datas →
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ─── Date Picker Panel (full-screen overlay from sticky bar) ──────────────────
+
+function DatePickerPanel({
+  localCheckIn,
+  localCheckOut,
+  unavailableDates,
+  onSelect,
+  onConfirm,
+  onClear,
+  onClose,
+}: {
+  localCheckIn: Date | null;
+  localCheckOut: Date | null;
+  unavailableDates: Date[];
+  onSelect: (range: DateRange | undefined) => void;
+  onConfirm: () => void;
+  onClear: () => void;
+  onClose: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
+      <div
+        className="absolute inset-0 bg-text-main/50 backdrop-blur-sm"
+        onClick={onClose}
+        aria-hidden="true"
+      />
+      <div className="relative w-full sm:max-w-lg bg-white sm:rounded-2xl rounded-t-2xl shadow-xl overflow-hidden max-h-[92dvh] flex flex-col animate-in fade-in slide-in-from-bottom-4 duration-200">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-surface shrink-0">
+          <h2 className="font-display font-semibold text-[17px] text-text-main">
+            Selecione as datas da sua estadia
+          </h2>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-surface transition-colors text-text-muted"
+            aria-label="Fechar"
+          >
+            <span className="material-symbols-outlined text-[20px]">close</span>
+          </button>
+        </div>
+        <div className="overflow-y-auto flex-1 px-4 py-5">
+          <DateRangePickerCard
+            localCheckIn={localCheckIn}
+            localCheckOut={localCheckOut}
+            unavailableDates={unavailableDates}
+            onSelect={onSelect}
+            onConfirm={onConfirm}
+            onClear={onClear}
+          />
+        </div>
+      </div>
     </div>
   );
 }
@@ -580,9 +725,60 @@ export default function PropertyDetailsClient({
   nights,
   totalPrice: initialTotalPrice,
 }: Props) {
+  const router = useRouter();
   const [activeImg, setActiveImg] = useState(0);
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
+
+  // ── Date picker state ────────────────────────────────────────────────────────
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [localCheckIn, setLocalCheckIn] = useState<Date | null>(null);
+  const [localCheckOut, setLocalCheckOut] = useState<Date | null>(null);
+  const [unavailableDates, setUnavailableDates] = useState<Date[]>([]);
+
+  // Fetch unavailable dates once on mount so the inline body section is ready
+  useEffect(() => {
+    fetch(`/api/availability?propertyId=${property.id}`)
+      .then((r) => r.json())
+      .then((json) => {
+        if (json.data?.unavailableDates) {
+          setUnavailableDates(
+            (json.data.unavailableDates as string[]).map((s) => new Date(s)),
+          );
+        }
+      })
+      .catch(() => { });
+  }, [property.id]);
+
+  // Close date picker panel on Escape key
+  useEffect(() => {
+    if (!showDatePicker) return;
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") setShowDatePicker(false);
+    }
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [showDatePicker]);
+
+  function handleRangeSelect(range: DateRange | undefined) {
+    setLocalCheckIn(range?.from ?? null);
+    setLocalCheckOut(range?.to ?? null);
+  }
+
+  function handleClearDates() {
+    setLocalCheckIn(null);
+    setLocalCheckOut(null);
+  }
+
+  function handleConfirmDates() {
+    if (!localCheckIn || !localCheckOut) return;
+    const ci = localDateStr(localCheckIn);
+    const co = localDateStr(localCheckOut);
+    router.push(
+      `/property/${property.slug}?checkIn=${ci}&checkOut=${co}&guests=${guests ?? 1}`,
+    );
+    setShowDatePicker(false);
+  }
 
   const hasDates = !!(checkIn && checkOut && nights);
 
@@ -662,8 +858,8 @@ export default function PropertyDetailsClient({
                     key={i}
                     onClick={() => setActiveImg(i)}
                     className={`w-14 h-10 rounded-lg overflow-hidden border-2 transition-all relative ${activeImg === i
-                        ? "border-white shadow-lg scale-110"
-                        : "border-transparent opacity-60"
+                      ? "border-white shadow-lg scale-110"
+                      : "border-transparent opacity-60"
                       }`}
                     aria-label={`Foto ${i + 1}`}
                   >
@@ -907,8 +1103,8 @@ export default function PropertyDetailsClient({
                       <button
                         onClick={() => setSelectedRoomId(room.id)}
                         className={`w-full text-left flex flex-col sm:flex-row gap-4 p-4 rounded-2xl border-2 transition-all ${isSelected
-                            ? "border-[#8b1a1a] bg-white shadow-md ring-1 ring-[#8b1a1a]/10"
-                            : "border-surface bg-white hover:border-slate-300"
+                          ? "border-[#8b1a1a] bg-white shadow-md ring-1 ring-[#8b1a1a]/10"
+                          : "border-surface bg-white hover:border-slate-300"
                           } ${isExcl ? "bg-amber-50/50" : ""}`}
                       >
                         {/* Room Image */}
@@ -982,8 +1178,8 @@ export default function PropertyDetailsClient({
                         <div className="mt-2 sm:mt-0 flex items-center justify-center">
                           <div
                             className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${isSelected
-                                ? "bg-[#8b1a1a] border-[#8b1a1a]"
-                                : "border-slate-300"
+                              ? "bg-[#8b1a1a] border-[#8b1a1a]"
+                              : "border-slate-300"
                               }`}
                           >
                             {isSelected && (
@@ -1070,7 +1266,7 @@ export default function PropertyDetailsClient({
             </button>
           ) : (
             <button
-              onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+              onClick={() => setShowDatePicker(true)}
               className="shrink-0 bg-primary hover:bg-primary/90 text-white font-bold px-5 py-3 rounded-xl shadow-lg shadow-primary/20 transition-all text-[14px]"
             >
               Verificar disponibilidade
@@ -1089,6 +1285,19 @@ export default function PropertyDetailsClient({
           selectedRoomId={selectedRoomId || undefined}
           selectedRoomName={selectedRoom?.name}
           onClose={() => setModalOpen(false)}
+        />
+      )}
+
+      {/* ── Date Picker Panel ────────────────────────────────────────────────── */}
+      {showDatePicker && (
+        <DatePickerPanel
+          localCheckIn={localCheckIn}
+          localCheckOut={localCheckOut}
+          unavailableDates={unavailableDates}
+          onSelect={handleRangeSelect}
+          onConfirm={handleConfirmDates}
+          onClear={handleClearDates}
+          onClose={() => setShowDatePicker(false)}
         />
       )}
     </div>
