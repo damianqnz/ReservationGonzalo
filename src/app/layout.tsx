@@ -3,6 +3,8 @@ import { Plus_Jakarta_Sans, Outfit } from 'next/font/google'
 import './globals.css'
 import { Providers } from '@/components/providers'
 import CookieBanner from '@/components/CookieBanner'
+import { Toaster } from 'sileo'
+import TawkChat from '@/components/TawkChat'
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   variable: '--font-display',
@@ -43,6 +45,8 @@ export default function RootLayout({
         <Providers>
           {children}
           <CookieBanner />
+          <Toaster position="top-right" />
+          <TawkChat />
         </Providers>
       </body>
     </html>

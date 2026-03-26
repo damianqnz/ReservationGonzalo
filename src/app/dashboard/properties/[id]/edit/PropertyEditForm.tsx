@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import dynamic from 'next/dynamic'
+import { sileo } from 'sileo'
 
 const PropertyMapWrapper = dynamic(() => import('@/components/ui/PropertyMapWrapper'), {
   ssr: false,
@@ -46,10 +47,8 @@ export default function PropertyEditForm({ property: initial }: Props) {
   const router  = useRouter()
   const [form,  setForm]  = useState(initial)
   const [saving, setSaving] = useState(false)
-  const [toast, setToast]  = useState<'success' | 'error' | null>(null)
   const [showWifiPass, setShowWifiPass] = useState(false)
   const [geocoding, setGeocoding] = useState(false)
-  const [geocodeError, setGeocodeError] = useState<string | null>(null)
 
   function field(name: keyof PropertyData) {
     return {
@@ -63,9 +62,8 @@ export default function PropertyEditForm({ property: initial }: Props) {
   async function handleSave(e: React.FormEvent) {
     e.preventDefault()
     setSaving(true)
-    setToast(null)
-
-    try {
+    
+    const savePromise = async () => {
       const res = await fetch(`/api/properties/${form.id}`, {
         method:  'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -92,60 +90,60 @@ export default function PropertyEditForm({ property: initial }: Props) {
         }),
       })
 
-      if (res.ok) {
-        setToast('success')
-        router.refresh()
-      } else {
-        setToast('error')
-      }
-    } catch {
-      setToast('error')
-    } finally {
-      setSaving(false)
-      setTimeout(() => setToast(null), 4000)
+      if (!res.ok) throw new Error('Erro ao guardar')
+      router.refresh()
+      return res
     }
+
+    sileo.promise(savePromise(), {
+      loading: { title: 'A guardar...' },
+      success: { 
+        title: 'Guardado!', 
+        description: 'Propriedade atualizada com sucesso' 
+      },
+      error: { 
+        title: 'Erro', 
+        description: 'Não foi possível guardar as alterações' 
+      }
+    })
+    .finally(() => setSaving(false))
   }
 
   async function handleGeocode() {
     setGeocoding(true)
-    setGeocodeError(null)
-    try {
+    
+    const geocodePromise = async () => {
       const params = new URLSearchParams({
         address: form.address,
         city: form.city,
       })
       const res = await fetch(`/api/geocode?${params.toString()}`)
       const json = await res.json()
+      
       if (!res.ok || !json.data) {
-        setGeocodeError(
-          typeof json.error === 'string' ? json.error : 'Endereço não encontrado.',
-        )
-        return
+        throw new Error(typeof json.error === 'string' ? json.error : 'Endereço não encontrado.')
       }
+      
       setForm((prev) => ({ ...prev, latitude: json.data.lat, longitude: json.data.lng }))
-    } catch {
-      setGeocodeError('Erro de ligação. Tente novamente.')
-    } finally {
-      setGeocoding(false)
+      return json.data
     }
+
+    sileo.promise(geocodePromise(), {
+      loading: { title: 'A geocodificar...' },
+      success: { 
+        title: 'Localização encontrada!', 
+        description: 'Coordenadas atualizadas no mapa' 
+      },
+      error: (err) => ({
+        title: 'Erro na localização',
+        description: err instanceof Error ? err.message : 'Não foi possível encontrar o endereço'
+      })
+    })
+    .finally(() => setGeocoding(false))
   }
 
   return (
     <form onSubmit={handleSave} className="space-y-8">
-
-      {/* Toast */}
-      {toast && (
-        <div className={`fixed top-6 right-6 z-50 flex items-center gap-2 px-5 py-3 rounded-xl shadow-lg text-sm font-semibold transition-all ${
-          toast === 'success'
-            ? 'bg-emerald-600 text-white'
-            : 'bg-red-600 text-white'
-        }`}>
-          <span className="material-symbols-outlined text-base">
-            {toast === 'success' ? 'check_circle' : 'error'}
-          </span>
-          {toast === 'success' ? 'Guardado com sucesso!' : 'Erro ao guardar. Tente novamente.'}
-        </div>
-      )}
 
       {/* ── Informações Gerais ─────────────────────────────────────────────── */}
       <section>
@@ -302,9 +300,6 @@ export default function PropertyEditForm({ property: initial }: Props) {
           <span className="material-symbols-outlined text-base">my_location</span>
           {geocoding ? 'A geocodificar...' : 'Geocodificar endereço'}
         </button>
-        {geocodeError && (
-          <p className="text-sm text-red-600 mb-4">{geocodeError}</p>
-        )}
         {form.latitude && form.longitude && (
           <PropertyMapWrapper
             lat={form.latitude}

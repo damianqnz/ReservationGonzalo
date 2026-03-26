@@ -12,7 +12,13 @@
       "Bash(find d:/developer/proyectos/ReservationGonzalo/src/app/dashboard/properties/*/rooms/[roomId] -type f)",
       "Bash(git -C \"d:/developer/proyectos/ReservationGonzalo\" log --oneline -5)",
       "Bash(git -C \"d:/developer/proyectos/ReservationGonzalo\" status --short)",
-      "Bash(git -C \"d:/developer/proyectos/ReservationGonzalo\" diff HEAD -- \"src/app/property/[slug]/PropertyDetailsClient.tsx\")"
+      "Bash(git -C \"d:/developer/proyectos/ReservationGonzalo\" diff HEAD -- \"src/app/property/[slug]/PropertyDetailsClient.tsx\")",
+      "Bash(xargs grep:*)",
+      "Bash(node -e \"require\\(''''sileo''''\\)\")",
+      "Bash(grep -rn \"toast\\\\|alert\\(\\\\|setSuccessMsg\\\\|setErrorMsg\\\\|setToast\\\\|successMsg\\\\|errorMsg\" d:/developer/proyectos/ReservationGonzalo/src --include=*.tsx --include=*.ts -l)",
+      "Bash(grep -rn \"setToast\\\\|toast\\\\b\\\\|Toast\\\\|alert\\(\" d:/developer/proyectos/ReservationGonzalo/src --include=*.tsx -l)",
+      "Bash(grep -n \"toast\\\\|setToast\\\\|setError\\\\|setSuccess\\\\|alert\\(\" d:/developer/proyectos/ReservationGonzalo/src/app/dashboard/properties/[id]/access/AccessForm.tsx d:/developer/proyectos/ReservationGonzalo/src/app/dashboard/properties/[id]/rooms/[roomId]/edit/RoomEditForm.tsx)",
+      "Bash(grep -rn \"toast\\\\|alert\\(\\\\|setError\\\\|setSuccess\\\\|setMsg\" d:/developer/proyectos/ReservationGonzalo/src/app/dashboard/properties/[id]/images/ d:/developer/proyectos/ReservationGonzalo/src/app/checkout/ d:/developer/proyectos/ReservationGonzalo/src/app/portal/)"
     ]
   }
 }

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { Trash2 } from 'lucide-react'
+import { sileo } from 'sileo'
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -16,8 +17,6 @@ interface Props {
 
 export default function DeleteRoomModal({ room, isOpen, onClose, onDeleted }: Props) {
   const [loading, setLoading] = useState(false)
-  const [error,   setError]   = useState<string | null>(null)
-  const [success, setSuccess] = useState(false)
 
   // Close on Escape
   useEffect(() => {
@@ -27,39 +26,36 @@ export default function DeleteRoomModal({ room, isOpen, onClose, onDeleted }: Pr
     return () => document.removeEventListener('keydown', onKey)
   }, [isOpen, loading, onClose])
 
-  // Reset state when modal opens
-  useEffect(() => {
-    if (isOpen) {
-      setError(null)
-      setSuccess(false)
-    }
-  }, [isOpen])
-
   if (!isOpen) return null
 
   async function handleDelete() {
     setLoading(true)
-    setError(null)
 
-    try {
+    const deletePromise = async () => {
       const res  = await fetch(`/api/rooms/${room.id}`, { method: 'DELETE' })
       const json = await res.json() as { data: unknown; error: string | null }
 
       if (!res.ok) {
-        setError(typeof json.error === 'string' ? json.error : 'Erro ao eliminar. Tente novamente.')
-        return
+        throw new Error(typeof json.error === 'string' ? json.error : 'Erro ao eliminar')
       }
 
-      setSuccess(true)
-      setTimeout(() => {
-        onDeleted()
-        onClose()
-      }, 1200)
-    } catch {
-      setError('Erro de ligação. Tente novamente.')
-    } finally {
-      setLoading(false)
+      onDeleted()
+      onClose()
+      return true
     }
+
+    sileo.promise(deletePromise(), {
+      loading: { title: 'A eliminar quarto...' },
+      success: { 
+        title: 'Quarto eliminado', 
+        description: `&ldquo;${room.name}&rdquo; foi removido com sucesso` 
+      },
+      error: (err: unknown) => ({
+        title: 'Erro ao eliminar',
+        description: err instanceof Error ? err.message : 'Tente novamente'
+      })
+    })
+    .finally(() => setLoading(false))
   }
 
   return (
@@ -111,21 +107,6 @@ export default function DeleteRoomModal({ room, isOpen, onClose, onDeleted }: Pr
             </p>
           </div>
 
-          {/* Error */}
-          {error && (
-            <div className="flex items-start gap-2 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-red-700 text-sm">
-              <span className="material-symbols-outlined text-base shrink-0 mt-0.5">error</span>
-              {error}
-            </div>
-          )}
-
-          {/* Success */}
-          {success && (
-            <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3 text-emerald-700 text-sm font-semibold">
-              <span className="material-symbols-outlined text-base">check_circle</span>
-              Quarto eliminado
-            </div>
-          )}
         </div>
 
         {/* Footer */}
@@ -133,7 +114,7 @@ export default function DeleteRoomModal({ room, isOpen, onClose, onDeleted }: Pr
           <button
             type="button"
             onClick={onClose}
-            disabled={loading || success}
+            disabled={loading}
             className="px-5 py-2 text-sm font-semibold text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors disabled:opacity-40"
           >
             Cancelar
@@ -141,7 +122,7 @@ export default function DeleteRoomModal({ room, isOpen, onClose, onDeleted }: Pr
           <button
             type="button"
             onClick={handleDelete}
-            disabled={loading || success}
+            disabled={loading}
             className="flex items-center gap-2 px-5 py-2 bg-red-600 text-white text-sm font-bold rounded-lg hover:bg-red-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {loading ? (

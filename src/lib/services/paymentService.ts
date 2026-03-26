@@ -3,6 +3,7 @@ import { BookingStatus, NotificationType, PaymentStatus } from '@prisma/client'
 import { db } from '@/lib/db'
 import { cancelReservation } from '@/lib/services/reservationService'
 import { createNotification } from '@/lib/services/notificationService'
+import { sendPushToOwner } from '@/lib/webPush'
 import {
   EMAIL_BOOKING_SELECT,
   sendBookingConfirmationToGuest,
@@ -197,10 +198,15 @@ export async function confirmReservation(paymentIntentId: string) {
   })
 
   if (fullBooking) {
-    // Fire-and-forget both emails in parallel — failure must NOT affect the confirmation
+    // Fire-and-forget — failure must NOT affect the confirmation
     void Promise.allSettled([
       sendBookingConfirmationToGuest(fullBooking),
       sendNewBookingNotificationToOwner(fullBooking),
+      sendPushToOwner({
+        title: '🎉 Nova reserva confirmada!',
+        body:  `${fullBooking.guestName} reservou ${fullBooking.nights} noite${fullBooking.nights !== 1 ? 's' : ''}.`,
+        url:   '/dashboard/reservations',
+      }),
     ])
   }
 
