@@ -129,7 +129,11 @@ export default function DashboardTopbar({ unreadCount: initialCount = 0, collaps
             )}
           </div>
 
-          <button className="p-2 hover:bg-slate-100 rounded-full transition-all">
+          <button
+            onClick={() => window.open('https://app.tawk.to/#/inbox', '_blank')}
+            title="Abrir caixa de mensagens"
+            className="p-2 hover:bg-slate-100 rounded-full transition-all"
+          >
             <span className="material-symbols-outlined text-slate-500">chat_bubble</span>
           </button>
         </div>
