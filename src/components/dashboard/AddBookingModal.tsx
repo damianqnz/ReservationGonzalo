@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { Plus } from 'lucide-react'
+import { sileo } from 'sileo'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -104,7 +105,6 @@ function fmtCurrency(n: number) {
 export default function AddBookingModal({ isOpen, onClose, onCreated, properties }: Props) {
   const [form, setForm] = useState<FormState>(EMPTY_FORM)
   const [loading,     setLoading]     = useState(false)
-  const [error,       setError]       = useState<string | null>(null)
   const [availability, setAvailability] = useState<'available' | 'unavailable' | 'unknown'>('unknown')
   const [checking,    setChecking]    = useState(false)
 
@@ -119,7 +119,6 @@ export default function AddBookingModal({ isOpen, onClose, onCreated, properties
   useEffect(() => {
     if (isOpen) {
       setForm(EMPTY_FORM)
-      setError(null)
       setAvailability('unknown')
     }
   }, [isOpen])
@@ -178,12 +177,14 @@ export default function AddBookingModal({ isOpen, onClose, onCreated, properties
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (nights <= 0) { setError('As datas são inválidas.'); return }
+    if (nights <= 0) { 
+      sileo.error({ title: 'Datas inválidas', description: 'A data de checkout deve ser posterior ao checkin' })
+      return 
+    }
 
     setLoading(true)
-    setError(null)
 
-    try {
+    const addPromise = async () => {
       const res = await fetch('/api/reservations/manual', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -209,17 +210,26 @@ export default function AddBookingModal({ isOpen, onClose, onCreated, properties
       const json = await res.json() as { data: unknown; error: string | null }
 
       if (!res.ok) {
-        setError(typeof json.error === 'string' ? json.error : 'Erro ao criar reserva.')
-        return
+        throw new Error(typeof json.error === 'string' ? json.error : 'Erro ao criar reserva')
       }
 
       onCreated()
       onClose()
-    } catch {
-      setError('Erro de ligação. Tente novamente.')
-    } finally {
-      setLoading(false)
+      return json.data
     }
+
+    sileo.promise(addPromise(), {
+      loading: { title: 'A criar reserva...' },
+      success: { 
+        title: 'Reserva criada!', 
+        description: `A reserva para ${form.guestName} foi registada com sucesso` 
+      },
+      error: (err: unknown) => ({
+        title: 'Erro ao criar reserva',
+        description: err instanceof Error ? err.message : 'Tente novamente'
+      })
+    })
+    .finally(() => setLoading(false))
   }
 
   if (!isOpen) return null
@@ -503,12 +513,7 @@ export default function AddBookingModal({ isOpen, onClose, onCreated, properties
             </Section>
 
             {/* Error */}
-            {error && (
-              <div className="flex items-start gap-2 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-red-700 text-sm">
-                <span className="material-symbols-outlined text-base shrink-0 mt-0.5">error</span>
-                {error}
-              </div>
-            )}
+          {/* error box removed — replaced by sileo */}
           </div>
         </form>
 

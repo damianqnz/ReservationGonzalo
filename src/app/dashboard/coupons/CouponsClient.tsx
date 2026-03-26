@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { Tag, Plus, ToggleLeft, ToggleRight, Trash2, X, Check } from 'lucide-react'
+import { sileo } from 'sileo'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -86,54 +87,62 @@ function CreateModal({
 }) {
   const [form, setForm] = useState<CreateForm>(BLANK_FORM)
   const [saving, setSaving] = useState(false)
-  const [error, setError] = useState<string | null>(null)
 
   function set(key: keyof CreateForm, value: string) {
     setForm((f) => ({ ...f, [key]: value }))
-    setError(null)
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setSaving(true)
-    setError(null)
 
-    const body = {
-      code: form.code.trim().toUpperCase(),
-      type: form.type,
-      discountValue: parseFloat(form.discountValue),
-      description: form.description.trim() || undefined,
-      maxUses: form.maxUses ? parseInt(form.maxUses) : undefined,
-      minNights: form.minNights ? parseInt(form.minNights) : undefined,
-      minOrderAmount: form.minOrderAmount ? parseFloat(form.minOrderAmount) : undefined,
-      expiresAt: form.expiresAt || undefined,
-    }
+    const createPromise = async () => {
+      const body = {
+        code: form.code.trim().toUpperCase(),
+        type: form.type,
+        discountValue: parseFloat(form.discountValue),
+        description: form.description.trim() || undefined,
+        maxUses: form.maxUses ? parseInt(form.maxUses) : undefined,
+        minNights: form.minNights ? parseInt(form.minNights) : undefined,
+        minOrderAmount: form.minOrderAmount ? parseFloat(form.minOrderAmount) : undefined,
+        expiresAt: form.expiresAt || undefined,
+      }
 
-    try {
       const res = await fetch('/api/coupons', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       })
+      
       const json = await res.json() as { data: { coupon: Coupon } | null; error: unknown }
+      
       if (!res.ok || json.error || !json.data) {
-        const msg = typeof json.error === 'string'
-          ? json.error
-          : JSON.stringify(json.error)
-        setError(msg)
-        return
+        throw new Error(typeof json.error === 'string' ? json.error : 'Erro ao criar cupão')
       }
-      onCreated({
+
+      const newCoupon: Coupon = {
         ...json.data.coupon,
         totalDiscount: 0,
         discountValue: Number(json.data.coupon.discountValue),
         minOrderAmount: json.data.coupon.minOrderAmount ? Number(json.data.coupon.minOrderAmount) : null,
-      })
-    } catch {
-      setError('Erro de ligação. Tente novamente.')
-    } finally {
-      setSaving(false)
+      }
+
+      onCreated(newCoupon)
+      return newCoupon
     }
+
+    sileo.promise(createPromise(), {
+      loading: { title: 'A criar cupão...' },
+      success: { 
+        title: 'Cupão criado!', 
+        description: `O código ${form.code.toUpperCase()} já está ativo` 
+      },
+      error: (err: unknown) => ({
+        title: 'Erro ao criar',
+        description: err instanceof Error ? err.message : 'Tente novamente'
+      })
+    })
+    .finally(() => setSaving(false))
   }
 
   return (
@@ -274,11 +283,7 @@ function CreateModal({
             </div>
           </div>
 
-          {error && (
-            <div className="rounded-lg bg-red-50 border border-red-100 px-4 py-3 text-[13px] text-red-700">
-              {error}
-            </div>
-          )}
+          {/* error box removed — replaced by sileo */}
 
           <div className="flex gap-3 pt-2">
             <button
@@ -336,20 +341,30 @@ export default function CouponsClient({ initialCoupons }: { initialCoupons: Coup
 
   async function handleDelete(id: string, code: string) {
     if (!confirm(`Eliminar cupão "${code}"? Esta ação é irreversível.`)) return
-    setDeleting(id)
-    try {
+    const deletePromise = async () => {
       const res = await fetch(`/api/coupons/${id}`, { method: 'DELETE' })
       const json = await res.json() as { data: unknown; error: string | null }
+      
       if (!res.ok || json.error) {
-        alert(json.error ?? 'Não foi possível eliminar o cupão.')
-        return
+        throw new Error(json.error ?? 'Não foi possível eliminar o cupão')
       }
+      
       setCoupons((prev) => prev.filter((c) => c.id !== id))
-    } catch {
-      alert('Erro de ligação. Tente novamente.')
-    } finally {
-      setDeleting(null)
+      return true
     }
+
+    sileo.promise(deletePromise(), {
+      loading: { title: 'A eliminar cupão...' },
+      success: { 
+        title: 'Cupão eliminado', 
+        description: `O código ${code} foi removido com sucesso` 
+      },
+      error: (err: unknown) => ({
+        title: 'Erro ao eliminar',
+        description: err instanceof Error ? err.message : 'Tente novamente'
+      })
+    })
+    .finally(() => setDeleting(null))
   }
 
   function handleCreated(coupon: Coupon) {

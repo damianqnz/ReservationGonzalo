@@ -9,13 +9,14 @@ import { ChevronLeft, ChevronRight } from 'lucide-react'
 // ─── Nav config ───────────────────────────────────────────────────────────────
 
 const navItems = [
-  { name: 'Dashboard',    icon: 'dashboard',      href: '/dashboard'                },
-  { name: 'Reservas',     icon: 'calendar_month', href: '/dashboard/reservations'   },
-  { name: 'Calendário',   icon: 'calendar_today', href: '/dashboard/calendar'       },
-  { name: 'Propriedades', icon: 'domain',         href: '/dashboard/properties'     },
-  { name: 'Clientes',     icon: 'group',          href: '/dashboard/clients'        },
-  { name: 'Análises',     icon: 'leaderboard',    href: '/dashboard/analytics'      },
-  { name: 'Cupões',       icon: 'local_offer',    href: '/dashboard/coupons'        },
+  { name: 'Dashboard',       icon: 'dashboard',      href: '/dashboard'                    },
+  { name: 'Reservas',        icon: 'calendar_month', href: '/dashboard/reservations'       },
+  { name: 'Calendário',      icon: 'calendar_today', href: '/dashboard/calendar'           },
+  { name: 'Propriedades',    icon: 'domain',         href: '/dashboard/properties'         },
+  { name: 'Clientes',        icon: 'group',          href: '/dashboard/clients'            },
+  { name: 'Análises',        icon: 'leaderboard',    href: '/dashboard/analytics'          },
+  { name: 'Cupões',          icon: 'local_offer',    href: '/dashboard/coupons'            },
+  { name: 'Notificações',    icon: 'notifications',  href: '/dashboard/notifications'      },
 ]
 
 const bottomNavItems = [
@@ -25,13 +26,14 @@ const bottomNavItems = [
 // ─── Props ────────────────────────────────────────────────────────────────────
 
 interface Props {
-  collapsed: boolean
-  onToggle:  () => void
+  collapsed:    boolean
+  onToggle:     () => void
+  unreadCount?: number
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export default function DashboardSidebar({ collapsed, onToggle }: Props) {
+export default function DashboardSidebar({ collapsed, onToggle, unreadCount = 0 }: Props) {
   const pathname   = usePathname()
   const [signingOut, setSigningOut] = useState(false)
 
@@ -96,7 +98,16 @@ export default function DashboardSidebar({ collapsed, onToggle }: Props) {
               }`}
             >
               <span className="material-symbols-outlined shrink-0">{item.icon}</span>
-              {!collapsed && <span>{item.name}</span>}
+              {!collapsed && (
+                <span className="flex-1 flex items-center justify-between">
+                  {item.name}
+                  {item.href === '/dashboard/notifications' && unreadCount > 0 && (
+                    <span className="text-[9px] font-bold bg-[#8b1a1a] text-white px-1.5 py-0.5 rounded-full leading-none">
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
+                  )}
+                </span>
+              )}
             </Link>
           )
         })}

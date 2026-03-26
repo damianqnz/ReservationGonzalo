@@ -9,7 +9,7 @@ export async function PATCH() {
   if (!session?.user) {
     return NextResponse.json({ data: null, error: 'Unauthorized.' }, { status: 401 })
   }
-  if (session.user.role !== 'OWNER') {
+  if (session.user.role !== 'OWNER' && session.user.role !== 'ADMIN') {
     return NextResponse.json({ data: null, error: 'Forbidden.' }, { status: 403 })
   }
 
