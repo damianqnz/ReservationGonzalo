@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { sileo } from 'sileo'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -34,7 +35,6 @@ export default function AccessForm({ property: initial }: Props) {
     contactPhone:       initial.contactPhone       ?? '',
   })
   const [saving,       setSaving]       = useState(false)
-  const [toast,        setToast]        = useState<'success' | 'error' | null>(null)
   const [showWifiPass, setShowWifiPass] = useState(false)
 
   function field(name: keyof typeof form) {
@@ -49,9 +49,8 @@ export default function AccessForm({ property: initial }: Props) {
   async function handleSave(e: React.FormEvent) {
     e.preventDefault()
     setSaving(true)
-    setToast(null)
 
-    try {
+    const savePromise = async () => {
       const res = await fetch(`/api/properties/${initial.id}`, {
         method:  'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -65,30 +64,27 @@ export default function AccessForm({ property: initial }: Props) {
         }),
       })
 
-      setToast(res.ok ? 'success' : 'error')
-      if (res.ok) router.refresh()
-    } catch {
-      setToast('error')
-    } finally {
-      setSaving(false)
-      setTimeout(() => setToast(null), 4000)
+      if (!res.ok) throw new Error('Erro ao guardar')
+      router.refresh()
+      return res
     }
+
+    sileo.promise(savePromise(), {
+      loading: { title: 'A guardar...' },
+      success: { 
+        title: 'Dados guardados!', 
+        description: 'Informações de acesso atualizadas' 
+      },
+      error: { 
+        title: 'Erro', 
+        description: 'Não foi possível guardar os dados de acesso' 
+      }
+    })
+    .finally(() => setSaving(false))
   }
 
   return (
     <form onSubmit={handleSave} className="space-y-6">
-
-      {/* Toast */}
-      {toast && (
-        <div className={`fixed top-6 right-6 z-50 flex items-center gap-2 px-5 py-3 rounded-xl shadow-lg text-sm font-semibold ${
-          toast === 'success' ? 'bg-emerald-600 text-white' : 'bg-red-600 text-white'
-        }`}>
-          <span className="material-symbols-outlined text-base">
-            {toast === 'success' ? 'check_circle' : 'error'}
-          </span>
-          {toast === 'success' ? 'Guardado com sucesso!' : 'Erro ao guardar. Tente novamente.'}
-        </div>
-      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Access code */}

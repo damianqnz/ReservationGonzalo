@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import { sileo } from 'sileo'
 import {
   format, addMonths, subMonths, startOfMonth, endOfMonth,
   startOfWeek, endOfWeek, eachDayOfInterval,
@@ -179,7 +180,6 @@ function BlockRangeModal({
   const [reasonKey,  setReasonKey]  = useState('personal')
   const [notes,      setNotes]      = useState('')
   const [loading,    setLoading]    = useState(false)
-  const [error,      setError]      = useState<string | null>(null)
 
   const selectedProp = properties.find((p) => p.id === propId)
   const count        = editStart && editEnd && editEnd >= editStart
@@ -187,15 +187,27 @@ function BlockRangeModal({
     : 0
 
   async function handleBlock() {
-    if (!propId) { setError('Selecione uma propriedade.'); return }
-    if (!editStart || !editEnd || editEnd < editStart) { setError('Datas inválidas.'); return }
-    setLoading(true); setError(null)
+    if (!propId) {
+      sileo.error({ 
+        title: 'Selecione uma propriedade',
+        description: 'É necessário escolher uma propriedade para bloquear o período'
+      })
+      return 
+    }
+    if (!editStart || !editEnd || editEnd < editStart) {
+      sileo.error({ 
+        title: 'Datas inválidas',
+        description: 'A data de fim deve ser posterior à data de início'
+      })
+      return 
+    }
+    setLoading(true)
 
     const reason = reasonKey === 'other'
       ? (notes.trim() || 'Outro')
       : (REASONS.find((r) => r.value === reasonKey)?.label ?? '')
 
-    try {
+    const blockPromise = async () => {
       const res = await fetch('/api/calendar/block', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -208,14 +220,28 @@ function BlockRangeModal({
         }),
       })
       const json = await res.json() as { data: { count: number } | null; error: string | null }
-      if (!res.ok) { setError(typeof json.error === 'string' ? json.error : 'Erro ao bloquear.'); return }
+      
+      if (!res.ok) {
+        throw new Error(typeof json.error === 'string' ? json.error : 'Erro ao bloquear o período')
+      }
+      
       onBlocked(json.data?.count ?? count)
       onClose()
-    } catch {
-      setError('Erro de ligação.')
-    } finally {
-      setLoading(false)
+      return json.data
     }
+
+    sileo.promise(blockPromise(), {
+      loading: { title: 'A bloquear período...' },
+      success: { 
+        title: 'Bloqueio concluído!', 
+        description: `${count} dia${count !== 1 ? 's' : ''} bloqueado${count !== 1 ? 's' : ''} com sucesso` 
+      },
+      error: (err) => ({
+        title: 'Erro ao bloquear',
+        description: err instanceof Error ? err.message : 'Tente novamente mais tarde'
+      })
+    })
+    .finally(() => setLoading(false))
   }
 
   return (
@@ -341,12 +367,6 @@ function BlockRangeModal({
             </div>
           )}
 
-          {error && (
-            <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-xl px-3 py-2.5 text-red-700 text-xs font-semibold">
-              <span className="material-symbols-outlined text-base">error</span>
-              {error}
-            </div>
-          )}
         </div>
 
         <div className="flex gap-3 px-6 py-4 border-t border-slate-100">
@@ -384,23 +404,34 @@ function UnblockDayModal({
   onUnblocked: () => void
 }) {
   const [loading, setLoading] = useState(false)
-  const [error,   setError]   = useState<string | null>(null)
 
   async function handleUnblock() {
-    setLoading(true); setError(null)
-    try {
+    setLoading(true)
+    
+    const unblockPromise = async () => {
       const res = await fetch(
         `/api/calendar/block/${blocked.id}?type=${blocked.type}`,
         { method: 'DELETE' },
       )
-      if (!res.ok) { setError('Erro ao desbloquear.'); return }
+      if (!res.ok) throw new Error('Erro ao desbloquear o dia')
+      
       onUnblocked()
       onClose()
-    } catch {
-      setError('Erro de ligação.')
-    } finally {
-      setLoading(false)
+      return true
     }
+
+    sileo.promise(unblockPromise(), {
+      loading: { title: 'A desbloquear...' },
+      success: { 
+        title: 'Dia desbloqueado!', 
+        description: 'A disponibilidade foi restaurada' 
+      },
+      error: (err) => ({
+        title: 'Erro ao desbloquear',
+        description: err instanceof Error ? err.message : 'Tente novamente'
+      })
+    })
+    .finally(() => setLoading(false))
   }
 
   return (
@@ -426,8 +457,6 @@ function UnblockDayModal({
           <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Motivo</p>
           <p className="text-sm text-slate-700">{blocked.reason || '—'}</p>
         </div>
-
-        {error && <p className="text-xs text-red-600">{error}</p>}
 
         <div className="flex gap-3">
           <button
@@ -810,14 +839,6 @@ export default function CalendarClient({
   const [blockRangeModal, setBlockRangeModal] = useState<{ start: string; end: string } | null>(null)
   const [unblockModal,    setUnblockModal]    = useState<CalendarBlockedDate | null>(null)
 
-  // Toast
-  const [toast, setToast] = useState<string | null>(null)
-
-  function showToast(msg: string) {
-    setToast(msg)
-    setTimeout(() => setToast(null), 3500)
-  }
-
   function clearSelection() {
     setRangeStart(null)
     setRangeEnd(null)
@@ -1122,14 +1143,6 @@ export default function CalendarClient({
         )}
       </div>
 
-      {/* Toast */}
-      {toast && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 bg-[#1a1a2e] text-white text-sm font-semibold px-5 py-3 rounded-xl shadow-xl">
-          <span className="material-symbols-outlined text-base text-emerald-400">check_circle</span>
-          {toast}
-        </div>
-      )}
-
       {/* Booking detail modal */}
       {selectedBooking && (
         <BookingModal booking={selectedBooking} onClose={() => setSelectedBooking(null)} />
@@ -1145,10 +1158,9 @@ export default function CalendarClient({
           propertyIdFilter={propertyIdFilter || (properties[0]?.id ?? '')}
           roomIdFilter={roomIdFilter}
           onClose={() => { setBlockRangeModal(null); clearSelection() }}
-          onBlocked={(count) => {
+          onBlocked={() => {
             setBlockRangeModal(null)
             clearSelection()
-            showToast(`${count} dia${count !== 1 ? 's' : ''} bloqueado${count !== 1 ? 's' : ''} com sucesso`)
             handleRefresh()
           }}
         />
@@ -1161,7 +1173,6 @@ export default function CalendarClient({
           onClose={() => setUnblockModal(null)}
           onUnblocked={() => {
             setUnblockModal(null)
-            showToast('Dia desbloqueado')
             handleRefresh()
           }}
         />

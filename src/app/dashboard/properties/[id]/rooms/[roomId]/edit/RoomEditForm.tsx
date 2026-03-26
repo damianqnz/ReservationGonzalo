@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { sileo } from 'sileo'
 import BedPicker from '../../new/BedPicker'
 import ServicesChecklist from '../../new/ServicesChecklist'
 
@@ -93,8 +94,6 @@ export default function RoomEditForm({ propertyId, room }: Props) {
   })
 
   const [loading, setLoading] = useState(false)
-  const [error,   setError]   = useState<string | null>(null)
-  const [toast,   setToast]   = useState<'success' | null>(null)
 
   function set<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((prev) => ({ ...prev, [key]: value }))
@@ -103,9 +102,8 @@ export default function RoomEditForm({ propertyId, room }: Props) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
-    setError(null)
 
-    try {
+    const submitPromise = async () => {
       const res = await fetch(`/api/rooms/${room.id}`, {
         method:  'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -125,30 +123,29 @@ export default function RoomEditForm({ propertyId, room }: Props) {
       const json = await res.json()
 
       if (!res.ok) {
-        setError(typeof json.error === 'string' ? json.error : JSON.stringify(json.error))
-        return
+        throw new Error(typeof json.error === 'string' ? json.error : 'Erro ao guardar as alterações')
       }
 
-      setToast('success')
-      setTimeout(() => setToast(null), 3000)
       router.refresh()
-    } catch {
-      setError('Erro de ligação. Tente novamente.')
-    } finally {
-      setLoading(false)
+      return json
     }
+
+    sileo.promise(submitPromise(), {
+      loading: { title: 'A guardar alterações...' },
+      success: { 
+        title: 'Quarto atualizado!', 
+        description: 'Alterações guardadas com sucesso' 
+      },
+      error: (err) => ({ 
+        title: 'Erro ao guardar', 
+        description: err instanceof Error ? err.message : 'Tente novamente mais tarde' 
+      })
+    })
+    .finally(() => setLoading(false))
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-
-      {/* Toast */}
-      {toast === 'success' && (
-        <div className="fixed top-6 right-6 z-50 flex items-center gap-2 px-5 py-3 rounded-xl shadow-lg text-sm font-semibold bg-emerald-600 text-white">
-          <span className="material-symbols-outlined text-base">check_circle</span>
-          Guardado com sucesso!
-        </div>
-      )}
 
       {/* ── Informações gerais ──────────────────────────────────────── */}
       <Section title="Informações gerais" icon="info">
@@ -293,13 +290,6 @@ export default function RoomEditForm({ propertyId, room }: Props) {
       <Section title="Serviços incluídos" icon="check_circle">
         <ServicesChecklist value={services} onChange={setServices} />
       </Section>
-
-      {/* Error */}
-      {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm">
-          {error}
-        </div>
-      )}
 
       {/* Footer */}
       <div className="flex gap-3 pb-8">

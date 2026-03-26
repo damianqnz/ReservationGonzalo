@@ -4,6 +4,8 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useSession, signOut } from 'next-auth/react'
 import Image from 'next/image'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { sileo } from 'sileo'
 import NotificationPanel from '@/components/dashboard/NotificationPanel'
 
 interface DashboardTopbarProps {
@@ -13,10 +15,12 @@ interface DashboardTopbarProps {
 
 export default function DashboardTopbar({ unreadCount: initialCount = 0, collapsed = false }: DashboardTopbarProps) {
   const { data: session } = useSession()
+  const router = useRouter()
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [signingOut,   setSigningOut]   = useState(false)
   const [bellOpen,     setBellOpen]     = useState(false)
   const [unread,       setUnread]       = useState(initialCount)
+  const prevUnreadRef = useRef(initialCount)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const bellRef     = useRef<HTMLDivElement>(null)
 
@@ -40,20 +44,41 @@ export default function DashboardTopbar({ unreadCount: initialCount = 0, collaps
   useEffect(() => {
     async function poll() {
       try {
-        const res  = await fetch('/api/notifications?unreadOnly=true')
+        // Fetch full list to get the latest notification details
+        const res  = await fetch('/api/notifications?limit=5')
         const json = await res.json()
-        if (typeof json.data?.unreadCount === 'number') {
-          setUnread(json.data.unreadCount as number)
+        
+        if (json.data && Array.isArray(json.data)) {
+          const notifications = json.data as { read: boolean; title?: string }[]
+          const newUnread = notifications.filter((n) => !n.read).length
+          
+          if (newUnread > prevUnreadRef.current) {
+            const latest = notifications.find(n => !n.read) || notifications[0]
+            if (latest) {
+              sileo.info({
+                title: '🔔 Nova notificação',
+                description: latest.title || 'Chegou uma nova atualização',
+                button: {
+                  title: 'Ver',
+                  onClick: () => router.push('/dashboard/notifications')
+                }
+              })
+            }
+          }
+          
+          setUnread(newUnread)
+          prevUnreadRef.current = newUnread
         }
       } catch {/* ignore */}
     }
 
     const id = setInterval(() => { void poll() }, 30_000)
     return () => clearInterval(id)
-  }, [])
+  }, [router])
 
   const handleUnreadChange = useCallback((count: number) => {
     setUnread(count)
+    prevUnreadRef.current = count
   }, [])
 
   async function handleSignOut() {
