@@ -2,6 +2,8 @@
 
 import { useRef, useState } from 'react'
 import { Upload, X, Star, GripVertical, ImageOff } from 'lucide-react'
+import { ImageCategory } from '@prisma/client'
+import { IMAGE_CATEGORIES } from '@/lib/imageCategories'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -12,6 +14,7 @@ export interface UploadedImage {
   isCover: boolean
   alt: string | null
   order: number
+  category?: ImageCategory
 }
 
 interface ImageUploaderProps {
@@ -160,6 +163,24 @@ export default function ImageUploader({
     }
   }
 
+  // ── Category ─────────────────────────────────────────────────────────────────
+
+  async function handleCategoryChange(image: UploadedImage, category: ImageCategory) {
+    try {
+      const res = await fetch(`${imageBaseUrl}/${image.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ category }),
+      })
+      if (!res.ok) return
+      setImages((prev) =>
+        prev.map((img) => (img.id === image.id ? { ...img, category } : img))
+      )
+    } catch {
+      // silent — non-critical
+    }
+  }
+
   // ── Reorder (drag & drop) ───────────────────────────────────────────────────
 
   function handleDragStart(index: number) {
@@ -260,70 +281,96 @@ export default function ImageUploader({
             {images.length} imagem{images.length !== 1 ? 'ns' : ''} · arraste para reordenar
           </p>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-            {images.map((img, index) => (
-              <div
-                key={img.id}
-                draggable
-                onDragStart={() => handleDragStart(index)}
-                onDragOver={(e) => e.preventDefault()}
-                onDrop={() => handleDrop(index)}
-                className={`group relative rounded-xl overflow-hidden border-2 transition-all cursor-grab active:cursor-grabbing ${
-                  img.isCover
-                    ? 'border-[#8b1a1a]'
-                    : 'border-transparent hover:border-slate-200'
-                } ${dragIndex === index ? 'opacity-50' : ''}`}
-              >
-                {/* Image */}
-                <div className="aspect-[4/3] bg-slate-100">
-                  {img.url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={img.url}
-                      alt={img.alt ?? ''}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <ImageOff size={24} className="text-slate-300" />
+            {images.map((img, index) => {
+              const catConfig = img.category ? IMAGE_CATEGORIES[img.category] : null
+              return (
+                <div
+                  key={img.id}
+                  draggable
+                  onDragStart={() => handleDragStart(index)}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={() => handleDrop(index)}
+                  className={`group relative rounded-xl overflow-hidden border-2 transition-all ${
+                    img.isCover
+                      ? 'border-[#8b1a1a]'
+                      : 'border-transparent hover:border-slate-200'
+                  } ${dragIndex === index ? 'opacity-50' : ''}`}
+                >
+                  {/* Image */}
+                  <div className="aspect-[4/3] bg-slate-100 cursor-grab active:cursor-grabbing">
+                    {img.url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={img.url}
+                        alt={img.alt ?? ''}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <ImageOff size={24} className="text-slate-300" />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Drag handle */}
+                  <div className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity bg-white/80 rounded p-0.5">
+                    <GripVertical size={14} className="text-slate-500" />
+                  </div>
+
+                  {/* Cover badge */}
+                  {img.isCover && (
+                    <div className="absolute top-2 right-2 bg-[#8b1a1a] text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                      <Star size={9} fill="white" />
+                      Capa
                     </div>
                   )}
-                </div>
 
-                {/* Drag handle */}
-                <div className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity bg-white/80 rounded p-0.5">
-                  <GripVertical size={14} className="text-slate-500" />
-                </div>
-
-                {/* Cover badge */}
-                {img.isCover && (
-                  <div className="absolute top-2 right-2 bg-[#8b1a1a] text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
-                    <Star size={9} fill="white" />
-                    Capa
-                  </div>
-                )}
-
-                {/* Actions overlay */}
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-end justify-between p-2 gap-1">
-                  {!img.isCover && (
+                  {/* Actions overlay */}
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-end justify-between p-2 gap-1">
+                    {!img.isCover && (
+                      <button
+                        onClick={() => handleSetCover(img)}
+                        title="Definir como capa"
+                        className="opacity-0 group-hover:opacity-100 transition-opacity bg-white text-slate-700 text-[10px] font-bold px-2 py-1 rounded-lg hover:bg-slate-50 flex items-center gap-1"
+                      >
+                        <Star size={10} />
+                        Capa
+                      </button>
+                    )}
                     <button
-                      onClick={() => handleSetCover(img)}
-                      title="Definir como capa"
-                      className="opacity-0 group-hover:opacity-100 transition-opacity bg-white text-slate-700 text-[10px] font-bold px-2 py-1 rounded-lg hover:bg-slate-50 flex items-center gap-1"
+                      onClick={() => handleDelete(img)}
+                      title="Eliminar imagem"
+                      className="opacity-0 group-hover:opacity-100 transition-opacity ml-auto bg-red-600 text-white p-1.5 rounded-lg hover:bg-red-700"
                     >
-                      <Star size={10} />
-                      Capa
+                      <X size={12} />
                     </button>
-                  )}
-                  <button
-                    onClick={() => handleDelete(img)}
-                    title="Eliminar imagem"
-                    className="opacity-0 group-hover:opacity-100 transition-opacity ml-auto bg-red-600 text-white p-1.5 rounded-lg hover:bg-red-700"
-                  >
-                    <X size={12} />
-                  </button>
+                  </div>
+
+                  {/* Category selector */}
+                  <div className="px-2 py-1.5 bg-white border-t border-slate-100">
+                    <select
+                      value={img.category ?? 'OUTRO'}
+                      onChange={(e) => handleCategoryChange(img, e.target.value as ImageCategory)}
+                      className="w-full text-[11px] text-slate-600 bg-slate-50 border border-slate-200 rounded px-1.5 py-1 focus:ring-[#8b1a1a] focus:border-[#8b1a1a] outline-none cursor-pointer"
+                      title="Categoria da imagem"
+                    >
+                      {Object.entries(IMAGE_CATEGORIES)
+                        .sort(([, a], [, b]) => a.order - b.order)
+                        .map(([key, cfg]) => (
+                          <option key={key} value={key}>
+                            {cfg.icon} {cfg.label.pt}
+                          </option>
+                        ))}
+                    </select>
+                    {catConfig && (
+                      <p className="text-[10px] text-slate-400 mt-0.5 text-center">
+                        {catConfig.icon} {catConfig.label.pt}
+                      </p>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </div>
       )}

@@ -744,7 +744,7 @@ function CheckoutInner() {
     <div className="bg-[#f9fafb] text-text-main antialiased min-h-screen">
       {/* Header */}
       <header className="sticky top-0 z-50 border-b border-surface bg-white/90 backdrop-blur-md">
-        <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-4 sm:px-6">
+        <div className="container-main flex h-16 items-center justify-between">
           <Link
             href="/"
             className="font-display font-bold text-[18px] tracking-tight text-text-main"
@@ -758,7 +758,7 @@ function CheckoutInner() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
+      <main className="container-main py-8">
         {/* Title */}
         <div className="flex items-center gap-3 mb-8">
           <Link

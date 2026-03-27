@@ -124,12 +124,28 @@ model PropertyImage {
   url        String
   publicId   String
   alt        String?
+  category   ImageCategory? @default(OUTRO)
   order      Int      @default(0)
   isCover    Boolean  @default(false)
   createdAt  DateTime @default(now())
   property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
 
   @@map("property_images")
+}
+
+enum ImageCategory {
+  SALA
+  COZINHA
+  QUARTO
+  CASA_DE_BANHO
+  EXTERIOR
+  ENTRADA
+  LAVANDARIA
+  PISCINA
+  JARDIM
+  VARANDA
+  ESCRITORIO
+  OUTRO
 }
 
 model Amenity {
@@ -406,6 +422,7 @@ model RoomImage {
   url       String
   publicId  String
   alt       String?
+  category  ImageCategory? @default(OUTRO)
   order     Int      @default(0)
   isCover   Boolean  @default(false)
   createdAt DateTime @default(now())
