@@ -3,7 +3,8 @@ import { notFound } from 'next/navigation'
 import { PropertyStatus } from '@prisma/client'
 import { db } from '@/lib/db'
 import { nightsBetween } from '@/lib/date'
-import { resolveImageUrl } from '@/lib/cloudinary'
+import { resolveImageUrl, getImageUrl } from '@/lib/cloudinary'
+import { getCategoryLabel } from '@/lib/imageCategories'
 import PropertyDetailsClient from './PropertyDetailsClient'
 
 interface Props {
@@ -65,12 +66,12 @@ export default async function PropertyPage({ params, searchParams }: Props) {
         include: {
           images: {
             orderBy: { order: "asc" },
-            select: { url: true, publicId: true, alt: true, order: true, isCover: true },
+            select: { url: true, publicId: true, alt: true, order: true, isCover: true, category: true },
           },
         },
       },
       images: {
-        select: { url: true, publicId: true, alt: true, order: true, isCover: true },
+        select: { id: true, url: true, publicId: true, alt: true, order: true, isCover: true, category: true },
         orderBy: { order: "asc" },
       },
       amenities: {
@@ -138,12 +139,14 @@ export default async function PropertyPage({ params, searchParams }: Props) {
   const resolvedImages = property.images.map((img) => ({
     ...img,
     url: resolveImageUrl(img, { width: 1200 }),
+    category: img.category || 'OUTRO', // fallback for TS safety
   }))
   const resolvedRooms = property.rooms.map((room) => ({
     ...room,
     images: room.images.map((img) => ({
       ...img,
       url: resolveImageUrl(img, { width: 800 }),
+      category: img.category || 'OUTRO',
     })),
   }))
 
@@ -153,23 +156,52 @@ export default async function PropertyPage({ params, searchParams }: Props) {
     createdAt: r.createdAt.toISOString(),
   }))
 
+  // ─── Schema.org metadata ───────────────────────────────────────────────────
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Accommodation',
+    name: property.title,
+    description: property.description,
+    address: {
+      '@type': 'PostalAddress',
+      addressLocality: property.city,
+      addressCountry: property.country,
+      streetAddress: property.address,
+    },
+    image: property.images.map((img) => ({
+      '@type': 'ImageObject',
+      url: img.publicId
+        ? getImageUrl(img.publicId, { width: 1200 })
+        : img.url,
+      name: `${property.title} — ${getCategoryLabel(img.category ?? 'OUTRO')}`,
+      description: img.alt || property.title,
+      representativeOfPage: img.isCover,
+    })),
+  }
+
   return (
-    <PropertyDetailsClient
-      property={{
-        ...property,
-        images: resolvedImages,
-        rooms: resolvedRooms,
-        reviews: serializedReviews,
-        avgRating,
-        reviewCount: property.reviews.length,
-        lat: property.latitude ?? null,
-        lng: property.longitude ?? null,
-      }}
-      checkIn={checkIn?.toISOString()}
-      checkOut={checkOut?.toISOString()}
-      guests={guests}
-      nights={nights}
-      totalPrice={totalPrice}
-    />
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <PropertyDetailsClient
+        property={{
+          ...property,
+          images: resolvedImages,
+          rooms: resolvedRooms,
+          reviews: serializedReviews,
+          avgRating,
+          reviewCount: property.reviews.length,
+          lat: property.latitude ?? null,
+          lng: property.longitude ?? null,
+        }}
+        checkIn={checkIn?.toISOString()}
+        checkOut={checkOut?.toISOString()}
+        guests={guests}
+        nights={nights}
+        totalPrice={totalPrice}
+      />
+    </>
   )
 }

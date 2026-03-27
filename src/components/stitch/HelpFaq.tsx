@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 
 interface FaqQuestion {
   q: string;
@@ -89,12 +89,12 @@ export default function HelpFaq() {
     <div className="bg-white text-text-main antialiased">
       <main>
         {/* Hero Section */}
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-accent/10 rounded-[2.5rem] p-8 md:p-16 flex flex-col md:flex-row items-center justify-between gap-12">
+        <section className="container-main">
+          <div className="bg-accent/10 rounded-[2.5rem] p-16 md:p-32 flex flex-col md:flex-row items-center justify-between gap-12">
             <div className="max-w-2xl text-center md:text-left order-2 md:order-1">
-              <span className="text-xs font-bold tracking-widest uppercase text-text-muted mb-4 block">
+              <p className="text-xs font-bold tracking-widest uppercase text-text-muted mb-4 block">
                 AYUDA Y ASISTENCIA
-              </span>
+              </p>
               <h1 className="font-display text-4xl md:text-5xl font-bold mb-6 leading-tight">
                 Todo lo que necesita en un solo lugar
               </h1>
@@ -102,7 +102,7 @@ export default function HelpFaq() {
                 Gestiona tus reservas, accede a información importante sobre la
                 propiedad o reserva complementos para mejorar tu estancia.
               </p>
-              <button className="bg-primary text-white px-8 py-4 rounded-xl font-semibold shadow-lg shadow-primary/20 hover:bg-primary/80 transition-all transform hover:-translate-y-0.5">
+              <button className="bg-primary text-white px-16 py-8 rounded-xl font-semibold shadow-lg shadow-primary/20 hover:bg-primary/80 transition-all transform hover:-translate-y-0.5">
                 Gestionar mi reserva
               </button>
             </div>
@@ -122,7 +122,7 @@ export default function HelpFaq() {
         </section>
 
         {/* FAQ Section */}
-        <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+        <section className="container-main py-40">
           <div className="mb-12 text-center md:text-left">
             <span className="text-xs font-bold tracking-[0.2em] uppercase text-text-muted">
               PREGUNTAS FRECUENTES
@@ -137,7 +137,7 @@ export default function HelpFaq() {
                   className={`border-b border-gray-100 last:border-b-0 ${isOpen ? "" : ""}`}
                 >
                   <button
-                    className="w-full flex items-center justify-between p-8 text-left focus:outline-none"
+                    className="w-full flex items-center justify-between p-16 text-left focus:outline-none"
                     onClick={() => toggle(i)}
                   >
                     <span className="text-2xl font-display font-semibold flex items-center">
@@ -151,9 +151,9 @@ export default function HelpFaq() {
                     className="overflow-hidden transition-all duration-300"
                     style={{ maxHeight: isOpen ? "500px" : "0" }}
                   >
-                    <div className="px-8 pb-8">
+                    <div className="px-16 pb-16">
                       {cat.type === "questions" ? (
-                        <div className="pl-8 space-y-6">
+                        <div className="pl-16 space-y-6">
                           {cat.questions.map((q, qi) => (
                             <div key={qi}>
                               {q.a ? (
@@ -164,7 +164,7 @@ export default function HelpFaq() {
                                     </span>
                                     {q.q}
                                   </h4>
-                                  <p className="text-text-muted text-sm pl-6 leading-relaxed">
+                                  <p className="text-text-muted text-sm pl-12 leading-relaxed">
                                     {q.a}
                                   </p>
                                 </div>
@@ -182,7 +182,7 @@ export default function HelpFaq() {
                           ))}
                         </div>
                       ) : (
-                        <p className="text-text-muted text-sm pl-8">
+                        <p className="text-text-muted text-sm pl-16">
                           {cat.content}
                         </p>
                       )}
@@ -196,8 +196,7 @@ export default function HelpFaq() {
       </main>
 
       {/* Footer */}
-      <footer className="bg-white border-t border-gray-100 py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <footer className="bg-white border-t border-gray-100 py-24 container-main">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <a
               className="text-xl font-display font-bold text-primary tracking-tight"
@@ -223,7 +222,6 @@ export default function HelpFaq() {
               © 2026 ReservationGonzalo
             </p>
           </div>
-        </div>
       </footer>
     </div>
   );
