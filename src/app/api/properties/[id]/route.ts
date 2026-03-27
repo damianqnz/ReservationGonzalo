@@ -23,8 +23,11 @@ const patchSchema = z
     area: z.number().positive().optional(),
     pricePerNight: z.number().positive().optional(),
     cleaningFee: z.number().min(0).optional(),
-    latitude: z.number().optional(),
-    longitude: z.number().optional(),
+    latitude:     z.number().optional(),
+    longitude:    z.number().optional(),
+    bedsConfig:   z.string().optional(),
+    bathroomType: z.string().optional(),
+    services:     z.string().optional(),
     // Access data
     accessCode:          z.string().max(100).nullish(),
     wifiName:            z.string().max(100).nullish(),
@@ -97,7 +100,7 @@ export async function PATCH(
   if (!session?.user) {
     return NextResponse.json({ data: null, error: 'Unauthorized.' }, { status: 401 })
   }
-  if (session.user.role !== 'OWNER') {
+  if (session.user.role !== 'OWNER' && session.user.role !== 'ADMIN') {
     return NextResponse.json({ data: null, error: 'Forbidden.' }, { status: 403 })
   }
 
@@ -119,7 +122,7 @@ export async function PATCH(
   }
 
   try {
-    // Verify property belongs to this owner
+    // Verify property belongs to this owner (ADMIN bypasses ownership check)
     const existing = await db.property.findUnique({
       where: { id },
       select: { ownerId: true },
@@ -129,7 +132,7 @@ export async function PATCH(
       return NextResponse.json({ data: null, error: 'Property not found.' }, { status: 404 })
     }
 
-    if (existing.ownerId !== session.user.id) {
+    if (existing.ownerId !== session.user.id && session.user.role !== 'ADMIN') {
       return NextResponse.json({ data: null, error: 'Forbidden.' }, { status: 403 })
     }
 
