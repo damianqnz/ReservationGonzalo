@@ -22,6 +22,12 @@ interface Props {
 function getActions(id: string) {
   return [
     {
+      icon:        'edit',
+      title:       'Editar Propriedade',
+      description: 'Editar título, descrição, preços e detalhes',
+      href:        `/dashboard/properties/${id}/edit`,
+    },
+    {
       icon:        'calendar_month',
       title:       'Ver Reservas',
       description: 'Ver todas as reservas desta propriedade',
