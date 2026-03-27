@@ -4,6 +4,8 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import { sileo } from 'sileo'
+import BedPicker from '@/components/dashboard/BedPicker'
+import ServicesChecklist from '@/components/dashboard/ServicesChecklist'
 
 const PropertyMapWrapper = dynamic(() => import('@/components/ui/PropertyMapWrapper'), {
   ssr: false,
@@ -27,6 +29,10 @@ interface PropertyData {
   bedrooms:           number
   bathrooms:          number
   beds:               number
+  hasRooms:           boolean
+  bedsConfig:         string | null
+  bathroomType:       string | null
+  services:           string | null
   accessCode:         string | null
   wifiName:           string | null
   wifiPassword:       string | null
@@ -43,12 +49,20 @@ interface Props {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
+function parseJsonArray(raw: string | null): string[] {
+  if (!raw) return []
+  try { return JSON.parse(raw) as string[] } catch { return [] }
+}
+
 export default function PropertyEditForm({ property: initial }: Props) {
   const router  = useRouter()
   const [form,  setForm]  = useState(initial)
   const [saving, setSaving] = useState(false)
   const [showWifiPass, setShowWifiPass] = useState(false)
   const [geocoding, setGeocoding] = useState(false)
+  const [bedsList,  setBedsList]  = useState<string[]>(() => parseJsonArray(initial.bedsConfig))
+  const [services,  setServices]  = useState<string[]>(() => parseJsonArray(initial.services))
+  const [bathroomType, setBathroomType] = useState(initial.bathroomType ?? 'private')
 
   function field(name: keyof PropertyData) {
     return {
@@ -79,6 +93,11 @@ export default function PropertyEditForm({ property: initial }: Props) {
           bedrooms:           Number(form.bedrooms),
           bathrooms:          Number(form.bathrooms),
           beds:               Number(form.beds),
+          ...(!form.hasRooms && {
+            bedsConfig:   JSON.stringify(bedsList),
+            bathroomType,
+            services:     JSON.stringify(services),
+          }),
           accessCode:         form.accessCode         || null,
           wifiName:           form.wifiName           || null,
           wifiPassword:       form.wifiPassword       || null,
@@ -197,6 +216,45 @@ export default function PropertyEditForm({ property: initial }: Props) {
             <Input {...field('bathrooms')} type="number" min="0" required />
           </div>
         </div>
+      </section>
+
+      {/* ── Configuração do espaço ─────────────────────────────────────────── */}
+      <section>
+        <div className="flex items-center gap-2 mb-4">
+          <span className="material-symbols-outlined text-[#8b1a1a]">bed</span>
+          <h2 className="text-lg font-bold text-[#1a1a2e]">Configuração do espaço</h2>
+        </div>
+
+        {form.hasRooms ? (
+          <p className="text-sm text-slate-500 bg-slate-50 border border-slate-200 rounded-lg px-4 py-3">
+            Os detalhes de camas e serviços são configurados individualmente em cada quarto.
+          </p>
+        ) : (
+          <div className="space-y-6">
+            <div>
+              <Label>Tipo de casa de banho</Label>
+              <select
+                value={bathroomType}
+                onChange={(e) => setBathroomType(e.target.value)}
+                className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-[#8b1a1a] focus:border-[#8b1a1a] outline-none bg-white"
+              >
+                <option value="private">Casa de banho privada</option>
+                <option value="shared">Casa de banho partilhada</option>
+                <option value="ensuite">En-suite</option>
+              </select>
+            </div>
+
+            <div>
+              <Label>Tipo de camas</Label>
+              <BedPicker value={bedsList} onChange={setBedsList} />
+            </div>
+
+            <div>
+              <Label>Serviços incluídos</Label>
+              <ServicesChecklist value={services} onChange={setServices} />
+            </div>
+          </div>
+        )}
       </section>
 
       {/* ── Dados de Acesso ────────────────────────────────────────────────── */}
