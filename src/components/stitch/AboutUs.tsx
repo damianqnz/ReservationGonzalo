@@ -70,8 +70,8 @@ export default function AboutUs() {
     <div className="bg-white text-text-main antialiased overflow-x-hidden">
       <main>
         {/* Hero Section */}
-        <section className="py-5 px-6 overflow-hidden">
-          <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-16 items-center">
+        <section className="py-5 overflow-hidden">
+          <div className="container-main grid lg:grid-cols-2 gap-16 items-center">
             <div className="space-y-8">
               <h1 className="font-display text-5xl lg:text-7xl font-extrabold leading-[1.1] tracking-tight">
                 Quem somos
@@ -110,8 +110,8 @@ export default function AboutUs() {
         </section>
 
         {/* Trajectory Section */}
-        <section className="py-24 bg-gray-50 px-6">
-          <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-20 items-center">
+        <section className="py-24 bg-gray-50">
+          <div className="container-main grid lg:grid-cols-2 gap-20 items-center">
             <div className="relative">
               <div className="aspect-[4/5] rounded-3xl overflow-hidden shadow-2xl">
                 <img
@@ -156,8 +156,8 @@ export default function AboutUs() {
         </section>
 
         {/* Trustpilot Section */}
-        <section className="py-24 bg-[#f4f7f4] px-6">
-          <div className="max-w-7xl mx-auto">
+        <section className="py-24 bg-[#f4f7f4]">
+          <div className="container-main">
             <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
               <div className="space-y-4">
                 <h2 className="font-display text-4xl font-bold">
@@ -190,8 +190,8 @@ export default function AboutUs() {
         </section>
 
         {/* Stay With Us Section */}
-        <section className="py-24 px-6">
-          <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-16 items-center">
+        <section className="py-24">
+          <div className="container-main grid lg:grid-cols-2 gap-16 items-center">
             <div className="order-2 lg:order-1 relative">
               <div className="aspect-square rounded-full overflow-hidden border-[16px] border-gray-50 shadow-2xl">
                 <img
@@ -241,8 +241,8 @@ export default function AboutUs() {
       </main>
 
       {/* Footer */}
-      <footer className="bg-white pt-20 pb-10 border-t border-gray-100 px-6">
-        <div className="max-w-7xl mx-auto space-y-16">
+      <footer className="bg-white pt-20 pb-10 border-t border-gray-100">
+        <div className="container-main space-y-16">
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-12">
             <div className="col-span-2 lg:col-span-1 space-y-6">
               <span className="text-xl font-bold font-display">

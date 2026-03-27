@@ -1,15 +1,17 @@
 "use client";
 
 import { useState, useEffect, type ComponentType } from "react";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { ImageCategory } from "@prisma/client";
 import PropertyMapWrapper from "@/components/ui/PropertyMapWrapper";
+import PropertyGallery from "@/components/property/PropertyGallery";
 import { DayPicker } from "react-day-picker";
 import type { DateRange } from "react-day-picker";
 import "react-day-picker/dist/style.css";
+import Image from "next/image";
 import { pt } from "date-fns/locale";
 import {
   Wifi,
@@ -52,7 +54,7 @@ interface PropertyData {
   checkOutTime: string;
   cancellationPolicy: string;
   minNights: number;
-  images: { url: string; alt: string | null; order: number; isCover: boolean }[];
+  images: { id: string; url: string; publicId: string; alt: string | null; order: number; isCover: boolean; category: ImageCategory }[];
   amenities: { amenity: { name: string; icon: string | null } }[];
   reviews: {
     id: string;
@@ -77,7 +79,7 @@ interface PropertyData {
     bathrooms: number;
     beds: number;
     pricePerNight: number;
-    images: { url: string; alt: string | null; isCover: boolean }[];
+    images: { url: string; alt: string | null; isCover: boolean; category: ImageCategory }[];
   }[];
 }
 
@@ -730,7 +732,6 @@ export default function PropertyDetailsClient({
   totalPrice: initialTotalPrice,
 }: Props) {
   const router = useRouter();
-  const [activeImg, setActiveImg] = useState(0);
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
 
@@ -799,8 +800,6 @@ export default function PropertyDetailsClient({
       property.securityDeposit
       : initialTotalPrice;
 
-  const images = property.images.length > 0 ? property.images : null;
-
   const handleBookNow = () => {
     if (property.hasRooms && !selectedRoomId) {
       const el = document.getElementById("room-selector");
@@ -813,7 +812,8 @@ export default function PropertyDetailsClient({
   return (
     <div className="bg-background text-text-main antialiased pb-24">
       {/* ── App Bar ─────────────────────────────────────────────────────────── */}
-      <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-md px-4 py-3 flex items-center justify-between border-b border-gray-100">
+      <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-gray-100">
+        <div className="container-main py-3 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <a href="/" aria-label="Voltar" className="p-2 -ml-2">
             <span className="material-symbols-outlined text-text-main">arrow_back</span>
@@ -830,57 +830,18 @@ export default function PropertyDetailsClient({
             <span className="material-symbols-outlined text-text-main">favorite_border</span>
           </button>
         </div>
+        </div>
       </header>
 
       <main>
         {/* ── Gallery ─────────────────────────────────────────────────────── */}
-        <section className="relative">
-          <div className="w-full aspect-[4/3] overflow-hidden bg-surface">
-            {images ? (
-              <Image
-                src={images[activeImg].url}
-                alt={images[activeImg].alt ?? property.title}
-                fill
-                className="object-cover transition-all duration-500"
-                sizes="100vw"
-                priority
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center">
-                <span className="material-symbols-outlined text-[64px] text-text-muted">
-                  apartment
-                </span>
-              </div>
-            )}
-          </div>
-
-          {images && images.length > 1 && (
-            <>
-              <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-2 px-4">
-                {images.map((img, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setActiveImg(i)}
-                    className={`w-14 h-10 rounded-lg overflow-hidden border-2 transition-all relative ${activeImg === i
-                      ? "border-white shadow-lg scale-110"
-                      : "border-transparent opacity-60"
-                      }`}
-                    aria-label={`Foto ${i + 1}`}
-                  >
-                    <Image src={img.url} alt="" fill className="object-cover" sizes="56px" />
-                  </button>
-                ))}
-              </div>
-              <div className="absolute top-4 right-4 bg-black/50 text-white text-[12px] font-medium px-3 py-1.5 rounded-full flex items-center gap-1">
-                <span className="material-symbols-outlined text-[14px]">photo_camera</span>
-                {activeImg + 1}/{images.length}
-              </div>
-            </>
-          )}
-        </section>
+        <PropertyGallery
+          images={property.images}
+          propertyTitle={property.title}
+        />
 
         {/* ── Property Info ────────────────────────────────────────────────── */}
-        <section className="px-4 py-6 space-y-4">
+        <section className="container-main py-6 space-y-4">
           <div className="flex items-start justify-between gap-3">
             <div className="space-y-1 min-w-0">
               <p className="text-[12px] font-semibold uppercase tracking-wider text-text-muted">
@@ -929,7 +890,7 @@ export default function PropertyDetailsClient({
         <hr className="mx-4 border-surface" />
 
         {/* ── Host ────────────────────────────────────────────────────────── */}
-        <section className="px-4 py-6 flex items-center gap-4">
+        <section className="container-main py-6 flex items-center gap-4">
           <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
             <span className="material-symbols-outlined text-primary text-[28px]">person</span>
           </div>
@@ -944,7 +905,7 @@ export default function PropertyDetailsClient({
         <hr className="mx-4 border-surface" />
 
         {/* ── Description ─────────────────────────────────────────────────── */}
-        <section className="px-4 py-6 space-y-3">
+        <section className="container-main py-6 space-y-3">
           <h3 className="text-[18px] font-display font-bold">Sobre este alojamento</h3>
           <p className="text-[14px] text-text-muted leading-relaxed whitespace-pre-line">
             {property.description}
@@ -956,7 +917,7 @@ export default function PropertyDetailsClient({
         {/* ── Amenities ───────────────────────────────────────────────────── */}
         {property.amenities.length > 0 && (
           <>
-            <section className="px-4 py-6 space-y-4">
+            <section className="container-main py-6 space-y-4">
               <h3 className="text-[18px] font-display font-bold">O que este espaço oferece</h3>
               <div className="grid grid-cols-2 gap-3">
                 {property.amenities.map(({ amenity }) => {
@@ -983,7 +944,7 @@ export default function PropertyDetailsClient({
         {/* ── Reviews ─────────────────────────────────────────────────────── */}
         {property.reviews.length > 0 && (
           <>
-            <section className="px-4 py-6 space-y-5">
+            <section className="container-main py-6 space-y-5">
               <div className="flex items-center justify-between">
                 <h3 className="text-[18px] font-display font-bold">Avaliações</h3>
                 {property.avgRating !== null && (
@@ -1033,7 +994,7 @@ export default function PropertyDetailsClient({
         )}
 
         {/* ── House Rules ──────────────────────────────────────────────────── */}
-        <section className="px-4 py-6 space-y-4">
+        <section className="container-main py-6 space-y-4">
           <h3 className="text-[18px] font-display font-bold">Regras da casa</h3>
           <div className="space-y-3">
             {[
@@ -1073,7 +1034,8 @@ export default function PropertyDetailsClient({
         {/* ── Room Selector (if applicable) ────────────────────────────────── */}
         {property.hasRooms && property.rooms.length > 0 && (
           <>
-            <section id="room-selector" className="px-4 py-8 space-y-6 bg-slate-50">
+            <section id="room-selector" className="py-8 bg-slate-50">
+              <div className="container-main space-y-6">
               <div className="space-y-1">
                 <h3 className="text-[20px] font-display font-bold">
                   Escolha o seu quarto
@@ -1196,13 +1158,14 @@ export default function PropertyDetailsClient({
                   );
                 })}
               </div>
-            </section>
+            </div>
+          </section>
             <hr className="mx-4 border-surface" />
           </>
         )}
 
         {/* ── Location ─────────────────────────────────────────────────────── */}
-        <section className="px-4 py-6 space-y-2">
+        <section className="container-main py-6 space-y-2">
           <h3 className="text-[18px] font-display font-bold">Localização</h3>
           <p className="text-[13px] text-text-muted mb-4">
             {property.city}, {property.country}
@@ -1223,7 +1186,8 @@ export default function PropertyDetailsClient({
       </main>
 
       {/* ── Sticky Booking Bar ───────────────────────────────────────────────── */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-surface px-4 py-3 shadow-[0_-4px_20px_rgba(26,26,46,0.08)]">
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-surface shadow-[0_-4px_20px_rgba(26,26,46,0.08)]">
+        <div className="container-main py-3">
         <div className="max-w-2xl mx-auto flex items-center justify-between gap-4">
           <div className="min-w-0">
             {hasDates ? (
@@ -1278,6 +1242,7 @@ export default function PropertyDetailsClient({
           )}
         </div>
       </div>
+    </div>
 
       {/* ── Guest Modal ──────────────────────────────────────────────────────── */}
       {modalOpen && checkIn && checkOut && (

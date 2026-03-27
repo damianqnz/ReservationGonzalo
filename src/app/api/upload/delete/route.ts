@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/lib/auth'
-import { deleteImage } from '@/lib/cloudinary'
+import { deleteImage } from '@/lib/cloudinary-server'
 
 const bodySchema = z.object({
   publicId: z.string().min(1),
