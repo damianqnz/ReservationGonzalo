@@ -29,9 +29,12 @@ const postSchema = z.object({
   minNights: z.number().int().min(1).optional(),
   maxNights: z.number().int().min(1).optional(),
   cancellationPolicy: z.enum(['FLEXIBLE', 'MODERATE', 'STRICT']).optional(),
-  hasRooms: z.boolean().optional(),
-  latitude: z.number().optional(),
-  longitude: z.number().optional(),
+  hasRooms:    z.boolean().optional(),
+  bedsConfig:  z.string().optional(),
+  bathroomType: z.string().optional(),
+  services:    z.string().optional(),
+  latitude:    z.number().optional(),
+  longitude:   z.number().optional(),
 })
 
 // ─── GET /api/properties — public, returns ACTIVE properties ─────────────────

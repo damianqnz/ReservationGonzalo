@@ -3,8 +3,8 @@
 import { useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
-import BedPicker from './BedPicker'
-import ServicesChecklist from './ServicesChecklist'
+import BedPicker from '@/components/dashboard/BedPicker'
+import ServicesChecklist from '@/components/dashboard/ServicesChecklist'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
