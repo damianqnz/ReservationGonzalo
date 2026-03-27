@@ -94,6 +94,9 @@ model Property {
   maxNights          Int                @default(365)
   cancellationPolicy CancellationPolicy @default(FLEXIBLE)
   hasRooms           Boolean            @default(false)
+  bedsConfig         String?
+  bathroomType       String?
+  services           String?
   rooms              Room[]
   // Access data
   accessCode         String?
