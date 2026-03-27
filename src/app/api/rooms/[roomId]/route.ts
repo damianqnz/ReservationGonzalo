@@ -3,7 +3,7 @@ import { z } from 'zod'
 import { RoomType, RoomStatus, BookingStatus } from '@prisma/client'
 import { auth } from '@/lib/auth'
 import { db } from '@/lib/db'
-import { deleteImage } from '@/lib/cloudinary'
+import { deleteImage } from '@/lib/cloudinary-server'
 
 // ─── Validation ───────────────────────────────────────────────────────────────
 

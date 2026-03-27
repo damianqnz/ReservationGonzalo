@@ -13,7 +13,7 @@ export default function PrivacyPage() {
     <div className="bg-white min-h-screen flex flex-col">
       <Navbar />
 
-      <main className="flex-1 py-12 px-4">
+      <main className="flex-1 py-12 container-main px-0">
         <article className="max-w-3xl mx-auto">
           {/* Back link */}
           <Link

@@ -1,13 +1,15 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
+import { ImageCategory } from '@prisma/client'
 import { auth } from '@/lib/auth'
 import { db } from '@/lib/db'
-import { deleteImage } from '@/lib/cloudinary'
+import { deleteImage } from '@/lib/cloudinary-server'
 
 const patchSchema = z.object({
-  order: z.number().int().min(0).optional(),
-  isCover: z.boolean().optional(),
-  alt: z.string().max(200).optional(),
+  order:    z.number().int().min(0).optional(),
+  isCover:  z.boolean().optional(),
+  alt:      z.string().max(200).optional(),
+  category: z.nativeEnum(ImageCategory).optional(),
 })
 
 type RouteContext = { params: Promise<{ id: string; imageId: string }> }
@@ -49,9 +51,10 @@ export async function PATCH(req: Request, { params }: RouteContext) {
     const updated = await db.propertyImage.update({
       where: { id: imageId },
       data: {
-        ...(validated.order !== undefined && { order: validated.order }),
-        ...(validated.isCover !== undefined && { isCover: validated.isCover }),
-        ...(validated.alt !== undefined && { alt: validated.alt }),
+        ...(validated.order    !== undefined && { order:    validated.order }),
+        ...(validated.isCover  !== undefined && { isCover:  validated.isCover }),
+        ...(validated.alt      !== undefined && { alt:      validated.alt }),
+        ...(validated.category !== undefined && { category: validated.category }),
       },
     })
 
