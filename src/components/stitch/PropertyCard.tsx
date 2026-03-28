@@ -40,7 +40,7 @@ export default function PropertyCard({
   // Resolve image: prefer Cloudinary publicId (contains "/"), otherwise fall back to stored url
   const resolvedImage =
     publicId && publicId.includes("/")
-      ? getImageUrl(publicId, { width: 600, height: 400 })
+      ? (getImageUrl(publicId, { width: 600, height: 400 }) || image)
       : image;
 
   return (

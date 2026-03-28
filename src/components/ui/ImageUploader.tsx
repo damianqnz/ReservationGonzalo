@@ -4,6 +4,7 @@ import { useRef, useState } from 'react'
 import { Upload, X, Star, GripVertical, ImageOff } from 'lucide-react'
 import { ImageCategory } from '@prisma/client'
 import { IMAGE_CATEGORIES } from '@/lib/imageCategories'
+import { sileo } from 'sileo'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -28,6 +29,8 @@ interface ImageUploaderProps {
   saveImageUrl: string
   /** Base URL for PATCH/DELETE per image, e.g. "/api/properties/[id]/images" */
   imageBaseUrl: string
+  /** Called after a category is successfully saved, so parent can sync state */
+  onCategoryChanged?: (imageId: string, category: string) => void
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -38,6 +41,7 @@ export default function ImageUploader({
   maxImages = 10,
   saveImageUrl,
   imageBaseUrl,
+  onCategoryChanged,
 }: ImageUploaderProps) {
   const [images, setImages] = useState<UploadedImage[]>(
     [...initialImages].sort((a, b) => a.order - b.order)
@@ -166,19 +170,23 @@ export default function ImageUploader({
   // ── Category ─────────────────────────────────────────────────────────────────
 
   async function handleCategoryChange(image: UploadedImage, category: ImageCategory) {
-    try {
+    const catPromise = async () => {
       const res = await fetch(`${imageBaseUrl}/${image.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ category }),
       })
-      if (!res.ok) return
+      if (!res.ok) throw new Error('Erro ao guardar categoria')
       setImages((prev) =>
         prev.map((img) => (img.id === image.id ? { ...img, category } : img))
       )
-    } catch {
-      // silent — non-critical
+      onCategoryChanged?.(image.id, category)
     }
+    sileo.promise(catPromise(), {
+      loading: { title: 'A guardar…' },
+      success: { title: 'Categoria guardada', description: IMAGE_CATEGORIES[category].label.pt },
+      error:   { title: 'Erro', description: 'Não foi possível guardar a categoria' },
+    })
   }
 
   // ── Reorder (drag & drop) ───────────────────────────────────────────────────

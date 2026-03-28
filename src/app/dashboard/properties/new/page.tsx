@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { sileo } from 'sileo'
 import BedPicker from '@/components/dashboard/BedPicker'
 import ServicesChecklist from '@/components/dashboard/ServicesChecklist'
 
@@ -573,26 +574,40 @@ function InlineRoomForm({
   propertyId,
   onSaved,
   onCancel,
+  onRequestNew,
 }: {
   propertyId: string
   onSaved: (room: RoomDraft) => void
   onCancel: () => void
+  onRequestNew: () => void
 }) {
-  const [name, setName] = useState('')
-  const [type, setType] = useState('DOUBLE')
-  const [price, setPrice] = useState('')
-  const [maxGuests, setMaxGuests] = useState('2')
+  const [name,         setName]         = useState('')
+  const [type,         setType]         = useState('DOUBLE')
+  const [price,        setPrice]        = useState('')
+  const [maxGuests,    setMaxGuests]    = useState('2')
+  const [bedrooms,     setBedrooms]     = useState('1')
+  const [bathrooms,    setBathrooms]    = useState('1')
   const [bathroomType, setBathroomType] = useState('private')
-  const [bedsList, setBedsList] = useState<string[]>([])
-  const [services, setServices] = useState<string[]>([])
-  const [error, setError] = useState<string | null>(null)
-  const [saving, setSaving] = useState(false)
+  const [bedsList,     setBedsList]     = useState<string[]>([])
+  const [services,     setServices]     = useState<string[]>([])
+  const [saving,       setSaving]       = useState(false)
+
+  function reset() {
+    setName(''); setType('DOUBLE'); setPrice(''); setMaxGuests('2')
+    setBedrooms('1'); setBathrooms('1'); setBathroomType('private')
+    setBedsList([]); setServices([])
+  }
 
   async function handleSave() {
-    if (!name.trim()) { setError('Nome é obrigatório'); return }
-    if (!price || Number(price) <= 0) { setError('Preço é obrigatório'); return }
+    if (!name.trim()) {
+      sileo.error({ title: 'Campo obrigatório', description: 'O nome do quarto é obrigatório' })
+      return
+    }
+    if (!price || Number(price) <= 0) {
+      sileo.error({ title: 'Campo obrigatório', description: 'O preço por noite é obrigatório' })
+      return
+    }
     setSaving(true)
-    setError(null)
     try {
       const res = await fetch(`/api/properties/${propertyId}/rooms`, {
         method: 'POST',
@@ -601,21 +616,30 @@ function InlineRoomForm({
           name: name.trim(),
           type,
           pricePerNight: Number(price),
-          maxGuests: Number(maxGuests),
+          maxGuests:     Number(maxGuests),
+          bedrooms:      Number(bedrooms),
+          bathrooms:     Number(bathrooms),
+          beds:          bedsList.length || Number(bedrooms) || 1,
           bathroomType,
-          bedsList: JSON.stringify(bedsList),
-          services: JSON.stringify(services),
+          bedsList:  JSON.stringify(bedsList),
+          services:  JSON.stringify(services),
         }),
       })
       const data = await res.json()
       if (!res.ok) {
-        setError(typeof data.error === 'string' ? data.error : 'Erro ao guardar quarto')
+        sileo.error({
+          title: 'Erro ao guardar quarto',
+          description: typeof data.error === 'string'
+            ? data.error
+            : 'Verifique os campos e tente novamente',
+        })
         return
       }
+      const saved = name.trim()
       onSaved({
         localId: crypto.randomUUID(),
         id: data.data.id,
-        name: name.trim(),
+        name: saved,
         type,
         pricePerNight: price,
         maxGuests,
@@ -623,8 +647,18 @@ function InlineRoomForm({
         bedsList,
         services,
       })
+      reset()
+      sileo.action({
+        title: 'Quarto adicionado!',
+        description: `${saved} foi adicionado com sucesso`,
+        duration: 6000,
+        button: {
+          title: 'Adicionar outro quarto',
+          onClick: onRequestNew,
+        },
+      })
     } catch {
-      setError('Erro de ligação.')
+      sileo.error({ title: 'Erro de ligação', description: 'Por favor tente novamente' })
     } finally {
       setSaving(false)
     }
@@ -678,6 +712,29 @@ function InlineRoomForm({
         </Field>
       </div>
 
+      <div className="grid grid-cols-2 gap-4">
+        <Field label="Quartos">
+          <input
+            className={INPUT}
+            type="number"
+            min={0}
+            max={20}
+            value={bedrooms}
+            onChange={(e) => setBedrooms(e.target.value)}
+          />
+        </Field>
+        <Field label="Casas de banho">
+          <input
+            className={INPUT}
+            type="number"
+            min={1}
+            max={20}
+            value={bathrooms}
+            onChange={(e) => setBathrooms(e.target.value)}
+          />
+        </Field>
+      </div>
+
       <Field label="Casa de banho">
         <select className={SELECT} value={bathroomType} onChange={(e) => setBathroomType(e.target.value)}>
           <option value="private">Privada</option>
@@ -701,10 +758,6 @@ function InlineRoomForm({
           <ServicesChecklist value={services} onChange={setServices} />
         </div>
       </details>
-
-      {error && (
-        <p className="text-xs text-red-600">{error}</p>
-      )}
 
       <div className="flex gap-2 pt-1">
         <button
@@ -822,6 +875,7 @@ function Step2({
               setShowForm(false)
             }}
             onCancel={() => setShowForm(false)}
+            onRequestNew={() => setShowForm(true)}
           />
         )}
       </section>

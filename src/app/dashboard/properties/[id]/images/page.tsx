@@ -3,7 +3,8 @@ import Link from 'next/link'
 import { auth } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { resolveImageUrl } from '@/lib/cloudinary'
-import ImageUploader, { type UploadedImage } from '@/components/ui/ImageUploader'
+import { type UploadedImage } from '@/components/ui/ImageUploader'
+import ImagesClient from './ImagesClient'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -33,6 +34,7 @@ export default async function PropertyImagesPage({ params }: Props) {
           isCover: true,
           alt: true,
           order: true,
+          category: true,
         },
       },
       rooms: {
@@ -51,9 +53,8 @@ export default async function PropertyImagesPage({ params }: Props) {
     ...img,
     url: resolveImageUrl(img),
     alt: img.alt,
+    category: img.category ?? undefined,
   }))
-
-  const folder = `properties/${property.slug}`
 
   return (
     <div className="space-y-8">
@@ -76,16 +77,12 @@ export default async function PropertyImagesPage({ params }: Props) {
         </div>
       </div>
 
-      {/* Uploader */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
-        <ImageUploader
-          folder={folder}
-          initialImages={images}
-          saveImageUrl={`/api/properties/${property.id}/images`}
-          imageBaseUrl={`/api/properties/${property.id}/images`}
-          maxImages={20}
-        />
-      </div>
+      {/* Summary + tip + uploader (client) */}
+      <ImagesClient
+        propertyId={property.id}
+        propertySlug={property.slug}
+        initialImages={images}
+      />
 
       {/* Rooms section (if property has rooms) */}
       {property.hasRooms && property.rooms.length > 0 && (
