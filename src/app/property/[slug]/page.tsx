@@ -90,7 +90,10 @@ export default async function PropertyPage({ params, searchParams }: Props) {
         },
         orderBy: { createdAt: "desc" },
       },
-      owner: { select: { name: true } },
+      owner: { select: { id: true, name: true } },
+      pricingRules: {
+        select: { type: true, value: true, isPercentage: true },
+      },
     },
   });
 
@@ -195,6 +198,7 @@ export default async function PropertyPage({ params, searchParams }: Props) {
           reviewCount: property.reviews.length,
           lat: property.latitude ?? null,
           lng: property.longitude ?? null,
+          pricingRules: property.pricingRules,
         }}
         checkIn={checkIn?.toISOString()}
         checkOut={checkOut?.toISOString()}

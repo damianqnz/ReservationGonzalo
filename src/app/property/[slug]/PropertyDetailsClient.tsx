@@ -63,7 +63,8 @@ interface PropertyData {
     comment: string | null;
     createdAt: string;
   }[];
-  owner: { name: string | null };
+  owner: { id: string; name: string | null };
+  pricingRules: { type: string; value: number; isPercentage: boolean }[];
   avgRating: number | null;
   reviewCount: number;
   lat: number | null;
@@ -840,6 +841,69 @@ export default function PropertyDetailsClient({
           propertyTitle={property.title}
         />
 
+        {/* ── Breadcrumb ──────────────────────────────────────────────────── */}
+        <div className="container-main pt-4 pb-1 flex items-center gap-1.5 text-[12px] text-text-muted flex-wrap">
+          <a href="/" className="hover:text-primary transition-colors">GonzaloReservation</a>
+          <span className="material-symbols-outlined text-[12px]">chevron_right</span>
+          <button
+            onClick={() => {
+              document.getElementById("host-section")?.scrollIntoView({ behavior: "smooth" });
+            }}
+            className="hover:text-primary transition-colors"
+          >
+            Anfitrião: {property.owner.name ?? "Gonzalo"}
+          </button>
+        </div>
+
+        {/* ── Price Banner ────────────────────────────────────────────────── */}
+        {property.pricingRules.length > 0 && (() => {
+          const longStay = property.pricingRules.find((r) => r.type === "LONG_STAY_DISCOUNT");
+          const weekendMarkup = property.pricingRules.find((r) => r.type === "WEEKEND_MARKUP");
+          if (!longStay && !weekendMarkup) return null;
+          return (
+            <div className="container-main py-3">
+              <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 flex flex-wrap gap-3 items-center">
+                <span className="material-symbols-outlined text-amber-600 text-[20px]" style={{ fontVariationSettings: "'FILL' 1" }}>local_offer</span>
+                <div className="flex flex-wrap gap-4 text-[13px]">
+                  {longStay && (
+                    <span className="text-amber-800 font-medium">
+                      {longStay.isPercentage
+                        ? `${longStay.value}% de desconto`
+                        : `€${longStay.value} de desconto`}{" "}
+                      em estadias longas (&ge;7 noites)
+                    </span>
+                  )}
+                  {weekendMarkup && (
+                    <span className="text-amber-800 font-medium">
+                      Preço especial ao fim de semana
+                      {weekendMarkup.isPercentage ? ` (+${weekendMarkup.value}%)` : ` (+€${weekendMarkup.value})`}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* ── Rating Row ──────────────────────────────────────────────────── */}
+        {property.avgRating !== null && (
+          <div className="container-main pb-2">
+            <button
+              onClick={() => {
+                document.getElementById("reviews-section")?.scrollIntoView({ behavior: "smooth" });
+              }}
+              className="inline-flex items-center gap-2 bg-green-50 hover:bg-green-100 transition-colors px-4 py-2 rounded-full"
+            >
+              <Star size={15} fill="#F59E0B" stroke="#F59E0B" />
+              <span className="text-[14px] font-bold">{property.avgRating}</span>
+              <span className="text-[13px] text-text-muted">·</span>
+              <span className="text-[13px] text-text-muted underline underline-offset-2">
+                {property.reviewCount} avaliação{property.reviewCount !== 1 ? "ões" : ""}
+              </span>
+            </button>
+          </div>
+        )}
+
         {/* ── Property Info ────────────────────────────────────────────────── */}
         <section className="container-main py-6 space-y-4">
           <div className="flex items-start justify-between gap-3">
@@ -890,7 +954,7 @@ export default function PropertyDetailsClient({
         <hr className="mx-4 border-surface" />
 
         {/* ── Host ────────────────────────────────────────────────────────── */}
-        <section className="container-main py-6 flex items-center gap-4">
+        <section id="host-section" className="container-main py-6 flex items-center gap-4">
           <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
             <span className="material-symbols-outlined text-primary text-[28px]">person</span>
           </div>
@@ -944,7 +1008,7 @@ export default function PropertyDetailsClient({
         {/* ── Reviews ─────────────────────────────────────────────────────── */}
         {property.reviews.length > 0 && (
           <>
-            <section className="container-main py-6 space-y-5">
+            <section id="reviews-section" className="container-main py-6 space-y-5">
               <div className="flex items-center justify-between">
                 <h3 className="text-[18px] font-display font-bold">Avaliações</h3>
                 {property.avgRating !== null && (

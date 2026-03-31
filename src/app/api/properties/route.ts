@@ -44,11 +44,13 @@ export async function GET(req: NextRequest) {
   const page = Math.max(1, parseInt(searchParams.get('page') ?? '1', 10))
   const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') ?? '20', 10)))
   const skip = (page - 1) * limit
+  const ownerId = searchParams.get('ownerId') ?? undefined
 
   try {
+    const where = { status: PropertyStatus.ACTIVE, ...(ownerId ? { ownerId } : {}) }
     const [properties, total] = await db.$transaction([
       db.property.findMany({
-        where: { status: PropertyStatus.ACTIVE },
+        where,
         select: {
           id: true,
           title: true,
@@ -63,7 +65,7 @@ export async function GET(req: NextRequest) {
           cleaningFee: true,
           images: {
             where: { isCover: true },
-            select: { url: true, alt: true },
+            select: { url: true, publicId: true, alt: true },
             take: 1,
           },
         },
@@ -71,7 +73,7 @@ export async function GET(req: NextRequest) {
         skip,
         take: limit,
       }),
-      db.property.count({ where: { status: PropertyStatus.ACTIVE } }),
+      db.property.count({ where }),
     ])
 
     return NextResponse.json({
