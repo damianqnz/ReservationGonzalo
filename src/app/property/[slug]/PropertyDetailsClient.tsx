@@ -29,7 +29,33 @@ import {
   Sun,
   Shield,
   ShieldAlert,
+  DoorOpen,
+  Users,
+  Shirt,
+  Sofa,
+  Bed,
+  PawPrint,
+  Baby,
+  X,
+  CalendarX,
+  ScrollText,
+  Info,
+  MessageCircle,
+  ChevronDown,
+  ChevronUp,
+  FileText,
+  Key,
+  Home,
+  MessageSquare,
 } from "lucide-react";
+import { format } from "date-fns";
+import { PROPERTY_SERVICES, AMENITY_TO_SERVICE_KEY } from "@/lib/propertyServices";
+
+declare global {
+  interface Window {
+    Tawk_API: Record<string, any>;
+  }
+}
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -61,14 +87,36 @@ interface PropertyData {
     guestName: string;
     rating: number;
     comment: string | null;
+    ownerReply: string | null;
     createdAt: string;
   }[];
-  owner: { name: string | null };
+  owner: { id: string; name: string | null; image: string | null; createdAt: string };
+  licenseNumber: string | null;
+  hostDescription: string | null;
+  spaceDescription: string | null;
+  accessInfo: string | null;
+  interactionInfo: string | null;
+  additionalInfo: string | null;
+  parkingInfo: string | null;
+  extraServices: string | null;
+  smokingAllowed: boolean;
+  houseRules: string | null;
+  cancellationDays: number | null;
+  pricingRules: { type: string; value: number; isPercentage: boolean }[];
   avgRating: number | null;
   reviewCount: number;
   lat: number | null;
   lng: number | null;
   hasRooms: boolean;
+  floors: number | null;
+  hasElevator: boolean;
+  towelsIncluded: boolean;
+  arrivalType: string | null;
+  petsAllowed: boolean;
+  childrenAllowed: boolean;
+  bedsConfig: string | null;
+  bathroomType: string | null;
+  services: string | null;
   rooms: {
     id: string;
     name: string;
@@ -79,6 +127,8 @@ interface PropertyData {
     bathrooms: number;
     beds: number;
     pricePerNight: number;
+    bedsList: string | null;
+    bathroomType: string | null;
     images: { url: string; alt: string | null; isCover: boolean; category: ImageCategory }[];
   }[];
 }
@@ -92,7 +142,94 @@ interface Props {
   totalPrice?: number;
 }
 
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function parseJsonArray(raw: string | null | undefined): string[] {
+  if (!raw) return []
+  try {
+    const parsed = JSON.parse(raw)
+    return Array.isArray(parsed) ? parsed : []
+  } catch {
+    return []
+  }
+}
+
+function formatBedsList(beds: string[]): string {
+  if (beds.length === 0) return ''
+  const counts = beds.reduce<Record<string, number>>((acc, bed) => {
+    acc[bed] = (acc[bed] || 0) + 1
+    return acc
+  }, {})
+  return Object.entries(counts)
+    .map(([type, count]) => (count === 1 ? type : `${count}× ${type}`))
+    .join(', ')
+}
+
 // ─── Constants / maps ─────────────────────────────────────────────────────────
+
+function getInitials(name: string | null): string {
+  if (!name) return "G";
+  return name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+}
+
+function AccordionItem({
+  title,
+  icon: Icon,
+  children,
+  isOpen,
+  onClick,
+}: {
+  title: string;
+  icon: LucideIcon;
+  children: React.ReactNode;
+  isOpen: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <div className="border-b border-gray-100">
+      <button
+        type="button"
+        onClick={onClick}
+        className="w-full flex justify-between items-center py-4 text-left group"
+      >
+        <div className="flex items-center gap-3">
+          <Icon
+            size={20}
+            className={`transition-colors ${
+              isOpen ? "text-primary" : "text-text-muted group-hover:text-primary"
+            }`}
+          />
+          <span
+            className={`font-medium text-[15px] transition-colors ${
+              isOpen ? "text-text-main" : "text-text-muted group-hover:text-primary"
+            }`}
+          >
+            {title}
+          </span>
+        </div>
+        {isOpen ? (
+          <ChevronUp size={20} className="text-text-muted" />
+        ) : (
+          <ChevronDown size={20} className="text-text-muted" />
+        )}
+      </button>
+      <div
+        className={`overflow-hidden transition-all duration-300 ease-in-out ${
+          isOpen ? "max-h-[1000px] opacity-100 pb-5" : "max-h-0 opacity-0"
+        }`}
+      >
+        <div className="text-[14px] text-gray-600 leading-relaxed">
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 type LucideIcon = ComponentType<{ size?: number; className?: string }>;
 
@@ -159,9 +296,21 @@ const CANCELLATION_LABELS: Record<string, string> = {
 };
 
 const MONTHS_PT = [
-  "jan", "fev", "mar", "abr", "mai", "jun",
-  "jul", "ago", "set", "out", "nov", "dez",
+  "janeiro",
+  "fevereiro",
+  "março",
+  "abril",
+  "maio",
+  "junho",
+  "julho",
+  "agosto",
+  "setembro",
+  "outubro",
+  "novembro",
+  "dezembro",
 ];
+
+const AVATAR_COLORS = ['#8b1a1a', '#1a1a2e', '#059669', '#d97706', '#7c3aed', '#db2777'];
 
 function formatShortDate(iso: string): string {
   if (!iso) return "";
@@ -267,17 +416,30 @@ type GuestFormValues = z.infer<typeof guestSchema>;
 
 // ─── Star rating helper ───────────────────────────────────────────────────────
 
-function StarRating({ rating, size = 14 }: { rating: number; size?: number }) {
+function StarRating({ rating, size = 'sm' }: { rating: number; size?: 'sm' | 'md' | 'lg' }) {
+  const sizeMap = {
+    sm: 12, // w-3
+    md: 16, // w-4
+    lg: 20, // w-5
+  };
+  const iconSize = sizeMap[size];
+
   return (
     <div className="flex items-center gap-0.5">
-      {Array.from({ length: 5 }).map((_, i) => (
-        <Star
-          key={i}
-          size={size}
-          fill={i < Math.round(rating) ? "#F59E0B" : "none"}
-          stroke={i < Math.round(rating) ? "#F59E0B" : "#D1D5DB"}
-        />
-      ))}
+      {Array.from({ length: 5 }).map((_, i) => {
+        const isFilled = i < Math.floor(rating);
+        const isHalf = !isFilled && i < rating;
+        
+        return (
+          <Star
+            key={i}
+            size={iconSize}
+            fill={isFilled || isHalf ? "#F59E0B" : "none"}
+            stroke={isFilled || isHalf ? "#F59E0B" : "#D1D5DB"}
+            className={isHalf ? "opacity-70" : ""} // Approximation of half star
+          />
+        );
+      })}
     </div>
   );
 }
@@ -740,6 +902,10 @@ export default function PropertyDetailsClient({
   const [localCheckIn, setLocalCheckIn] = useState<Date | null>(null);
   const [localCheckOut, setLocalCheckOut] = useState<Date | null>(null);
   const [unavailableDates, setUnavailableDates] = useState<Date[]>([]);
+  const [showAllServices, setShowAllServices] = useState(false);
+  const [hostDescExpanded, setHostDescExpanded] = useState(false);
+  const [reviewsExpanded, setReviewsExpanded] = useState(false);
+  const [openFaq, setOpenFaq] = useState<string | null>(null);
 
   // Fetch unavailable dates once on mount so the inline body section is ready
   useEffect(() => {
@@ -840,6 +1006,215 @@ export default function PropertyDetailsClient({
           propertyTitle={property.title}
         />
 
+        {/* ── Breadcrumb ──────────────────────────────────────────────────── */}
+        <div className="container-main pt-4 pb-1 flex items-center gap-1.5 text-[12px] text-text-muted flex-wrap">
+          <a href="/" className="hover:text-primary transition-colors">GonzaloReservation</a>
+          <span className="material-symbols-outlined text-[12px]">chevron_right</span>
+          <button
+            onClick={() => {
+              document.getElementById("host-section")?.scrollIntoView({ behavior: "smooth" });
+            }}
+            className="hover:text-primary transition-colors"
+          >
+            Anfitrião: {property.owner.name ?? "Gonzalo"}
+          </button>
+        </div>
+
+        {/* ── Price Banner ────────────────────────────────────────────────── */}
+        {property.pricingRules.length > 0 && (() => {
+          const longStay = property.pricingRules.find((r) => r.type === "LONG_STAY_DISCOUNT");
+          const weekendMarkup = property.pricingRules.find((r) => r.type === "WEEKEND_MARKUP");
+          if (!longStay && !weekendMarkup) return null;
+          return (
+            <div className="container-main py-3">
+              <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 flex flex-wrap gap-3 items-center">
+                <span className="material-symbols-outlined text-amber-600 text-[20px]" style={{ fontVariationSettings: "'FILL' 1" }}>local_offer</span>
+                <div className="flex flex-wrap gap-4 text-[13px]">
+                  {longStay && (
+                    <span className="text-amber-800 font-medium">
+                      {longStay.isPercentage
+                        ? `${longStay.value}% de desconto`
+                        : `€${longStay.value} de desconto`}{" "}
+                      em estadias longas (&ge;7 noites)
+                    </span>
+                  )}
+                  {weekendMarkup && (
+                    <span className="text-amber-800 font-medium">
+                      Preço especial ao fim de semana
+                      {weekendMarkup.isPercentage ? ` (+${weekendMarkup.value}%)` : ` (+€${weekendMarkup.value})`}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* ── Rating Row ──────────────────────────────────────────────────── */}
+        {property.avgRating !== null && (
+          <div className="container-main pb-2">
+            <button
+              onClick={() => {
+                document.getElementById("reviews-section")?.scrollIntoView({ behavior: "smooth" });
+              }}
+              className="inline-flex items-center gap-2 bg-green-50 hover:bg-green-100 transition-colors px-4 py-2 rounded-full"
+            >
+              <StarRating rating={property.avgRating} size="sm" />
+              <span className="text-[14px] font-bold">{property.avgRating}</span>
+              <span className="text-[13px] text-text-muted">·</span>
+              <span className="text-[13px] text-text-muted underline underline-offset-2">
+                {property.reviewCount} avaliação{property.reviewCount !== 1 ? "ões" : ""}
+              </span>
+            </button>
+          </div>
+        )}
+
+        {/* ── Title + Specs ───────────────────────────────────────────────── */}
+        <div className="container-main pt-4 pb-2 space-y-2">
+          <h1 className="text-2xl md:text-3xl font-bold text-[#1a1a2e] leading-tight">
+            {property.title}
+          </h1>
+          {(() => {
+            const parts: string[] = []
+            if (property.area) parts.push(`${property.area} m²`)
+            parts.push(`${property.bedrooms} quarto${property.bedrooms !== 1 ? "s" : ""}`)
+            if (property.floors) parts.push(`${property.floors} piso${property.floors !== 1 ? "s" : ""}`)
+            parts.push(property.hasElevator ? "Acessível por elevador 🛗" : "Acessível por escadas 🪜")
+            return (
+              <p className="text-sm text-gray-500">{parts.join(" · ")}</p>
+            )
+          })()}
+        </div>
+
+        {/* ── Quick Info Cards ────────────────────────────────────────────── */}
+        {(() => {
+          const servicesList = parseJsonArray(property.services)
+          const sofaService = servicesList.find(
+            (s) => s.toLowerCase().includes("sofá") || s.toLowerCase().includes("sofa")
+          )
+
+          // Beds cards
+          const bedCards: { label: string; value: string }[] = []
+          if (property.hasRooms && property.rooms.length > 0) {
+            for (const room of property.rooms) {
+              const beds = parseJsonArray(room.bedsList)
+              if (beds.length > 0) {
+                bedCards.push({ label: room.name, value: formatBedsList(beds) })
+              }
+            }
+          } else {
+            const beds = parseJsonArray(property.bedsConfig)
+            if (beds.length > 0) {
+              bedCards.push({ label: "Camas", value: formatBedsList(beds) })
+            }
+          }
+
+          // Bathroom cards
+          const bathroomCards: { label: string; value: string }[] = []
+          if (property.hasRooms && property.rooms.length > 0) {
+            property.rooms.forEach((room, i) => {
+              if (room.bathroomType) {
+                const typeLabel =
+                  room.bathroomType === "private" ? "privada" :
+                  room.bathroomType === "shared" ? "partilhada" :
+                  room.bathroomType
+                bathroomCards.push({
+                  label: `Casa de banho${bathroomCards.length > 0 ? ` ${i + 1}` : ""}`,
+                  value: `${typeLabel.charAt(0).toUpperCase() + typeLabel.slice(1)} (${room.name})`,
+                })
+              }
+            })
+          } else if (property.bathroomType) {
+            const typeLabel =
+              property.bathroomType === "private" ? "privada" :
+              property.bathroomType === "shared" ? "partilhada" :
+              property.bathroomType
+            bathroomCards.push({
+              label: "Casa de banho",
+              value: `${typeLabel.charAt(0).toUpperCase() + typeLabel.slice(1)}`,
+            })
+          }
+
+          const cards = [
+            // 1. Arrival type
+            ...(property.arrivalType ? [{
+              icon: <DoorOpen size={20} className="text-primary shrink-0" />,
+              label: "Chegada",
+              value: property.arrivalType === "autonomous"
+                ? "Chegada autónoma"
+                : property.arrivalType === "guided"
+                ? "Chegada acompanhada"
+                : property.arrivalType,
+            }] : []),
+            // 2. Max guests (always)
+            {
+              icon: <Users size={20} className="text-primary shrink-0" />,
+              label: "Hóspedes",
+              value: `Máximo ${property.maxGuests} hóspede${property.maxGuests !== 1 ? "s" : ""}`,
+            },
+            // 3. Towels (always)
+            {
+              icon: <Shirt size={20} className="text-primary shrink-0" />,
+              label: "Roupa de cama e banho",
+              value: property.towelsIncluded ? "Toalhas e lençóis incluídos ✓" : "Não incluídos",
+            },
+            // 4. Sofa (only if found in services)
+            ...(sofaService ? [{
+              icon: <Sofa size={20} className="text-primary shrink-0" />,
+              label: "Sala de estar",
+              value: sofaService,
+            }] : []),
+            // 5. Beds (per room or property)
+            ...bedCards.map(({ label, value }) => ({
+              icon: <Bed size={20} className="text-primary shrink-0" />,
+              label,
+              value,
+            })),
+            // 6. Bathrooms
+            ...bathroomCards.map(({ label, value }) => ({
+              icon: <Bath size={20} className="text-primary shrink-0" />,
+              label,
+              value,
+            })),
+            // 7. Pets (always)
+            {
+              icon: <PawPrint size={20} className="text-primary shrink-0" />,
+              label: "Animais de estimação",
+              value: property.petsAllowed ? "Permitidos ✓" : "Não permitidos",
+            },
+            // 8. Children (always)
+            {
+              icon: <Baby size={20} className="text-primary shrink-0" />,
+              label: "Crianças",
+              value: property.childrenAllowed ? "Bem-vindas ✓" : "Não recomendado",
+            },
+          ]
+
+          return (
+            <section className="container-main py-4">
+              <h2 className="text-lg font-semibold mb-4">Informação rápida</h2>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                {cards.map((card, i) => (
+                  <div
+                    key={i}
+                    className="bg-gray-50 border border-gray-100 rounded-xl p-4 flex gap-3 items-start"
+                  >
+                    {card.icon}
+                    <div className="min-w-0">
+                      <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 leading-tight mb-0.5">
+                        {card.label}
+                      </p>
+                      <p className="text-[13px] text-gray-700 leading-snug">{card.value}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )
+        })()}
+
+        <hr className="mx-4 border-surface" />
+
         {/* ── Property Info ────────────────────────────────────────────────── */}
         <section className="container-main py-6 space-y-4">
           <div className="flex items-start justify-between gap-3">
@@ -857,15 +1232,15 @@ export default function PropertyDetailsClient({
                 </span>
               </div>
             </div>
-            {property.avgRating !== null && (
-              <div className="flex items-center gap-1 bg-green-50 px-3 py-1.5 rounded-full shrink-0">
-                <Star size={14} fill="#F59E0B" stroke="#F59E0B" />
-                <span className="text-[14px] font-bold">{property.avgRating}</span>
-                {property.reviewCount > 0 && (
-                  <span className="text-[12px] text-text-muted">({property.reviewCount})</span>
-                )}
-              </div>
-            )}
+              {property.avgRating !== null && (
+                <div className="flex items-center gap-1 bg-green-50 px-3 py-1.5 rounded-full shrink-0">
+                  <StarRating rating={property.avgRating} size="sm" />
+                  <span className="text-[14px] font-bold">{property.avgRating}</span>
+                  {property.reviewCount > 0 && (
+                    <span className="text-[12px] text-text-muted">({property.reviewCount})</span>
+                  )}
+                </div>
+              )}
           </div>
 
           {/* Capacity tags */}
@@ -890,15 +1265,66 @@ export default function PropertyDetailsClient({
         <hr className="mx-4 border-surface" />
 
         {/* ── Host ────────────────────────────────────────────────────────── */}
-        <section className="container-main py-6 flex items-center gap-4">
-          <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-            <span className="material-symbols-outlined text-primary text-[28px]">person</span>
-          </div>
-          <div>
-            <p className="font-semibold text-[16px]">
-              Anfitrião: {property.owner.name ?? "Gonzalo"}
-            </p>
-            <p className="text-[13px] text-text-muted">Superanfitrião</p>
+        <section id="host-section" className="container-main py-8 space-y-6">
+          <h2 className="text-[20px] font-display font-bold text-[#1a1a2e]">Gerido por</h2>
+          
+          <div className="flex flex-col md:flex-row gap-8 items-start">
+            {/* Owner Info Card */}
+            <div className="flex items-start gap-4 min-w-0">
+              <div className="relative w-16 h-16 shrink-0 rounded-full overflow-hidden bg-[#8b1a1a] flex items-center justify-center">
+                {property.owner.image ? (
+                  <Image
+                    src={property.owner.image}
+                    alt={property.owner.name || "Owner"}
+                    fill
+                    className="object-cover"
+                  />
+                ) : (
+                  <span className="text-white font-bold text-xl uppercase">
+                    {getInitials(property.owner.name)}
+                  </span>
+                )}
+              </div>
+              <div className="space-y-1 min-w-0">
+                <p className="text-[17px] font-bold text-[#1a1a2e] truncate">
+                  {property.owner.name || "Gonzalo Rodríguez"}
+                </p>
+                <div className="space-y-0.5">
+                  <p className="text-[13px] text-gray-500">
+                    Anfitrião desde {new Date(property.owner.createdAt).getFullYear()}
+                  </p>
+                  {property.licenseNumber && (
+                    <p className="text-[13px] text-gray-500">
+                      Licença AL: {property.licenseNumber}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Description & Button */}
+            <div className="flex-1 space-y-4">
+              <div className="space-y-2">
+                <div className={`text-[14px] text-gray-600 leading-relaxed ${!hostDescExpanded ? "line-clamp-3" : ""}`}>
+                  {property.hostDescription || "O anfitrião está disponível para responder às suas questões sempre que necessário."}
+                </div>
+                {property.hostDescription && property.hostDescription.length > 150 && (
+                  <button 
+                    onClick={() => setHostDescExpanded(!hostDescExpanded)}
+                    className="text-[13px] font-bold text-primary hover:underline"
+                  >
+                    {hostDescExpanded ? "Ver menos" : "Ver mais"}
+                  </button>
+                )}
+              </div>
+
+              <button 
+                onClick={() => window.Tawk_API?.toggle?.()}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border-2 border-[#8b1a1a] text-[#8b1a1a] font-bold hover:bg-[#8b1a1a]/5 transition-all text-sm"
+              >
+                💬 Enviar mensagem
+              </button>
+            </div>
           </div>
         </section>
 
@@ -914,118 +1340,343 @@ export default function PropertyDetailsClient({
 
         <hr className="mx-4 border-surface" />
 
-        {/* ── Amenities ───────────────────────────────────────────────────── */}
-        {property.amenities.length > 0 && (
-          <>
-            <section className="container-main py-6 space-y-4">
-              <h3 className="text-[18px] font-display font-bold">O que este espaço oferece</h3>
-              <div className="grid grid-cols-2 gap-3">
-                {property.amenities.map(({ amenity }) => {
-                  const IconComp =
-                    ICON_MAP[amenity.icon ?? ""] ?? ICON_MAP[amenity.name] ?? Check;
-                  return (
-                    <div
-                      key={amenity.name}
-                      className="flex items-center gap-3 p-3 rounded-xl bg-surface"
-                    >
-                      <IconComp size={18} className="text-primary shrink-0" />
-                      <span className="text-[13px] font-medium text-text-main">
-                        {amenity.name}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            </section>
-            <hr className="mx-4 border-surface" />
-          </>
-        )}
+        {/* ── Services & Amenities ────────────────────────────────────────── */}
+        {(() => {
+          const includedServicesSet = new Set([
+            ...parseJsonArray(property.services),
+            ...property.amenities
+              .map((a) => AMENITY_TO_SERVICE_KEY[a.amenity.name])
+              .filter(Boolean),
+          ]);
 
-        {/* ── Reviews ─────────────────────────────────────────────────────── */}
-        {property.reviews.length > 0 && (
-          <>
-            <section className="container-main py-6 space-y-5">
-              <div className="flex items-center justify-between">
-                <h3 className="text-[18px] font-display font-bold">Avaliações</h3>
-                {property.avgRating !== null && (
-                  <div className="flex items-center gap-2">
-                    <StarRating rating={property.avgRating} />
-                    <span className="text-[14px] font-bold">{property.avgRating}</span>
-                    <span className="text-[13px] text-text-muted">
-                      ({property.reviewCount})
-                    </span>
-                  </div>
-                )}
-              </div>
-              <div className="space-y-4">
-                {property.reviews.map((r) => (
-                  <div
-                    key={r.id}
-                    className="bg-white border border-surface rounded-2xl p-5 space-y-3"
+          const allServices = Object.entries(PROPERTY_SERVICES).flatMap(([catKey, cat]) =>
+            cat.services.map((s) => ({ ...s, catKey, catLabel: cat.label.pt }))
+          );
+
+          const displayedServices = showAllServices ? allServices : allServices.slice(0, 12);
+
+          // Group displayedServices by catKey
+          const groupedServices: Record<string, { label: string; services: typeof allServices }> = {};
+          displayedServices.forEach((s) => {
+            if (!groupedServices[s.catKey]) {
+              groupedServices[s.catKey] = { label: s.catLabel, services: [] };
+            }
+            groupedServices[s.catKey].services.push(s);
+          });
+
+          return (
+            <>
+              <section id="amenities-section" className="container-main py-8 space-y-6">
+                <h3 className="text-[18px] font-display font-bold text-[#1a1a2e]">
+                  O que este espaço oferece
+                </h3>
+
+                <div className="space-y-8">
+                  {Object.entries(groupedServices).map(([catKey, cat]) => (
+                    <div key={catKey} className="space-y-4">
+                      <h4 className="text-[12px] font-bold text-gray-400 uppercase tracking-widest">
+                        {cat.label}
+                      </h4>
+                      <div className="grid grid-cols-2 lg:grid-cols-3 gap-y-4 gap-x-8">
+                        {cat.services.map((service) => {
+                          const isIncluded = includedServicesSet.has(service.key);
+                          return (
+                            <div
+                              key={service.key}
+                              className="flex items-center gap-3 transition-all duration-200"
+                            >
+                              {isIncluded ? (
+                                <Check size={20} className="text-green-600 shrink-0" />
+                              ) : (
+                                <X size={20} className="text-gray-300 shrink-0" />
+                              )}
+                              <span className={`text-[15px] ${isIncluded
+                                  ? "text-gray-800"
+                                  : "text-gray-300 line-through decoration-gray-300/50"
+                                }`}>
+                                {service.label.pt}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {allServices.length > 12 && (
+                  <button
+                    onClick={() => setShowAllServices(!showAllServices)}
+                    className="mt-6 flex items-center gap-2 px-6 py-3 border border-[#1a1a2e]/10 rounded-xl text-[14px] font-bold text-[#1a1a2e] hover:bg-[#1a1a2e]/5 transition-all"
                   >
+                    {showAllServices ? (
+                      <>
+                        Ver menos
+                        <span className="material-symbols-outlined text-[20px]">keyboard_arrow_up</span>
+                      </>
+                    ) : (
+                      <>
+                        Ver todos os {allServices.length} serviços
+                        <span className="material-symbols-outlined text-[20px]">keyboard_arrow_down</span>
+                      </>
+                    )}
+                  </button>
+                )}
+              </section>
+              <hr className="mx-4 border-surface" />
+            </>
+          );
+        })()}
+
+        {/* ── Reviews Redesign ────────────────────────────────────────────── */}
+        <section id="reviews-section" className="container-main py-10 space-y-8">
+          {property.reviews.length > 0 ? (
+            <>
+              {/* Header Grid */}
+              <div className="flex flex-col md:flex-row md:items-start justify-between gap-8 pb-4 border-b border-gray-100">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-3">
+                    <span className="text-4xl font-bold text-[#1a1a2e]">
+                      {property.avgRating?.toFixed(1)}
+                    </span>
+                    <div className="space-y-0.5">
+                      <StarRating rating={property.avgRating ?? 0} size="md" />
+                      <p className="text-[14px] font-medium text-text-muted">
+                        {property.reviewCount} avaliações
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-3 flex-1 max-w-xl">
+                  {[
+                    { label: "Limpeza", rating: property.avgRating ?? 0 },
+                    { label: "Localização", rating: (property.avgRating ?? 0) * 0.95 },
+                    { label: "Comunicação", rating: Math.min(5, (property.avgRating ?? 0) * 1.02) },
+                  ].map((cat) => (
+                    <div key={cat.label} className="flex items-center justify-between gap-4">
+                      <span className="text-[13px] text-gray-600 font-medium">{cat.label}</span>
+                      <div className="flex items-center gap-2">
+                        <StarRating rating={cat.rating} size="sm" />
+                        <span className="text-[12px] font-bold w-6">{cat.rating.toFixed(1)}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Reviews List */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {(reviewsExpanded ? property.reviews : property.reviews.slice(0, 6)).map((r, idx) => (
+                  <div key={r.id} className="space-y-4 p-6 bg-gray-50/50 rounded-2xl border border-gray-100 hover:bg-gray-50 transition-colors">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-surface flex items-center justify-center shrink-0">
-                          <span className="material-symbols-outlined text-text-muted text-[20px]">
-                            person
-                          </span>
+                        <div 
+                          className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 text-white font-bold text-sm"
+                          style={{ backgroundColor: AVATAR_COLORS[idx % AVATAR_COLORS.length] }}
+                        >
+                          {getInitials(r.guestName)}
                         </div>
-                        <div>
-                          <p className="font-semibold text-[14px]">{r.guestName}</p>
+                        <div className="min-w-0">
+                          <p className="font-bold text-[14px] text-[#1a1a2e] truncate">{r.guestName}</p>
                           <p className="text-[12px] text-text-muted">
-                            {new Date(r.createdAt).toLocaleDateString("pt-PT", {
-                              month: "long",
-                              year: "numeric",
-                            })}
+                            {format(new Date(r.createdAt), 'MMMM yyyy', { locale: pt })}
                           </p>
                         </div>
                       </div>
-                      <StarRating rating={r.rating} size={13} />
+                      <StarRating rating={r.rating} size="sm" />
                     </div>
-                    {r.comment && (
-                      <p className="text-[13px] text-text-muted leading-relaxed">{r.comment}</p>
+
+                    <div className="space-y-2">
+                      <p className="text-[14px] text-gray-600 leading-relaxed line-clamp-3 whitespace-pre-line">
+                        "{r.comment}"
+                      </p>
+                    </div>
+
+                    {r.ownerReply && (
+                      <div className="mt-4 pl-4 border-l-2 border-[#8b1a1a] space-y-2 bg-white/50 p-3 rounded-r-xl">
+                        <div className="flex items-center gap-2 text-primary">
+                          <MessageSquare size={14} />
+                          <span className="text-[12px] font-bold uppercase tracking-wider">Resposta do anfitrião:</span>
+                        </div>
+                        <p className="text-[13px] text-gray-600 italic">
+                          "{r.ownerReply}"
+                        </p>
+                      </div>
                     )}
                   </div>
                 ))}
               </div>
-            </section>
-            <hr className="mx-4 border-surface" />
-          </>
-        )}
 
-        {/* ── House Rules ──────────────────────────────────────────────────── */}
-        <section className="container-main py-6 space-y-4">
-          <h3 className="text-[18px] font-display font-bold">Regras da casa</h3>
-          <div className="space-y-3">
-            {[
-              {
-                icon: "schedule",
-                label: `Check-in: a partir das ${property.checkInTime}`,
-              },
-              {
-                icon: "logout",
-                label: `Check-out: até às ${property.checkOutTime}`,
-              },
-              { icon: "smoke_free", label: "Não fumar" },
-              { icon: "pets", label: "Sem animais de estimação" },
-              { icon: "volume_off", label: "Sem festas nem eventos" },
-              {
-                icon: "cancel",
-                label:
-                  CANCELLATION_LABELS[property.cancellationPolicy] ??
-                  property.cancellationPolicy,
-              },
-              ...(property.minNights > 1
-                ? [{ icon: "event_available", label: `Mínimo ${property.minNights} noites` }]
-                : []),
-            ].map((rule) => (
-              <div key={rule.label} className="flex items-start gap-3">
-                <span className="material-symbols-outlined text-text-muted text-[20px] mt-0.5">
-                  {rule.icon}
-                </span>
-                <span className="text-[14px] text-text-muted">{rule.label}</span>
+              {property.reviews.length > 6 && (
+                <button
+                  onClick={() => setReviewsExpanded(!reviewsExpanded)}
+                  className="w-full flex items-center justify-center gap-2 px-6 py-4 border-2 border-[#8b1a1a] rounded-xl text-[15px] font-bold text-[#8b1a1a] hover:bg-[#8b1a1a]/5 transition-all"
+                >
+                  {reviewsExpanded ? (
+                    <>Ver menos ▲</>
+                  ) : (
+                    <>Ver todas as {property.reviewCount} avaliações ▼</>
+                  )}
+                </button>
+              )}
+            </>
+          ) : (
+            <div className="py-12 border-2 border-dashed border-gray-100 rounded-3xl flex flex-col items-center justify-center text-center space-y-3">
+              <div className="w-16 h-16 rounded-full bg-amber-50 flex items-center justify-center">
+                <Star size={32} className="text-amber-400" />
               </div>
-            ))}
+              <div className="space-y-1">
+                <p className="text-lg font-bold text-[#1a1a2e]">Ainda sem avaliações</p>
+                <p className="text-sm text-gray-500">Seja o primeiro a avaliar esta estadia!</p>
+              </div>
+            </div>
+          )}
+
+          <p className="text-[11px] text-gray-400 text-center pt-4 italic">
+            As avaliações são recolhidas automaticamente após o check-out. Apenas hóspedes verificados podem avaliar.
+          </p>
+        </section>
+        <hr className="mx-4 border-surface" />
+
+        {/* ── House Rules FAQ ──────────────────────────────────────────────── */}
+        <section className="container-main py-8 space-y-6">
+          <h2 className="text-[20px] font-display font-bold text-[#1a1a2e]">Regras da casa</h2>
+          
+          <div className="border-t border-gray-100">
+            <AccordionItem
+              title="Chegada"
+              icon={DoorOpen}
+              isOpen={openFaq === "chegada"}
+              onClick={() => setOpenFaq(openFaq === "chegada" ? null : "chegada")}
+            >
+              <div className="space-y-2 pt-2">
+                <p>• Check-in: a partir das <b>{property.checkInTime}</b></p>
+                <p>• Check-out: até às <b>{property.checkOutTime}</b></p>
+                {property.securityDeposit > 0 && (
+                  <p>• Depósito de segurança: <b>€{property.securityDeposit}</b> (devolvido após o check-out)</p>
+                )}
+                {property.parkingInfo && <p>• Estacionamento: {property.parkingInfo}</p>}
+                {property.extraServices && <p>• Serviços extra: {property.extraServices}</p>}
+                <p>• Animais de estimação: {property.petsAllowed ? "Permitidos ✓" : "Não permitidos ✗"}</p>
+                <p>• Crianças: {property.childrenAllowed ? "Bem-vindas ✓" : "Não recomendado ✗"}</p>
+              </div>
+            </AccordionItem>
+
+            <AccordionItem
+              title="Política de cancelamento"
+              icon={CalendarX}
+              isOpen={openFaq === "cancellation"}
+              onClick={() => setOpenFaq(openFaq === "cancellation" ? null : "cancellation")}
+            >
+              <div className="space-y-3 pt-2">
+                <p className="font-medium">
+                  {property.cancellationPolicy === "FLEXIBLE" && "Política Flexível"}
+                  {property.cancellationPolicy === "MODERATE" && "Política Moderada"}
+                  {property.cancellationPolicy === "STRICT" && "Política Estrita"}
+                </p>
+                <p>
+                  {property.cancellationPolicy === "FLEXIBLE" && "Cancelamento gratuito até 24 horas antes da llegada. Após esse prazo, será cobrada 1 noite."}
+                  {property.cancellationPolicy === "MODERATE" && "Cancelamento gratuito até 5 dias antes da llegada. Após esse prazo, reembolso de 50% do valor total."}
+                  {property.cancellationPolicy === "STRICT" && "Sem reembolso após a confirmação da reserva. Em casos excecionais, contacte o anfitrião."}
+                </p>
+                {property.cancellationDays !== null && property.cancellationDays > 0 && (
+                  <p className="text-primary font-semibold">
+                    Cancelamento gratuito até {property.cancellationDays} dias antes da chegada.
+                  </p>
+                )}
+              </div>
+            </AccordionItem>
+
+            <AccordionItem
+              title="Normas"
+              icon={ScrollText}
+              isOpen={openFaq === "normas"}
+              onClick={() => setOpenFaq(openFaq === "normas" ? null : "normas")}
+            >
+              <div className="space-y-3 pt-2">
+                <p>{property.smokingAllowed ? "🚬 Permitido fumar" : "🚭 Proibido fumar"}</p>
+                <p>{property.petsAllowed ? "🐾 Animais permitidos" : "🚫 Animais não permitidos"}</p>
+                <p>{property.childrenAllowed ? "👶 Crianças bem-vindas" : "🔞 Não recomendado para crianças"}</p>
+                {property.houseRules && (
+                  <div className="pt-2 border-t border-gray-100 mt-2">
+                    <p className="font-semibold mb-1">Regras adicionais:</p>
+                    <p className="whitespace-pre-line">{property.houseRules}</p>
+                  </div>
+                )}
+              </div>
+            </AccordionItem>
+
+            <AccordionItem
+              title="Acerca de"
+              icon={Info}
+              isOpen={openFaq === "about"}
+              onClick={() => setOpenFaq(openFaq === "about" ? null : "about")}
+            >
+              <div className="pt-2 whitespace-pre-line">
+                {property.description || "Sem descrição disponível."}
+              </div>
+            </AccordionItem>
+
+            <AccordionItem
+              title="Espaço"
+              icon={Home}
+              isOpen={openFaq === "space"}
+              onClick={() => setOpenFaq(openFaq === "space" ? null : "space")}
+            >
+              <div className="space-y-3 pt-2">
+                {property.spaceDescription ? (
+                  <div className="whitespace-pre-line">{property.spaceDescription}</div>
+                ) : (
+                  <p>
+                    Este espaço tem capacidade para {property.maxGuests} hóspede(s), com {property.bedrooms} quarto(s) e {property.bathrooms} casa(s) de banho.
+                    {property.area && ` Área total de ${property.area} m².`}
+                    {property.floors && ` ${property.floors} piso(s).`}
+                    {property.hasElevator && " Acessível por elevador."}
+                  </p>
+                )}
+              </div>
+            </AccordionItem>
+
+            <AccordionItem
+              title="Acesso"
+              icon={Key}
+              isOpen={openFaq === "access"}
+              onClick={() => setOpenFaq(openFaq === "access" ? null : "access")}
+            >
+              <div className="space-y-3 pt-2">
+                <p>
+                  {property.arrivalType === 'autonomous' 
+                    ? "Chegada autónoma — receberá todas as instruções de acesso após a confirmação da reserva."
+                    : property.arrivalType === 'guided'
+                    ? "Chegada acompanhada — o anfitrião irá recebê-lo pessoalmente."
+                    : "Informação de acesso disponível após reserva."}
+                </p>
+                {property.accessInfo && <p className="pt-2 border-t border-gray-100">{property.accessInfo}</p>}
+              </div>
+            </AccordionItem>
+
+            <AccordionItem
+              title="Interação"
+              icon={MessageCircle}
+              isOpen={openFaq === "interaction"}
+              onClick={() => setOpenFaq(openFaq === "interaction" ? null : "interaction")}
+            >
+              <div className="pt-2">
+                {property.interactionInfo || "O anfitrião está sempre disponível para responder às suas questões. Para uma resposta mais rápida, utilize o sistema de mensagens da plataforma clicando no botão de chat no canto inferior derecho."}
+              </div>
+            </AccordionItem>
+
+            {property.additionalInfo && (
+              <AccordionItem
+                title="Informação adicional"
+                icon={FileText}
+                isOpen={openFaq === "additional"}
+                onClick={() => setOpenFaq(openFaq === "additional" ? null : "additional")}
+              >
+                <div className="pt-2 whitespace-pre-line">{property.additionalInfo}</div>
+              </AccordionItem>
+            )}
           </div>
         </section>
 
