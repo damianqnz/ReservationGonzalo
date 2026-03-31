@@ -66,9 +66,20 @@ export default async function PropertyPage({ params, searchParams }: Props) {
       arrivalType: true,
       petsAllowed: true,
       childrenAllowed: true,
+      smokingAllowed: true,
       bedsConfig: true,
       bathroomType: true,
       services: true,
+      licenseNumber: true,
+      hostDescription: true,
+      spaceDescription: true,
+      accessInfo: true,
+      interactionInfo: true,
+      additionalInfo: true,
+      parkingInfo: true,
+      extraServices: true,
+      houseRules: true,
+      cancellationDays: true,
       rooms: {
         where: { status: "ACTIVE" },
         orderBy: { order: "asc" },
@@ -99,7 +110,7 @@ export default async function PropertyPage({ params, searchParams }: Props) {
         },
         orderBy: { createdAt: "desc" },
       },
-      owner: { select: { id: true, name: true } },
+      owner: { select: { id: true, name: true, image: true, createdAt: true } },
       pricingRules: {
         select: { type: true, value: true, isPercentage: true },
       },
@@ -167,6 +178,10 @@ export default async function PropertyPage({ params, searchParams }: Props) {
     ...r,
     createdAt: r.createdAt.toISOString(),
   }))
+  const serializedOwner = {
+    ...property.owner,
+    createdAt: property.owner.createdAt.toISOString(),
+  }
 
   // ─── Schema.org metadata ───────────────────────────────────────────────────
   const jsonLd = {
@@ -200,6 +215,7 @@ export default async function PropertyPage({ params, searchParams }: Props) {
       <PropertyDetailsClient
         property={{
           ...property,
+          owner: serializedOwner,
           images: resolvedImages,
           rooms: resolvedRooms,
           reviews: serializedReviews,
