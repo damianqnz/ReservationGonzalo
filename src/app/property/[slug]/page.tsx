@@ -106,6 +106,7 @@ export default async function PropertyPage({ params, searchParams }: Props) {
           guestName: true,
           rating: true,
           comment: true,
+          ownerReply: true,
           createdAt: true,
         },
         orderBy: { createdAt: "desc" },
