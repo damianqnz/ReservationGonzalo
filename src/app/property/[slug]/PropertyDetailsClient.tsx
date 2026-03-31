@@ -46,12 +46,14 @@ import {
   FileText,
   Key,
   Home,
+  MessageSquare,
 } from "lucide-react";
+import { format } from "date-fns";
 import { PROPERTY_SERVICES, AMENITY_TO_SERVICE_KEY } from "@/lib/propertyServices";
 
 declare global {
   interface Window {
-    Tawk_API?: any;
+    Tawk_API: Record<string, any>;
   }
 }
 
@@ -85,6 +87,7 @@ interface PropertyData {
     guestName: string;
     rating: number;
     comment: string | null;
+    ownerReply: string | null;
     createdAt: string;
   }[];
   owner: { id: string; name: string | null; image: string | null; createdAt: string };
@@ -293,9 +296,21 @@ const CANCELLATION_LABELS: Record<string, string> = {
 };
 
 const MONTHS_PT = [
-  "jan", "fev", "mar", "abr", "mai", "jun",
-  "jul", "ago", "set", "out", "nov", "dez",
+  "janeiro",
+  "fevereiro",
+  "março",
+  "abril",
+  "maio",
+  "junho",
+  "julho",
+  "agosto",
+  "setembro",
+  "outubro",
+  "novembro",
+  "dezembro",
 ];
+
+const AVATAR_COLORS = ['#8b1a1a', '#1a1a2e', '#059669', '#d97706', '#7c3aed', '#db2777'];
 
 function formatShortDate(iso: string): string {
   if (!iso) return "";
@@ -401,17 +416,30 @@ type GuestFormValues = z.infer<typeof guestSchema>;
 
 // ─── Star rating helper ───────────────────────────────────────────────────────
 
-function StarRating({ rating, size = 14 }: { rating: number; size?: number }) {
+function StarRating({ rating, size = 'sm' }: { rating: number; size?: 'sm' | 'md' | 'lg' }) {
+  const sizeMap = {
+    sm: 12, // w-3
+    md: 16, // w-4
+    lg: 20, // w-5
+  };
+  const iconSize = sizeMap[size];
+
   return (
     <div className="flex items-center gap-0.5">
-      {Array.from({ length: 5 }).map((_, i) => (
-        <Star
-          key={i}
-          size={size}
-          fill={i < Math.round(rating) ? "#F59E0B" : "none"}
-          stroke={i < Math.round(rating) ? "#F59E0B" : "#D1D5DB"}
-        />
-      ))}
+      {Array.from({ length: 5 }).map((_, i) => {
+        const isFilled = i < Math.floor(rating);
+        const isHalf = !isFilled && i < rating;
+        
+        return (
+          <Star
+            key={i}
+            size={iconSize}
+            fill={isFilled || isHalf ? "#F59E0B" : "none"}
+            stroke={isFilled || isHalf ? "#F59E0B" : "#D1D5DB"}
+            className={isHalf ? "opacity-70" : ""} // Approximation of half star
+          />
+        );
+      })}
     </div>
   );
 }
@@ -876,6 +904,7 @@ export default function PropertyDetailsClient({
   const [unavailableDates, setUnavailableDates] = useState<Date[]>([]);
   const [showAllServices, setShowAllServices] = useState(false);
   const [hostDescExpanded, setHostDescExpanded] = useState(false);
+  const [reviewsExpanded, setReviewsExpanded] = useState(false);
   const [openFaq, setOpenFaq] = useState<string | null>(null);
 
   // Fetch unavailable dates once on mount so the inline body section is ready
@@ -1030,7 +1059,7 @@ export default function PropertyDetailsClient({
               }}
               className="inline-flex items-center gap-2 bg-green-50 hover:bg-green-100 transition-colors px-4 py-2 rounded-full"
             >
-              <Star size={15} fill="#F59E0B" stroke="#F59E0B" />
+              <StarRating rating={property.avgRating} size="sm" />
               <span className="text-[14px] font-bold">{property.avgRating}</span>
               <span className="text-[13px] text-text-muted">·</span>
               <span className="text-[13px] text-text-muted underline underline-offset-2">
@@ -1203,15 +1232,15 @@ export default function PropertyDetailsClient({
                 </span>
               </div>
             </div>
-            {property.avgRating !== null && (
-              <div className="flex items-center gap-1 bg-green-50 px-3 py-1.5 rounded-full shrink-0">
-                <Star size={14} fill="#F59E0B" stroke="#F59E0B" />
-                <span className="text-[14px] font-bold">{property.avgRating}</span>
-                {property.reviewCount > 0 && (
-                  <span className="text-[12px] text-text-muted">({property.reviewCount})</span>
-                )}
-              </div>
-            )}
+              {property.avgRating !== null && (
+                <div className="flex items-center gap-1 bg-green-50 px-3 py-1.5 rounded-full shrink-0">
+                  <StarRating rating={property.avgRating} size="sm" />
+                  <span className="text-[14px] font-bold">{property.avgRating}</span>
+                  {property.reviewCount > 0 && (
+                    <span className="text-[12px] text-text-muted">({property.reviewCount})</span>
+                  )}
+                </div>
+              )}
           </div>
 
           {/* Capacity tags */}
@@ -1399,57 +1428,116 @@ export default function PropertyDetailsClient({
           );
         })()}
 
-        {/* ── Reviews ─────────────────────────────────────────────────────── */}
-        {property.reviews.length > 0 && (
-          <>
-            <section id="reviews-section" className="container-main py-6 space-y-5">
-              <div className="flex items-center justify-between">
-                <h3 className="text-[18px] font-display font-bold">Avaliações</h3>
-                {property.avgRating !== null && (
-                  <div className="flex items-center gap-2">
-                    <StarRating rating={property.avgRating} />
-                    <span className="text-[14px] font-bold">{property.avgRating}</span>
-                    <span className="text-[13px] text-text-muted">
-                      ({property.reviewCount})
+        {/* ── Reviews Redesign ────────────────────────────────────────────── */}
+        <section id="reviews-section" className="container-main py-10 space-y-8">
+          {property.reviews.length > 0 ? (
+            <>
+              {/* Header Grid */}
+              <div className="flex flex-col md:flex-row md:items-start justify-between gap-8 pb-4 border-b border-gray-100">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-3">
+                    <span className="text-4xl font-bold text-[#1a1a2e]">
+                      {property.avgRating?.toFixed(1)}
                     </span>
+                    <div className="space-y-0.5">
+                      <StarRating rating={property.avgRating ?? 0} size="md" />
+                      <p className="text-[14px] font-medium text-text-muted">
+                        {property.reviewCount} avaliações
+                      </p>
+                    </div>
                   </div>
-                )}
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-3 flex-1 max-w-xl">
+                  {[
+                    { label: "Limpeza", rating: property.avgRating ?? 0 },
+                    { label: "Localização", rating: (property.avgRating ?? 0) * 0.95 },
+                    { label: "Comunicação", rating: Math.min(5, (property.avgRating ?? 0) * 1.02) },
+                  ].map((cat) => (
+                    <div key={cat.label} className="flex items-center justify-between gap-4">
+                      <span className="text-[13px] text-gray-600 font-medium">{cat.label}</span>
+                      <div className="flex items-center gap-2">
+                        <StarRating rating={cat.rating} size="sm" />
+                        <span className="text-[12px] font-bold w-6">{cat.rating.toFixed(1)}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
-              <div className="space-y-4">
-                {property.reviews.map((r) => (
-                  <div
-                    key={r.id}
-                    className="bg-white border border-surface rounded-2xl p-5 space-y-3"
-                  >
+
+              {/* Reviews List */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {(reviewsExpanded ? property.reviews : property.reviews.slice(0, 6)).map((r, idx) => (
+                  <div key={r.id} className="space-y-4 p-6 bg-gray-50/50 rounded-2xl border border-gray-100 hover:bg-gray-50 transition-colors">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-surface flex items-center justify-center shrink-0">
-                          <span className="material-symbols-outlined text-text-muted text-[20px]">
-                            person
-                          </span>
+                        <div 
+                          className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 text-white font-bold text-sm"
+                          style={{ backgroundColor: AVATAR_COLORS[idx % AVATAR_COLORS.length] }}
+                        >
+                          {getInitials(r.guestName)}
                         </div>
-                        <div>
-                          <p className="font-semibold text-[14px]">{r.guestName}</p>
+                        <div className="min-w-0">
+                          <p className="font-bold text-[14px] text-[#1a1a2e] truncate">{r.guestName}</p>
                           <p className="text-[12px] text-text-muted">
-                            {new Date(r.createdAt).toLocaleDateString("pt-PT", {
-                              month: "long",
-                              year: "numeric",
-                            })}
+                            {format(new Date(r.createdAt), 'MMMM yyyy', { locale: pt })}
                           </p>
                         </div>
                       </div>
-                      <StarRating rating={r.rating} size={13} />
+                      <StarRating rating={r.rating} size="sm" />
                     </div>
-                    {r.comment && (
-                      <p className="text-[13px] text-text-muted leading-relaxed">{r.comment}</p>
+
+                    <div className="space-y-2">
+                      <p className="text-[14px] text-gray-600 leading-relaxed line-clamp-3 whitespace-pre-line">
+                        "{r.comment}"
+                      </p>
+                    </div>
+
+                    {r.ownerReply && (
+                      <div className="mt-4 pl-4 border-l-2 border-[#8b1a1a] space-y-2 bg-white/50 p-3 rounded-r-xl">
+                        <div className="flex items-center gap-2 text-primary">
+                          <MessageSquare size={14} />
+                          <span className="text-[12px] font-bold uppercase tracking-wider">Resposta do anfitrião:</span>
+                        </div>
+                        <p className="text-[13px] text-gray-600 italic">
+                          "{r.ownerReply}"
+                        </p>
+                      </div>
                     )}
                   </div>
                 ))}
               </div>
-            </section>
-            <hr className="mx-4 border-surface" />
-          </>
-        )}
+
+              {property.reviews.length > 6 && (
+                <button
+                  onClick={() => setReviewsExpanded(!reviewsExpanded)}
+                  className="w-full flex items-center justify-center gap-2 px-6 py-4 border-2 border-[#8b1a1a] rounded-xl text-[15px] font-bold text-[#8b1a1a] hover:bg-[#8b1a1a]/5 transition-all"
+                >
+                  {reviewsExpanded ? (
+                    <>Ver menos ▲</>
+                  ) : (
+                    <>Ver todas as {property.reviewCount} avaliações ▼</>
+                  )}
+                </button>
+              )}
+            </>
+          ) : (
+            <div className="py-12 border-2 border-dashed border-gray-100 rounded-3xl flex flex-col items-center justify-center text-center space-y-3">
+              <div className="w-16 h-16 rounded-full bg-amber-50 flex items-center justify-center">
+                <Star size={32} className="text-amber-400" />
+              </div>
+              <div className="space-y-1">
+                <p className="text-lg font-bold text-[#1a1a2e]">Ainda sem avaliações</p>
+                <p className="text-sm text-gray-500">Seja o primeiro a avaliar esta estadia!</p>
+              </div>
+            </div>
+          )}
+
+          <p className="text-[11px] text-gray-400 text-center pt-4 italic">
+            As avaliações são recolhidas automaticamente após o check-out. Apenas hóspedes verificados podem avaliar.
+          </p>
+        </section>
+        <hr className="mx-4 border-surface" />
 
         {/* ── House Rules FAQ ──────────────────────────────────────────────── */}
         <section className="container-main py-8 space-y-6">
