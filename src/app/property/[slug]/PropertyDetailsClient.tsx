@@ -37,8 +37,23 @@ import {
   PawPrint,
   Baby,
   X,
+  CalendarX,
+  ScrollText,
+  Info,
+  MessageCircle,
+  ChevronDown,
+  ChevronUp,
+  FileText,
+  Key,
+  Home,
 } from "lucide-react";
 import { PROPERTY_SERVICES, AMENITY_TO_SERVICE_KEY } from "@/lib/propertyServices";
+
+declare global {
+  interface Window {
+    Tawk_API?: any;
+  }
+}
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -72,7 +87,18 @@ interface PropertyData {
     comment: string | null;
     createdAt: string;
   }[];
-  owner: { id: string; name: string | null };
+  owner: { id: string; name: string | null; image: string | null; createdAt: string };
+  licenseNumber: string | null;
+  hostDescription: string | null;
+  spaceDescription: string | null;
+  accessInfo: string | null;
+  interactionInfo: string | null;
+  additionalInfo: string | null;
+  parkingInfo: string | null;
+  extraServices: string | null;
+  smokingAllowed: boolean;
+  houseRules: string | null;
+  cancellationDays: number | null;
   pricingRules: { type: string; value: number; isPercentage: boolean }[];
   avgRating: number | null;
   reviewCount: number;
@@ -137,6 +163,70 @@ function formatBedsList(beds: string[]): string {
 }
 
 // ─── Constants / maps ─────────────────────────────────────────────────────────
+
+function getInitials(name: string | null): string {
+  if (!name) return "G";
+  return name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+}
+
+function AccordionItem({
+  title,
+  icon: Icon,
+  children,
+  isOpen,
+  onClick,
+}: {
+  title: string;
+  icon: LucideIcon;
+  children: React.ReactNode;
+  isOpen: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <div className="border-b border-gray-100">
+      <button
+        type="button"
+        onClick={onClick}
+        className="w-full flex justify-between items-center py-4 text-left group"
+      >
+        <div className="flex items-center gap-3">
+          <Icon
+            size={20}
+            className={`transition-colors ${
+              isOpen ? "text-primary" : "text-text-muted group-hover:text-primary"
+            }`}
+          />
+          <span
+            className={`font-medium text-[15px] transition-colors ${
+              isOpen ? "text-text-main" : "text-text-muted group-hover:text-primary"
+            }`}
+          >
+            {title}
+          </span>
+        </div>
+        {isOpen ? (
+          <ChevronUp size={20} className="text-text-muted" />
+        ) : (
+          <ChevronDown size={20} className="text-text-muted" />
+        )}
+      </button>
+      <div
+        className={`overflow-hidden transition-all duration-300 ease-in-out ${
+          isOpen ? "max-h-[1000px] opacity-100 pb-5" : "max-h-0 opacity-0"
+        }`}
+      >
+        <div className="text-[14px] text-gray-600 leading-relaxed">
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 type LucideIcon = ComponentType<{ size?: number; className?: string }>;
 
@@ -785,6 +875,8 @@ export default function PropertyDetailsClient({
   const [localCheckOut, setLocalCheckOut] = useState<Date | null>(null);
   const [unavailableDates, setUnavailableDates] = useState<Date[]>([]);
   const [showAllServices, setShowAllServices] = useState(false);
+  const [hostDescExpanded, setHostDescExpanded] = useState(false);
+  const [openFaq, setOpenFaq] = useState<string | null>(null);
 
   // Fetch unavailable dates once on mount so the inline body section is ready
   useEffect(() => {
@@ -1144,15 +1236,66 @@ export default function PropertyDetailsClient({
         <hr className="mx-4 border-surface" />
 
         {/* ── Host ────────────────────────────────────────────────────────── */}
-        <section id="host-section" className="container-main py-6 flex items-center gap-4">
-          <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-            <span className="material-symbols-outlined text-primary text-[28px]">person</span>
-          </div>
-          <div>
-            <p className="font-semibold text-[16px]">
-              Anfitrião: {property.owner.name ?? "Gonzalo"}
-            </p>
-            <p className="text-[13px] text-text-muted">Superanfitrião</p>
+        <section id="host-section" className="container-main py-8 space-y-6">
+          <h2 className="text-[20px] font-display font-bold text-[#1a1a2e]">Gerido por</h2>
+          
+          <div className="flex flex-col md:flex-row gap-8 items-start">
+            {/* Owner Info Card */}
+            <div className="flex items-start gap-4 min-w-0">
+              <div className="relative w-16 h-16 shrink-0 rounded-full overflow-hidden bg-[#8b1a1a] flex items-center justify-center">
+                {property.owner.image ? (
+                  <Image
+                    src={property.owner.image}
+                    alt={property.owner.name || "Owner"}
+                    fill
+                    className="object-cover"
+                  />
+                ) : (
+                  <span className="text-white font-bold text-xl uppercase">
+                    {getInitials(property.owner.name)}
+                  </span>
+                )}
+              </div>
+              <div className="space-y-1 min-w-0">
+                <p className="text-[17px] font-bold text-[#1a1a2e] truncate">
+                  {property.owner.name || "Gonzalo Rodríguez"}
+                </p>
+                <div className="space-y-0.5">
+                  <p className="text-[13px] text-gray-500">
+                    Anfitrião desde {new Date(property.owner.createdAt).getFullYear()}
+                  </p>
+                  {property.licenseNumber && (
+                    <p className="text-[13px] text-gray-500">
+                      Licença AL: {property.licenseNumber}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Description & Button */}
+            <div className="flex-1 space-y-4">
+              <div className="space-y-2">
+                <div className={`text-[14px] text-gray-600 leading-relaxed ${!hostDescExpanded ? "line-clamp-3" : ""}`}>
+                  {property.hostDescription || "O anfitrião está disponível para responder às suas questões sempre que necessário."}
+                </div>
+                {property.hostDescription && property.hostDescription.length > 150 && (
+                  <button 
+                    onClick={() => setHostDescExpanded(!hostDescExpanded)}
+                    className="text-[13px] font-bold text-primary hover:underline"
+                  >
+                    {hostDescExpanded ? "Ver menos" : "Ver mais"}
+                  </button>
+                )}
+              </div>
+
+              <button 
+                onClick={() => window.Tawk_API?.toggle?.()}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border-2 border-[#8b1a1a] text-[#8b1a1a] font-bold hover:bg-[#8b1a1a]/5 transition-all text-sm"
+              >
+                💬 Enviar mensagem
+              </button>
+            </div>
           </div>
         </section>
 
@@ -1308,39 +1451,144 @@ export default function PropertyDetailsClient({
           </>
         )}
 
-        {/* ── House Rules ──────────────────────────────────────────────────── */}
-        <section className="container-main py-6 space-y-4">
-          <h3 className="text-[18px] font-display font-bold">Regras da casa</h3>
-          <div className="space-y-3">
-            {[
-              {
-                icon: "schedule",
-                label: `Check-in: a partir das ${property.checkInTime}`,
-              },
-              {
-                icon: "logout",
-                label: `Check-out: até às ${property.checkOutTime}`,
-              },
-              { icon: "smoke_free", label: "Não fumar" },
-              { icon: "pets", label: "Sem animais de estimação" },
-              { icon: "volume_off", label: "Sem festas nem eventos" },
-              {
-                icon: "cancel",
-                label:
-                  CANCELLATION_LABELS[property.cancellationPolicy] ??
-                  property.cancellationPolicy,
-              },
-              ...(property.minNights > 1
-                ? [{ icon: "event_available", label: `Mínimo ${property.minNights} noites` }]
-                : []),
-            ].map((rule) => (
-              <div key={rule.label} className="flex items-start gap-3">
-                <span className="material-symbols-outlined text-text-muted text-[20px] mt-0.5">
-                  {rule.icon}
-                </span>
-                <span className="text-[14px] text-text-muted">{rule.label}</span>
+        {/* ── House Rules FAQ ──────────────────────────────────────────────── */}
+        <section className="container-main py-8 space-y-6">
+          <h2 className="text-[20px] font-display font-bold text-[#1a1a2e]">Regras da casa</h2>
+          
+          <div className="border-t border-gray-100">
+            <AccordionItem
+              title="Chegada"
+              icon={DoorOpen}
+              isOpen={openFaq === "chegada"}
+              onClick={() => setOpenFaq(openFaq === "chegada" ? null : "chegada")}
+            >
+              <div className="space-y-2 pt-2">
+                <p>• Check-in: a partir das <b>{property.checkInTime}</b></p>
+                <p>• Check-out: até às <b>{property.checkOutTime}</b></p>
+                {property.securityDeposit > 0 && (
+                  <p>• Depósito de segurança: <b>€{property.securityDeposit}</b> (devolvido após o check-out)</p>
+                )}
+                {property.parkingInfo && <p>• Estacionamento: {property.parkingInfo}</p>}
+                {property.extraServices && <p>• Serviços extra: {property.extraServices}</p>}
+                <p>• Animais de estimação: {property.petsAllowed ? "Permitidos ✓" : "Não permitidos ✗"}</p>
+                <p>• Crianças: {property.childrenAllowed ? "Bem-vindas ✓" : "Não recomendado ✗"}</p>
               </div>
-            ))}
+            </AccordionItem>
+
+            <AccordionItem
+              title="Política de cancelamento"
+              icon={CalendarX}
+              isOpen={openFaq === "cancellation"}
+              onClick={() => setOpenFaq(openFaq === "cancellation" ? null : "cancellation")}
+            >
+              <div className="space-y-3 pt-2">
+                <p className="font-medium">
+                  {property.cancellationPolicy === "FLEXIBLE" && "Política Flexível"}
+                  {property.cancellationPolicy === "MODERATE" && "Política Moderada"}
+                  {property.cancellationPolicy === "STRICT" && "Política Estrita"}
+                </p>
+                <p>
+                  {property.cancellationPolicy === "FLEXIBLE" && "Cancelamento gratuito até 24 horas antes da llegada. Após esse prazo, será cobrada 1 noite."}
+                  {property.cancellationPolicy === "MODERATE" && "Cancelamento gratuito até 5 dias antes da llegada. Após esse prazo, reembolso de 50% do valor total."}
+                  {property.cancellationPolicy === "STRICT" && "Sem reembolso após a confirmação da reserva. Em casos excecionais, contacte o anfitrião."}
+                </p>
+                {property.cancellationDays !== null && property.cancellationDays > 0 && (
+                  <p className="text-primary font-semibold">
+                    Cancelamento gratuito até {property.cancellationDays} dias antes da chegada.
+                  </p>
+                )}
+              </div>
+            </AccordionItem>
+
+            <AccordionItem
+              title="Normas"
+              icon={ScrollText}
+              isOpen={openFaq === "normas"}
+              onClick={() => setOpenFaq(openFaq === "normas" ? null : "normas")}
+            >
+              <div className="space-y-3 pt-2">
+                <p>{property.smokingAllowed ? "🚬 Permitido fumar" : "🚭 Proibido fumar"}</p>
+                <p>{property.petsAllowed ? "🐾 Animais permitidos" : "🚫 Animais não permitidos"}</p>
+                <p>{property.childrenAllowed ? "👶 Crianças bem-vindas" : "🔞 Não recomendado para crianças"}</p>
+                {property.houseRules && (
+                  <div className="pt-2 border-t border-gray-100 mt-2">
+                    <p className="font-semibold mb-1">Regras adicionais:</p>
+                    <p className="whitespace-pre-line">{property.houseRules}</p>
+                  </div>
+                )}
+              </div>
+            </AccordionItem>
+
+            <AccordionItem
+              title="Acerca de"
+              icon={Info}
+              isOpen={openFaq === "about"}
+              onClick={() => setOpenFaq(openFaq === "about" ? null : "about")}
+            >
+              <div className="pt-2 whitespace-pre-line">
+                {property.description || "Sem descrição disponível."}
+              </div>
+            </AccordionItem>
+
+            <AccordionItem
+              title="Espaço"
+              icon={Home}
+              isOpen={openFaq === "space"}
+              onClick={() => setOpenFaq(openFaq === "space" ? null : "space")}
+            >
+              <div className="space-y-3 pt-2">
+                {property.spaceDescription ? (
+                  <div className="whitespace-pre-line">{property.spaceDescription}</div>
+                ) : (
+                  <p>
+                    Este espaço tem capacidade para {property.maxGuests} hóspede(s), com {property.bedrooms} quarto(s) e {property.bathrooms} casa(s) de banho.
+                    {property.area && ` Área total de ${property.area} m².`}
+                    {property.floors && ` ${property.floors} piso(s).`}
+                    {property.hasElevator && " Acessível por elevador."}
+                  </p>
+                )}
+              </div>
+            </AccordionItem>
+
+            <AccordionItem
+              title="Acesso"
+              icon={Key}
+              isOpen={openFaq === "access"}
+              onClick={() => setOpenFaq(openFaq === "access" ? null : "access")}
+            >
+              <div className="space-y-3 pt-2">
+                <p>
+                  {property.arrivalType === 'autonomous' 
+                    ? "Chegada autónoma — receberá todas as instruções de acesso após a confirmação da reserva."
+                    : property.arrivalType === 'guided'
+                    ? "Chegada acompanhada — o anfitrião irá recebê-lo pessoalmente."
+                    : "Informação de acesso disponível após reserva."}
+                </p>
+                {property.accessInfo && <p className="pt-2 border-t border-gray-100">{property.accessInfo}</p>}
+              </div>
+            </AccordionItem>
+
+            <AccordionItem
+              title="Interação"
+              icon={MessageCircle}
+              isOpen={openFaq === "interaction"}
+              onClick={() => setOpenFaq(openFaq === "interaction" ? null : "interaction")}
+            >
+              <div className="pt-2">
+                {property.interactionInfo || "O anfitrião está sempre disponível para responder às suas questões. Para uma resposta mais rápida, utilize o sistema de mensagens da plataforma clicando no botão de chat no canto inferior derecho."}
+              </div>
+            </AccordionItem>
+
+            {property.additionalInfo && (
+              <AccordionItem
+                title="Informação adicional"
+                icon={FileText}
+                isOpen={openFaq === "additional"}
+                onClick={() => setOpenFaq(openFaq === "additional" ? null : "additional")}
+              >
+                <div className="pt-2 whitespace-pre-line">{property.additionalInfo}</div>
+              </AccordionItem>
+            )}
           </div>
         </section>
 
