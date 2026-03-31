@@ -98,6 +98,30 @@ model Property {
   bathroomType       String?
   services           String?            @db.Text
   rooms              Room[]
+  // Arrival & Access
+  arrivalType       String?   // "autonomous" | "guided"
+  accessInfo        String?   @db.Text
+  interactionInfo   String?   @db.Text
+  additionalInfo    String?   @db.Text
+
+  // Space details
+  floors            Int?
+  hasElevator       Boolean   @default(false)
+  towelsIncluded    Boolean   @default(false)
+  petsAllowed       Boolean   @default(false)
+  childrenAllowed   Boolean   @default(true)
+  smokingAllowed    Boolean   @default(false)
+
+  // House rules
+  extraServices     String?   @db.Text
+  parkingInfo       String?   @db.Text
+  cancellationDays  Int?      @default(0)
+  houseRules        String?   @db.Text
+
+  // Host
+  licenseNumber     String?
+  hostDescription   String?   @db.Text
+  spaceDescription  String?   @db.Text
   // Access data
   accessCode         String?
   wifiName           String?

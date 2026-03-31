@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import BedPicker from '@/components/dashboard/BedPicker'
 import ServicesChecklist from '@/components/dashboard/ServicesChecklist'
+import ToggleSwitch from '@/components/ui/ToggleSwitch'
 
 // ─── Slug helper ──────────────────────────────────────────────────────────────
 
@@ -45,6 +46,24 @@ interface Step1State {
   cancellationPolicy: string
   hasRooms: boolean
   bathroomType: string
+  // New fields
+  arrivalType: string
+  floors: string
+  hasElevator: boolean
+  towelsIncluded: boolean
+  petsAllowed: boolean
+  childrenAllowed: boolean
+  smokingAllowed: boolean
+  spaceDescription: string
+  accessInfo: string
+  interactionInfo: string
+  additionalInfo: string
+  parkingInfo: string
+  extraServices: string
+  houseRules: string
+  cancellationDays: string
+  licenseNumber: string
+  hostDescription: string
 }
 
 const STEP1_INITIAL: Step1State = {
@@ -71,6 +90,24 @@ const STEP1_INITIAL: Step1State = {
   cancellationPolicy: 'FLEXIBLE',
   hasRooms: false,
   bathroomType: 'private',
+  // New fields
+  arrivalType: '',
+  floors: '1',
+  hasElevator: false,
+  towelsIncluded: false,
+  petsAllowed: false,
+  childrenAllowed: true,
+  smokingAllowed: false,
+  spaceDescription: '',
+  accessInfo: '',
+  interactionInfo: '',
+  additionalInfo: '',
+  parkingInfo: '',
+  extraServices: '',
+  houseRules: '',
+  cancellationDays: '0',
+  licenseNumber: '',
+  hostDescription: '',
 }
 
 interface RoomDraft {
@@ -381,6 +418,232 @@ function Step1({
             onChange={(e) => set('area', e.target.value)}
           />
         </Field>
+      </section>
+
+      {/* ── Detalhes do espaço ── */}
+      <section className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-6">
+        <h3 className="text-sm font-bold text-[#1a1a2e] uppercase tracking-wider">Detalhes do espaço</h3>
+        
+        <Field label="Tipo de chegada">
+          <div className="flex flex-wrap gap-4 mt-2">
+            <label className="flex-1 min-w-[200px] cursor-pointer group">
+              <input
+                type="radio"
+                name="arrivalType"
+                className="sr-only"
+                checked={form.arrivalType === 'autonomous'}
+                onChange={() => set('arrivalType', 'autonomous')}
+              />
+              <div className={`p-4 rounded-xl border-2 transition-all ${
+                form.arrivalType === 'autonomous' 
+                ? 'border-[#8b1a1a] bg-[#8b1a1a]/5' 
+                : 'border-slate-100 hover:border-slate-200'
+              }`}>
+                <p className="font-bold text-sm text-[#1a1a2e]">Chegada autónoma</p>
+                <p className="text-xs text-slate-500 mt-1">O hóspede recebe instruções e acede sozinho</p>
+              </div>
+            </label>
+            <label className="flex-1 min-w-[200px] cursor-pointer group">
+              <input
+                type="radio"
+                name="arrivalType"
+                className="sr-only"
+                checked={form.arrivalType === 'guided'}
+                onChange={() => set('arrivalType', 'guided')}
+              />
+              <div className={`p-4 rounded-xl border-2 transition-all ${
+                form.arrivalType === 'guided' 
+                ? 'border-[#8b1a1a] bg-[#8b1a1a]/5' 
+                : 'border-slate-100 hover:border-slate-200'
+              }`}>
+                <p className="font-bold text-sm text-[#1a1a2e]">Chegada acompanhada</p>
+                <p className="text-xs text-slate-500 mt-1">O anfitrião recebe o hóspede pessoalmente</p>
+              </div>
+            </label>
+          </div>
+        </Field>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Field label="Número de pisos">
+            <input
+              className={INPUT}
+              type="number"
+              min="1"
+              max="20"
+              placeholder="1"
+              value={form.floors}
+              onChange={(e) => set('floors', e.target.value)}
+            />
+            <p className="text-[11px] text-slate-400 mt-1">Pisos totais do alojamento</p>
+          </Field>
+          
+          <div className="flex items-center">
+            {Number(form.floors) > 1 && (
+              <ToggleSwitch
+                checked={form.hasElevator}
+                onChange={(v) => set('hasElevator', v)}
+                label="Tem elevador?"
+              />
+            )}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-12 pt-2">
+          <ToggleSwitch
+            checked={form.towelsIncluded}
+            onChange={(v) => set('towelsIncluded', v)}
+            label="Toalhas e lençóis incluídos"
+            helper="Inclui toalhas de banho e roupa de cama"
+          />
+          <ToggleSwitch
+            checked={form.petsAllowed}
+            onChange={(v) => set('petsAllowed', v)}
+            label="Animais de estimação"
+          />
+          <ToggleSwitch
+            checked={form.childrenAllowed}
+            onChange={(v) => set('childrenAllowed', v)}
+            label="Apto para crianças"
+            helper="Crianças a partir de 2 anos"
+          />
+          <ToggleSwitch
+            checked={form.smokingAllowed}
+            onChange={(v) => set('smokingAllowed', v)}
+            label="Permitido fumar"
+          />
+        </div>
+      </section>
+
+      {/* ── Informação para hóspedes ── */}
+      <section className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-6">
+        <h3 className="text-sm font-bold text-[#1a1a2e] uppercase tracking-wider">Informação para hóspedes</h3>
+        
+        <div className="space-y-5">
+          <Field label="Descrição do espaço">
+            <textarea
+              className="w-full px-3 py-2.5 rounded-lg border border-slate-200 bg-white text-sm text-slate-800 resize-none focus:outline-none focus:ring-2 focus:ring-[#8b1a1a]/20 focus:border-[#8b1a1a] transition"
+              rows={4}
+              placeholder="Descreva como está organizado o espaço, os quartos, casas de banho, áreas comuns..."
+              value={form.spaceDescription}
+              onChange={(e) => set('spaceDescription', e.target.value)}
+            />
+            <p className="text-[11px] text-slate-400 mt-1">Aparece na secção &quot;Espaço&quot; da página pública</p>
+          </Field>
+          
+          <Field label="Informação de acesso">
+            <textarea
+              className="w-full px-3 py-2.5 rounded-lg border border-slate-200 bg-white text-sm text-slate-800 resize-none focus:outline-none focus:ring-2 focus:ring-[#8b1a1a]/20 focus:border-[#8b1a1a] transition"
+              rows={3}
+              placeholder="Como funciona o processo de entrada, localização das chaves, códigos de acesso..."
+              value={form.accessInfo}
+              onChange={(e) => set('accessInfo', e.target.value)}
+            />
+            <p className="text-[11px] text-slate-400 mt-1">Aparece na secção &quot;Acesso&quot; da página pública</p>
+          </Field>
+          
+          <Field label="Interação com hóspedes">
+            <textarea
+              className="w-full px-3 py-2.5 rounded-lg border border-slate-200 bg-white text-sm text-slate-800 resize-none focus:outline-none focus:ring-2 focus:ring-[#8b1a1a]/20 focus:border-[#8b1a1a] transition"
+              rows={3}
+              placeholder="Descreva a sua disponibilidade para ajudar os hóspedes durante a estadia..."
+              value={form.interactionInfo}
+              onChange={(e) => set('interactionInfo', e.target.value)}
+            />
+            <p className="text-[11px] text-slate-400 mt-1">Aparece na secção &quot;Interação&quot; da página pública</p>
+          </Field>
+          
+          <Field label="Informação adicional (opcional)">
+            <textarea
+              className="w-full px-3 py-2.5 rounded-lg border border-slate-200 bg-white text-sm text-slate-800 resize-none focus:outline-none focus:ring-2 focus:ring-[#8b1a1a]/20 focus:border-[#8b1a1a] transition"
+              rows={3}
+              placeholder="Qualquer informação extra relevante para os hóspedes..."
+              value={form.additionalInfo}
+              onChange={(e) => set('additionalInfo', e.target.value)}
+            />
+            <p className="text-[11px] text-slate-400 mt-1">Aparece na secção &quot;Informação adicional&quot; apenas se preenchida</p>
+          </Field>
+        </div>
+      </section>
+
+      {/* ── Regras da casa ── */}
+      <section className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-6">
+        <h3 className="text-sm font-bold text-[#1a1a2e] uppercase tracking-wider">Regras da casa</h3>
+        
+        <div className="space-y-5">
+          <Field label="Estacionamento">
+            <textarea
+              className="w-full px-3 py-2.5 rounded-lg border border-slate-200 bg-white text-sm text-slate-800 resize-none focus:outline-none focus:ring-2 focus:ring-[#8b1a1a]/20 focus:border-[#8b1a1a] transition"
+              rows={2}
+              placeholder="Informação sobre estacionamento disponível, preço, localização..."
+              value={form.parkingInfo}
+              onChange={(e) => set('parkingInfo', e.target.value)}
+            />
+          </Field>
+          
+          <Field label="Serviços extra disponíveis">
+            <textarea
+              className="w-full px-3 py-2.5 rounded-lg border border-slate-200 bg-white text-sm text-slate-800 resize-none focus:outline-none focus:ring-2 focus:ring-[#8b1a1a]/20 focus:border-[#8b1a1a] transition"
+              rows={2}
+              placeholder="Serviços adicionales que pode oferecer (transfer, pequeno-almoço, etc.)..."
+              value={form.extraServices}
+              onChange={(e) => set('extraServices', e.target.value)}
+            />
+          </Field>
+          
+          <Field label="Normas específicas da casa">
+            <textarea
+              className="w-full px-3 py-2.5 rounded-lg border border-slate-200 bg-white text-sm text-slate-800 resize-none focus:outline-none focus:ring-2 focus:ring-[#8b1a1a]/20 focus:border-[#8b1a1a] transition"
+              rows={3}
+              placeholder="Regras específicas do seu alojamento (horário de silêncio, uso das instalações, etc.)..."
+              value={form.houseRules}
+              onChange={(e) => set('houseRules', e.target.value)}
+            />
+          </Field>
+          
+          <div className="max-w-xs">
+            <Field label="Dias de cancelamento gratuito">
+              <input
+                className={INPUT}
+                type="number"
+                min="0"
+                max="365"
+                placeholder="0"
+                value={form.cancellationDays}
+                onChange={(e) => set('cancellationDays', e.target.value)}
+              />
+              <p className="text-[11px] text-slate-400 mt-1">Dias antes da llegada para cancelar (0 = sem cancelamento gratuito)</p>
+            </Field>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Sobre el anfitrión ── */}
+      <section className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-6">
+        <h3 className="text-sm font-bold text-[#1a1a2e] uppercase tracking-wider">Sobre o anfitrião</h3>
+        
+        <div className="space-y-5">
+          <Field label="Número de licença AL">
+            <input
+              className={INPUT}
+              type="text"
+              placeholder="AL-XXXXX/XXXX"
+              value={form.licenseNumber}
+              onChange={(e) => set('licenseNumber', e.target.value)}
+            />
+            <p className="text-[11px] text-slate-400 mt-1">Número de registo de Alojamento Local</p>
+          </Field>
+          
+          <Field label="Sobre mim">
+            <textarea
+              className="w-full px-3 py-2.5 rounded-lg border border-slate-200 bg-white text-sm text-slate-800 resize-none focus:outline-none focus:ring-2 focus:ring-[#8b1a1a]/20 focus:border-[#8b1a1a] transition"
+              rows={4}
+              placeholder="Apresente-se aos seus hóspedes. Fale sobre si, os seus intereses, porque aluga o seu espaço..."
+              value={form.hostDescription}
+              onChange={(e) => set('hostDescription', e.target.value)}
+            />
+            <p className="text-[11px] text-gray-400 mt-1">Aparece na secção &quot;Gerido por&quot; da página pública</p>
+          </Field>
+        </div>
       </section>
 
       {/* ── Preços ── */}
@@ -1014,6 +1277,24 @@ export default function NewPropertyPage() {
       bathroomType: form.hasRooms ? undefined : form.bathroomType,
       bedsConfig: form.hasRooms ? undefined : JSON.stringify(spaceConfig.bedsList),
       services: form.hasRooms ? undefined : JSON.stringify(spaceConfig.services),
+      // New fields from COMMIT 1
+      arrivalType: form.arrivalType || undefined,
+      floors: form.floors ? Number(form.floors) : undefined,
+      hasElevator: form.hasElevator,
+      towelsIncluded: form.towelsIncluded,
+      petsAllowed: form.petsAllowed,
+      childrenAllowed: form.childrenAllowed,
+      smokingAllowed: form.smokingAllowed,
+      spaceDescription: form.spaceDescription.trim() || undefined,
+      accessInfo: form.accessInfo.trim() || undefined,
+      interactionInfo: form.interactionInfo.trim() || undefined,
+      additionalInfo: form.additionalInfo.trim() || undefined,
+      parkingInfo: form.parkingInfo.trim() || undefined,
+      extraServices: form.extraServices.trim() || undefined,
+      houseRules: form.houseRules.trim() || undefined,
+      cancellationDays: form.cancellationDays ? Number(form.cancellationDays) : 0,
+      licenseNumber: form.licenseNumber.trim() || undefined,
+      hostDescription: form.hostDescription.trim() || undefined,
     }
   }
 
