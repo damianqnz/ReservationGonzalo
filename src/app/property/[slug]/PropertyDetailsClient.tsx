@@ -89,6 +89,8 @@ interface PropertyData {
     comment: string | null;
     ownerReply: string | null;
     createdAt: string;
+    source?: string;
+    stayDate?: string | null;
   }[];
   owner: { id: string; name: string | null; image: string | null; createdAt: string };
   licenseNumber: string | null;
@@ -443,6 +445,19 @@ function StarRating({ rating, size = 'sm' }: { rating: number; size?: 'sm' | 'md
     </div>
   );
 }
+
+const SOURCE_LABELS: Record<string, string> = {
+  AIRBNB: "Airbnb",
+  BOOKING: "Booking.com",
+  MANUAL: "Importada",
+};
+
+const SOURCE_CLASSES: Record<string, string> = {
+  AIRBNB: "bg-orange-50 text-orange-700 border-orange-100",
+  BOOKING: "bg-blue-50 text-blue-700 border-blue-100",
+  MANUAL: "bg-gray-50 text-gray-700 border-gray-100",
+};
+
 
 // ─── Date Range Picker Card (shared by body section + overlay panel) ─────────
 
@@ -1478,7 +1493,14 @@ export default function PropertyDetailsClient({
                           {getInitials(r.guestName)}
                         </div>
                         <div className="min-w-0">
-                          <p className="font-bold text-[14px] text-[#1a1a2e] truncate">{r.guestName}</p>
+                          <p className="font-bold text-[14px] text-[#1a1a2e] truncate flex items-center gap-2">
+                            {r.guestName}
+                            {r.source && r.source !== "WEBSITE" && (
+                              <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold border ${SOURCE_CLASSES[r.source] ?? ""}`}>
+                                {SOURCE_LABELS[r.source] ?? r.source}
+                              </span>
+                            )}
+                          </p>
                           <p className="text-[12px] text-text-muted">
                             {format(new Date(r.createdAt), 'MMMM yyyy', { locale: pt })}
                           </p>

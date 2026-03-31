@@ -5,12 +5,18 @@ import DashboardSidebar from './DashboardSidebar'
 import DashboardTopbar from './DashboardTopbar'
 
 interface DashboardLayoutProps {
-  children:     React.ReactNode
-  unreadCount?: number
-  userName?:    string
+  children:             React.ReactNode
+  unreadCount?:         number
+  pendingReviewsCount?: number
+  userName?:            string
 }
 
-export default function DashboardLayout({ children, unreadCount = 0, userName }: DashboardLayoutProps) {
+export default function DashboardLayout({ 
+  children, 
+  unreadCount = 0, 
+  pendingReviewsCount = 0,
+  userName 
+}: DashboardLayoutProps) {
   const [collapsed, setCollapsed] = useState(false)
 
   // Restore from localStorage on mount
@@ -26,7 +32,13 @@ export default function DashboardLayout({ children, unreadCount = 0, userName }:
 
   return (
     <div className="min-h-screen bg-[#fbfbfb]">
-      <DashboardSidebar collapsed={collapsed} onToggle={toggleSidebar} unreadCount={unreadCount} />
+      <DashboardSidebar 
+        collapsed={collapsed} 
+        onToggle={toggleSidebar} 
+        unreadCount={unreadCount} 
+        pendingReviewsCount={pendingReviewsCount}
+      />
+
       <div
         className={`flex flex-col min-h-screen transition-all duration-300 ${
           collapsed ? 'pl-16' : 'pl-64'

@@ -13,6 +13,7 @@ const navItems = [
   { name: 'Reservas',        icon: 'calendar_month', href: '/dashboard/reservations'       },
   { name: 'Calendário',      icon: 'calendar_today', href: '/dashboard/calendar'           },
   { name: 'Propriedades',    icon: 'domain',         href: '/dashboard/properties'         },
+  { name: 'Avaliações',      icon: 'star',           href: '/dashboard/reviews'            },
   { name: 'Clientes',        icon: 'group',          href: '/dashboard/clients'            },
   { name: 'Análises',        icon: 'leaderboard',    href: '/dashboard/analytics'          },
   { name: 'Cupões',          icon: 'local_offer',    href: '/dashboard/coupons'            },
@@ -26,14 +27,20 @@ const bottomNavItems = [
 // ─── Props ────────────────────────────────────────────────────────────────────
 
 interface Props {
-  collapsed:    boolean
-  onToggle:     () => void
-  unreadCount?: number
+  collapsed:           boolean
+  onToggle:            () => void
+  unreadCount?:        number
+  pendingReviewsCount?: number
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export default function DashboardSidebar({ collapsed, onToggle, unreadCount = 0 }: Props) {
+export default function DashboardSidebar({ 
+  collapsed, 
+  onToggle, 
+  unreadCount = 0, 
+  pendingReviewsCount = 0 
+}: Props) {
   const pathname   = usePathname()
   const [signingOut, setSigningOut] = useState(false)
 
@@ -104,6 +111,11 @@ export default function DashboardSidebar({ collapsed, onToggle, unreadCount = 0 
                   {item.href === '/dashboard/notifications' && unreadCount > 0 && (
                     <span className="text-[9px] font-bold bg-[#8b1a1a] text-white px-1.5 py-0.5 rounded-full leading-none">
                       {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
+                  )}
+                  {item.href === '/dashboard/reviews' && pendingReviewsCount > 0 && (
+                    <span className="text-[9px] font-bold bg-orange-600 text-white px-1.5 py-0.5 rounded-full leading-none">
+                      {pendingReviewsCount > 9 ? '9+' : pendingReviewsCount}
                     </span>
                   )}
                 </span>
