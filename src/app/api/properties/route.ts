@@ -35,6 +35,24 @@ const postSchema = z.object({
   services:     z.string().optional(),
   latitude:     z.number().optional(),
   longitude:    z.number().optional(),
+  // New fields from COMMIT 1
+  arrivalType: z.enum(['autonomous', 'guided']).optional(),
+  floors: z.number().int().min(1).max(20).optional(),
+  hasElevator: z.boolean().optional(),
+  towelsIncluded: z.boolean().optional(),
+  petsAllowed: z.boolean().optional(),
+  childrenAllowed: z.boolean().optional(),
+  smokingAllowed: z.boolean().optional(),
+  spaceDescription: z.string().max(5000).optional(),
+  accessInfo: z.string().max(5000).optional(),
+  interactionInfo: z.string().max(5000).optional(),
+  additionalInfo: z.string().max(5000).optional(),
+  parkingInfo: z.string().max(2000).optional(),
+  extraServices: z.string().max(2000).optional(),
+  houseRules: z.string().max(5000).optional(),
+  cancellationDays: z.number().int().min(0).optional(),
+  licenseNumber: z.string().max(100).optional(),
+  hostDescription: z.string().max(5000).optional(),
 })
 
 // ─── GET /api/properties — public, returns ACTIVE properties ─────────────────
