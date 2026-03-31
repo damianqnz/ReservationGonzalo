@@ -29,7 +29,16 @@ import {
   Sun,
   Shield,
   ShieldAlert,
+  DoorOpen,
+  Users,
+  Shirt,
+  Sofa,
+  Bed,
+  PawPrint,
+  Baby,
+  X,
 } from "lucide-react";
+import { PROPERTY_SERVICES, AMENITY_TO_SERVICE_KEY } from "@/lib/propertyServices";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -70,6 +79,15 @@ interface PropertyData {
   lat: number | null;
   lng: number | null;
   hasRooms: boolean;
+  floors: number | null;
+  hasElevator: boolean;
+  towelsIncluded: boolean;
+  arrivalType: string | null;
+  petsAllowed: boolean;
+  childrenAllowed: boolean;
+  bedsConfig: string | null;
+  bathroomType: string | null;
+  services: string | null;
   rooms: {
     id: string;
     name: string;
@@ -80,6 +98,8 @@ interface PropertyData {
     bathrooms: number;
     beds: number;
     pricePerNight: number;
+    bedsList: string | null;
+    bathroomType: string | null;
     images: { url: string; alt: string | null; isCover: boolean; category: ImageCategory }[];
   }[];
 }
@@ -91,6 +111,29 @@ interface Props {
   guests?: number;
   nights?: number;
   totalPrice?: number;
+}
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function parseJsonArray(raw: string | null | undefined): string[] {
+  if (!raw) return []
+  try {
+    const parsed = JSON.parse(raw)
+    return Array.isArray(parsed) ? parsed : []
+  } catch {
+    return []
+  }
+}
+
+function formatBedsList(beds: string[]): string {
+  if (beds.length === 0) return ''
+  const counts = beds.reduce<Record<string, number>>((acc, bed) => {
+    acc[bed] = (acc[bed] || 0) + 1
+    return acc
+  }, {})
+  return Object.entries(counts)
+    .map(([type, count]) => (count === 1 ? type : `${count}× ${type}`))
+    .join(', ')
 }
 
 // ─── Constants / maps ─────────────────────────────────────────────────────────
@@ -741,6 +784,7 @@ export default function PropertyDetailsClient({
   const [localCheckIn, setLocalCheckIn] = useState<Date | null>(null);
   const [localCheckOut, setLocalCheckOut] = useState<Date | null>(null);
   const [unavailableDates, setUnavailableDates] = useState<Date[]>([]);
+  const [showAllServices, setShowAllServices] = useState(false);
 
   // Fetch unavailable dates once on mount so the inline body section is ready
   useEffect(() => {
@@ -904,6 +948,152 @@ export default function PropertyDetailsClient({
           </div>
         )}
 
+        {/* ── Title + Specs ───────────────────────────────────────────────── */}
+        <div className="container-main pt-4 pb-2 space-y-2">
+          <h1 className="text-2xl md:text-3xl font-bold text-[#1a1a2e] leading-tight">
+            {property.title}
+          </h1>
+          {(() => {
+            const parts: string[] = []
+            if (property.area) parts.push(`${property.area} m²`)
+            parts.push(`${property.bedrooms} quarto${property.bedrooms !== 1 ? "s" : ""}`)
+            if (property.floors) parts.push(`${property.floors} piso${property.floors !== 1 ? "s" : ""}`)
+            parts.push(property.hasElevator ? "Acessível por elevador 🛗" : "Acessível por escadas 🪜")
+            return (
+              <p className="text-sm text-gray-500">{parts.join(" · ")}</p>
+            )
+          })()}
+        </div>
+
+        {/* ── Quick Info Cards ────────────────────────────────────────────── */}
+        {(() => {
+          const servicesList = parseJsonArray(property.services)
+          const sofaService = servicesList.find(
+            (s) => s.toLowerCase().includes("sofá") || s.toLowerCase().includes("sofa")
+          )
+
+          // Beds cards
+          const bedCards: { label: string; value: string }[] = []
+          if (property.hasRooms && property.rooms.length > 0) {
+            for (const room of property.rooms) {
+              const beds = parseJsonArray(room.bedsList)
+              if (beds.length > 0) {
+                bedCards.push({ label: room.name, value: formatBedsList(beds) })
+              }
+            }
+          } else {
+            const beds = parseJsonArray(property.bedsConfig)
+            if (beds.length > 0) {
+              bedCards.push({ label: "Camas", value: formatBedsList(beds) })
+            }
+          }
+
+          // Bathroom cards
+          const bathroomCards: { label: string; value: string }[] = []
+          if (property.hasRooms && property.rooms.length > 0) {
+            property.rooms.forEach((room, i) => {
+              if (room.bathroomType) {
+                const typeLabel =
+                  room.bathroomType === "private" ? "privada" :
+                  room.bathroomType === "shared" ? "partilhada" :
+                  room.bathroomType
+                bathroomCards.push({
+                  label: `Casa de banho${bathroomCards.length > 0 ? ` ${i + 1}` : ""}`,
+                  value: `${typeLabel.charAt(0).toUpperCase() + typeLabel.slice(1)} (${room.name})`,
+                })
+              }
+            })
+          } else if (property.bathroomType) {
+            const typeLabel =
+              property.bathroomType === "private" ? "privada" :
+              property.bathroomType === "shared" ? "partilhada" :
+              property.bathroomType
+            bathroomCards.push({
+              label: "Casa de banho",
+              value: `${typeLabel.charAt(0).toUpperCase() + typeLabel.slice(1)}`,
+            })
+          }
+
+          const cards = [
+            // 1. Arrival type
+            ...(property.arrivalType ? [{
+              icon: <DoorOpen size={20} className="text-primary shrink-0" />,
+              label: "Chegada",
+              value: property.arrivalType === "autonomous"
+                ? "Chegada autónoma"
+                : property.arrivalType === "guided"
+                ? "Chegada acompanhada"
+                : property.arrivalType,
+            }] : []),
+            // 2. Max guests (always)
+            {
+              icon: <Users size={20} className="text-primary shrink-0" />,
+              label: "Hóspedes",
+              value: `Máximo ${property.maxGuests} hóspede${property.maxGuests !== 1 ? "s" : ""}`,
+            },
+            // 3. Towels (always)
+            {
+              icon: <Shirt size={20} className="text-primary shrink-0" />,
+              label: "Roupa de cama e banho",
+              value: property.towelsIncluded ? "Toalhas e lençóis incluídos ✓" : "Não incluídos",
+            },
+            // 4. Sofa (only if found in services)
+            ...(sofaService ? [{
+              icon: <Sofa size={20} className="text-primary shrink-0" />,
+              label: "Sala de estar",
+              value: sofaService,
+            }] : []),
+            // 5. Beds (per room or property)
+            ...bedCards.map(({ label, value }) => ({
+              icon: <Bed size={20} className="text-primary shrink-0" />,
+              label,
+              value,
+            })),
+            // 6. Bathrooms
+            ...bathroomCards.map(({ label, value }) => ({
+              icon: <Bath size={20} className="text-primary shrink-0" />,
+              label,
+              value,
+            })),
+            // 7. Pets (always)
+            {
+              icon: <PawPrint size={20} className="text-primary shrink-0" />,
+              label: "Animais de estimação",
+              value: property.petsAllowed ? "Permitidos ✓" : "Não permitidos",
+            },
+            // 8. Children (always)
+            {
+              icon: <Baby size={20} className="text-primary shrink-0" />,
+              label: "Crianças",
+              value: property.childrenAllowed ? "Bem-vindas ✓" : "Não recomendado",
+            },
+          ]
+
+          return (
+            <section className="container-main py-4">
+              <h2 className="text-lg font-semibold mb-4">Informação rápida</h2>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                {cards.map((card, i) => (
+                  <div
+                    key={i}
+                    className="bg-gray-50 border border-gray-100 rounded-xl p-4 flex gap-3 items-start"
+                  >
+                    {card.icon}
+                    <div className="min-w-0">
+                      <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 leading-tight mb-0.5">
+                        {card.label}
+                      </p>
+                      <p className="text-[13px] text-gray-700 leading-snug">{card.value}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )
+        })()}
+
+        <hr className="mx-4 border-surface" />
+
         {/* ── Property Info ────────────────────────────────────────────────── */}
         <section className="container-main py-6 space-y-4">
           <div className="flex items-start justify-between gap-3">
@@ -978,32 +1168,93 @@ export default function PropertyDetailsClient({
 
         <hr className="mx-4 border-surface" />
 
-        {/* ── Amenities ───────────────────────────────────────────────────── */}
-        {property.amenities.length > 0 && (
-          <>
-            <section className="container-main py-6 space-y-4">
-              <h3 className="text-[18px] font-display font-bold">O que este espaço oferece</h3>
-              <div className="grid grid-cols-2 gap-3">
-                {property.amenities.map(({ amenity }) => {
-                  const IconComp =
-                    ICON_MAP[amenity.icon ?? ""] ?? ICON_MAP[amenity.name] ?? Check;
-                  return (
-                    <div
-                      key={amenity.name}
-                      className="flex items-center gap-3 p-3 rounded-xl bg-surface"
-                    >
-                      <IconComp size={18} className="text-primary shrink-0" />
-                      <span className="text-[13px] font-medium text-text-main">
-                        {amenity.name}
-                      </span>
+        {/* ── Services & Amenities ────────────────────────────────────────── */}
+        {(() => {
+          const includedServicesSet = new Set([
+            ...parseJsonArray(property.services),
+            ...property.amenities
+              .map((a) => AMENITY_TO_SERVICE_KEY[a.amenity.name])
+              .filter(Boolean),
+          ]);
+
+          const allServices = Object.entries(PROPERTY_SERVICES).flatMap(([catKey, cat]) =>
+            cat.services.map((s) => ({ ...s, catKey, catLabel: cat.label.pt }))
+          );
+
+          const displayedServices = showAllServices ? allServices : allServices.slice(0, 12);
+
+          // Group displayedServices by catKey
+          const groupedServices: Record<string, { label: string; services: typeof allServices }> = {};
+          displayedServices.forEach((s) => {
+            if (!groupedServices[s.catKey]) {
+              groupedServices[s.catKey] = { label: s.catLabel, services: [] };
+            }
+            groupedServices[s.catKey].services.push(s);
+          });
+
+          return (
+            <>
+              <section id="amenities-section" className="container-main py-8 space-y-6">
+                <h3 className="text-[18px] font-display font-bold text-[#1a1a2e]">
+                  O que este espaço oferece
+                </h3>
+
+                <div className="space-y-8">
+                  {Object.entries(groupedServices).map(([catKey, cat]) => (
+                    <div key={catKey} className="space-y-4">
+                      <h4 className="text-[12px] font-bold text-gray-400 uppercase tracking-widest">
+                        {cat.label}
+                      </h4>
+                      <div className="grid grid-cols-2 lg:grid-cols-3 gap-y-4 gap-x-8">
+                        {cat.services.map((service) => {
+                          const isIncluded = includedServicesSet.has(service.key);
+                          return (
+                            <div
+                              key={service.key}
+                              className="flex items-center gap-3 transition-all duration-200"
+                            >
+                              {isIncluded ? (
+                                <Check size={20} className="text-green-600 shrink-0" />
+                              ) : (
+                                <X size={20} className="text-gray-300 shrink-0" />
+                              )}
+                              <span className={`text-[15px] ${isIncluded
+                                  ? "text-gray-800"
+                                  : "text-gray-300 line-through decoration-gray-300/50"
+                                }`}>
+                                {service.label.pt}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
-                  );
-                })}
-              </div>
-            </section>
-            <hr className="mx-4 border-surface" />
-          </>
-        )}
+                  ))}
+                </div>
+
+                {allServices.length > 12 && (
+                  <button
+                    onClick={() => setShowAllServices(!showAllServices)}
+                    className="mt-6 flex items-center gap-2 px-6 py-3 border border-[#1a1a2e]/10 rounded-xl text-[14px] font-bold text-[#1a1a2e] hover:bg-[#1a1a2e]/5 transition-all"
+                  >
+                    {showAllServices ? (
+                      <>
+                        Ver menos
+                        <span className="material-symbols-outlined text-[20px]">keyboard_arrow_up</span>
+                      </>
+                    ) : (
+                      <>
+                        Ver todos os {allServices.length} serviços
+                        <span className="material-symbols-outlined text-[20px]">keyboard_arrow_down</span>
+                      </>
+                    )}
+                  </button>
+                )}
+              </section>
+              <hr className="mx-4 border-surface" />
+            </>
+          );
+        })()}
 
         {/* ── Reviews ─────────────────────────────────────────────────────── */}
         {property.reviews.length > 0 && (

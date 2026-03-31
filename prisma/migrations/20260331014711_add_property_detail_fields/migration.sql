@@ -1,0 +1,18 @@
+-- AlterTable
+ALTER TABLE "properties" ADD COLUMN     "accessInfo" TEXT,
+ADD COLUMN     "additionalInfo" TEXT,
+ADD COLUMN     "arrivalType" TEXT,
+ADD COLUMN     "cancellationDays" INTEGER DEFAULT 0,
+ADD COLUMN     "childrenAllowed" BOOLEAN NOT NULL DEFAULT true,
+ADD COLUMN     "extraServices" TEXT,
+ADD COLUMN     "floors" INTEGER,
+ADD COLUMN     "hasElevator" BOOLEAN NOT NULL DEFAULT false,
+ADD COLUMN     "hostDescription" TEXT,
+ADD COLUMN     "houseRules" TEXT,
+ADD COLUMN     "interactionInfo" TEXT,
+ADD COLUMN     "licenseNumber" TEXT,
+ADD COLUMN     "parkingInfo" TEXT,
+ADD COLUMN     "petsAllowed" BOOLEAN NOT NULL DEFAULT false,
+ADD COLUMN     "smokingAllowed" BOOLEAN NOT NULL DEFAULT false,
+ADD COLUMN     "spaceDescription" TEXT,
+ADD COLUMN     "towelsIncluded" BOOLEAN NOT NULL DEFAULT false;
