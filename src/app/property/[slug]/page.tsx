@@ -108,8 +108,8 @@ export default async function PropertyPage({ params, searchParams }: Props) {
           comment: true,
           ownerReply: true,
           createdAt: true,
-          // source: true,
-          // stayDate: true,
+          source: true,
+          stayDate: true,
         },
         orderBy: { createdAt: "desc" },
       },
@@ -180,7 +180,7 @@ export default async function PropertyPage({ params, searchParams }: Props) {
   const serializedReviews = property.reviews.map((r) => ({
     ...r,
     createdAt: r.createdAt.toISOString(),
-    // stayDate: r.stayDate?.toISOString() || null,
+    stayDate: r.stayDate?.toISOString() || null,
   }))
   const serializedOwner = {
     ...property.owner,

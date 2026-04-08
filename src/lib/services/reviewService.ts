@@ -36,19 +36,17 @@ export async function listReviews(query: ListReviewsQuery): Promise<ReviewWithDe
     if (query.status && query.status !== 'all') {
       if (query.status === 'pending') {
         where.isPublished = false
-        // where.isRejected = false
+        where.isRejected = false
       } else if (query.status === 'approved') {
         where.isPublished = true
       } else if (query.status === 'rejected') {
-        // where.isRejected = true
+        where.isRejected = true
       }
     }
 
-    /*
     if (query.source && query.source !== 'all') {
       where.source = query.source
     }
-    */
 
     return db.review.findMany({
       where,
@@ -101,12 +99,12 @@ export async function updateReview(
       case 'approve':
         return db.review.update({
           where: { id },
-          data: { isPublished: true, /* isRejected: false */ },
+          data: { isPublished: true, isRejected: false },
         })
       case 'reject':
         return db.review.update({
           where: { id },
-          data: { isPublished: false, /* isRejected: true */ },
+          data: { isPublished: false, isRejected: true },
         })
       case 'reply':
         return db.review.update({
@@ -119,7 +117,7 @@ export async function updateReview(
           where: { id },
           data: { 
             isPublished: newPublished, 
-            // isRejected: false 
+            isRejected: false 
           },
         })
       default:
@@ -153,11 +151,11 @@ export async function importReview(data: {
         guestName: data.guestName,
         rating: data.rating,
         comment: data.comment,
-        // source: data.source,
-        // sourceUrl: data.sourceUrl,
-        // stayDate: data.stayDate,
+        source: data.source,
+        sourceUrl: data.sourceUrl,
+        stayDate: data.stayDate,
         isPublished: true,
-        // isRejected: false,
+        isRejected: false,
         bookingId: null,
       },
     })
@@ -177,7 +175,7 @@ export async function getPendingReviewsCount(userId: string, role: Role): Promis
   try {
     const where: any = {
       isPublished: false,
-      // isRejected: false,
+      isRejected: false,
     }
 
     if (role === Role.OWNER) {
