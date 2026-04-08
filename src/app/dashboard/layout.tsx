@@ -18,7 +18,7 @@ export default async function RootDashboardLayout({
     db.review.count({
       where: {
         isPublished: false,
-        // isRejected: false,
+        isRejected: false,
         property: session.user.role === 'OWNER' ? { ownerId: session.user.id } : {},
       },
     }),
