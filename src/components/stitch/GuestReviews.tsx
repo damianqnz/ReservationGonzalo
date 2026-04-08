@@ -42,7 +42,11 @@ export default async function GuestReviews() {
     text: r.comment || "",
     author: r.guestName,
     initial: r.guestName.charAt(0).toUpperCase(),
-    stay: `Estadia em ${format(r.booking.checkIn, "MMMM yyyy", { locale: ptBR })}`,
+    stay: r.booking
+      ? `Estadia em ${format(r.booking.checkIn, "MMMM yyyy", { locale: ptBR })}`
+      : r.stayDate
+      ? `Estadia em ${format(new Date(r.stayDate), "MMMM yyyy", { locale: ptBR })}`
+      : 'Estadia verificada',
     rating: r.rating,
   }));
 

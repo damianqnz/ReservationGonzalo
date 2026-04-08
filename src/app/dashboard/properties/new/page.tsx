@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import BedPicker from '@/components/dashboard/BedPicker'
@@ -9,16 +9,29 @@ import ToggleSwitch from '@/components/ui/ToggleSwitch'
 
 // ─── Slug helper ──────────────────────────────────────────────────────────────
 
-function toSlug(value: string): string {
-  return value
+function generateSlug(val: string): string {
+  return val
+    .toLowerCase()
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .replace(/[^a-z0-9\s-]/g, '')
     .trim()
+    .replace(/[^a-z0-9\s-]/g, '')
     .replace(/\s+/g, '-')
     .replace(/-+/g, '-')
 }
+
+// ─── Constants ────────────────────────────────────────────────────────────────
+
+const ROOM_TYPES = [
+  { value: 'SINGLE',       label: 'Individual'          },
+  { value: 'DOUBLE',       label: 'Duplo'               },
+  { value: 'TWIN',         label: 'Twin'                },
+  { value: 'SUITE',        label: 'Suite'               },
+  { value: 'JUNIOR_SUITE', label: 'Suite Junior'        },
+  { value: 'FAMILY',       label: 'Familiar'            },
+  { value: 'STUDIO',       label: 'Estúdio'             },
+  { value: 'ENTIRE_PLACE', label: 'Alojamento completo' },
+]
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -46,7 +59,7 @@ interface Step1State {
   cancellationPolicy: string
   hasRooms: boolean
   bathroomType: string
-  // New fields
+  // New fields from COMMIT 1 (Property Details & Redesign)
   arrivalType: string
   floors: string
   hasElevator: boolean
@@ -64,6 +77,18 @@ interface Step1State {
   cancellationDays: string
   licenseNumber: string
   hostDescription: string
+}
+
+interface RoomDraft {
+  localId: string
+  id?: string   // set after API POST
+  name: string
+  type: string
+  pricePerNight: number
+  maxGuests: number
+  bathroomType: string
+  bedsList: string[]
+  services: string[]
 }
 
 const STEP1_INITIAL: Step1State = {
@@ -90,8 +115,8 @@ const STEP1_INITIAL: Step1State = {
   cancellationPolicy: 'FLEXIBLE',
   hasRooms: false,
   bathroomType: 'private',
-  // New fields
-  arrivalType: '',
+  // New fields from COMMIT 1
+  arrivalType: 'autonomous',
   floors: '1',
   hasElevator: false,
   towelsIncluded: false,
@@ -110,89 +135,82 @@ const STEP1_INITIAL: Step1State = {
   hostDescription: '',
 }
 
-interface RoomDraft {
-  localId: string
-  id?: string
-  name: string
-  type: string
-  pricePerNight: string
-  maxGuests: string
-  bathroomType: string
-  bedsList: string[]
-  services: string[]
-}
-
 // ─── Shared UI helpers ────────────────────────────────────────────────────────
-
-function Field({
-  label,
-  required,
-  error,
-  children,
-}: {
-  label: string
-  required?: boolean
-  error?: string
-  children: React.ReactNode
-}) {
-  return (
-    <div>
-      <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
-        {label}
-        {required && <span className="text-[#8b1a1a] ml-0.5">*</span>}
-      </label>
-      {children}
-      {error && <p className="text-xs text-red-600 mt-1">{error}</p>}
-    </div>
-  )
-}
 
 const INPUT =
   'w-full h-10 px-3 rounded-lg border border-slate-200 bg-white text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#8b1a1a]/20 focus:border-[#8b1a1a] transition'
 const SELECT = INPUT + ' cursor-pointer'
 
-// ─── StepIndicator ────────────────────────────────────────────────────────────
+function Field({
+  label, required, error, hint, children,
+}: {
+  label: string
+  required?: boolean
+  error?: string
+  hint?: string
+  children: React.ReactNode
+}) {
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center justify-between">
+        <label className="text-xs font-bold text-[#1a1a2e] uppercase tracking-wider flex items-center gap-1">
+          {label}
+          {required && <span className="text-red-500">*</span>}
+        </label>
+        {hint && <span className="text-[10px] text-slate-400 font-medium italic">{hint}</span>}
+      </div>
+      {children}
+      {error && <p className="text-[11px] font-medium text-red-500 animate-in fade-in slide-in-from-top-1">{error}</p>}
+    </div>
+  )
+}
+
+function Card({ title, icon, children }: { title: string; icon?: string; children: React.ReactNode }) {
+  return (
+    <section className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-5">
+      <div className="flex items-center gap-2 mb-1">
+        {icon && <span className="material-symbols-outlined text-[#8b1a1a] text-lg">{icon}</span>}
+        <h3 className="text-sm font-bold text-[#1a1a2e] uppercase tracking-wider">{title}</h3>
+      </div>
+      {children}
+    </section>
+  )
+}
+
+// ─── Step indicator ───────────────────────────────────────────────────────────
 
 function StepIndicator({ current }: { current: 1 | 2 | 3 }) {
-  const steps = ['Informação', 'Quartos', 'Revisão']
+  const steps = [
+    { n: 1, label: 'Informação básica' },
+    { n: 2, label: 'Quartos'           },
+    { n: 3, label: 'Revisão'           },
+  ]
+
   return (
     <div className="flex items-center gap-0 mb-8">
-      {steps.map((label, i) => {
-        const num = i + 1
-        const done = num < current
-        const active = num === current
+      {steps.map((s, i) => {
+        const done   = s.n < current
+        const active = s.n === current
         return (
-          <div key={num} className="flex items-center flex-1 last:flex-none">
-            <div className="flex flex-col items-center">
+          <div key={s.n} className="flex items-center flex-1 last:flex-none">
+            <div className="flex items-center gap-2 shrink-0">
               <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold border-2 transition-colors ${
-                  done
-                    ? 'bg-green-500 border-green-500 text-white'
-                    : active
-                    ? 'bg-[#8b1a1a] border-[#8b1a1a] text-white'
-                    : 'bg-white border-slate-300 text-slate-400'
+                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors ${
+                  done   ? 'bg-emerald-500 text-white'
+                  : active ? 'bg-[#8b1a1a] text-white'
+                  : 'bg-slate-100 text-slate-400'
                 }`}
               >
-                {done ? (
-                  <span className="material-symbols-outlined text-sm">check</span>
-                ) : (
-                  num
-                )}
+                {done
+                  ? <span className="material-symbols-outlined text-base" style={{ fontVariationSettings: "'FILL' 1" }}>check</span>
+                  : s.n}
               </div>
-              <span
-                className={`text-[11px] font-semibold mt-1 ${
-                  active ? 'text-[#8b1a1a]' : done ? 'text-green-600' : 'text-slate-400'
-                }`}
-              >
-                {label}
+              <span className={`text-sm font-semibold hidden sm:block ${active ? 'text-[#1a1a2e]' : 'text-slate-400'}`}>
+                {s.label}
               </span>
             </div>
             {i < steps.length - 1 && (
-              <div
-                className={`flex-1 h-0.5 mx-2 mt-[-14px] rounded transition-colors ${
-                  done ? 'bg-green-400' : 'bg-slate-200'
-                }`}
-              />
+              <div className={`flex-1 h-px mx-3 ${done ? 'bg-emerald-400' : 'bg-slate-200'}`} />
             )}
           </div>
         )
@@ -201,112 +219,74 @@ function StepIndicator({ current }: { current: 1 | 2 | 3 }) {
   )
 }
 
-// ─── Step 1 — Property info ───────────────────────────────────────────────────
+// ─── Step 1 — Basic info form ─────────────────────────────────────────────────
 
 function Step1({
   form,
   setForm,
   slugManual,
   setSlugManual,
+  errors,
   spaceConfig,
   setSpaceConfig,
-  onSaveDirect,
-  onContinue,
-  isSubmitting,
   apiError,
+  isSubmitting,
+  onContinue,
+  onSaveDirect,
 }: {
-  form: Step1State
-  setForm: React.Dispatch<React.SetStateAction<Step1State>>
-  slugManual: boolean
-  setSlugManual: (v: boolean) => void
-  spaceConfig: { bedsList: string[]; services: string[] }
-  setSpaceConfig: React.Dispatch<React.SetStateAction<{ bedsList: string[]; services: string[] }>>
-  onSaveDirect: () => void
-  onContinue: () => void
-  isSubmitting: boolean
-  apiError: string | null
+  form:            Step1State
+  setForm:         React.Dispatch<React.SetStateAction<Step1State>>
+  slugManual:      boolean
+  setSlugManual:   React.Dispatch<React.SetStateAction<boolean>>
+  errors:          Partial<Record<keyof Step1State, string>>
+  spaceConfig:     { bedsList: string[]; services: string[] }
+  setSpaceConfig:  React.Dispatch<React.SetStateAction<{ bedsList: string[]; services: string[] }>>
+  apiError:        string | null
+  isSubmitting:    boolean
+  onContinue:      () => void   // hasRooms=true: save DRAFT → step 2
+  onSaveDirect:    () => void   // hasRooms=false: save → redirect
 }) {
-  const [errors, setErrors] = useState<Partial<Record<keyof Step1State, string>>>({})
-
   function set(field: keyof Step1State, value: string | boolean) {
     setForm((prev) => {
       const next = { ...prev, [field]: value }
       if (field === 'title' && !slugManual) {
-        next.slug = toSlug(value as string)
+        next.slug = generateSlug(value as string)
       }
       return next
     })
-    setErrors((prev) => ({ ...prev, [field]: undefined }))
-  }
-
-  function validate(): boolean {
-    const e: Partial<Record<keyof Step1State, string>> = {}
-    if (!form.title.trim()) e.title = 'Título é obrigatório'
-    if (!form.slug.trim()) e.slug = 'Slug é obrigatório'
-    if (!/^[a-z0-9-]+$/.test(form.slug)) e.slug = 'Slug: apenas letras minúsculas, números e hífens'
-    if (!form.description.trim() || form.description.length < 10)
-      e.description = 'Descrição deve ter pelo menos 10 caracteres'
-    if (!form.address.trim()) e.address = 'Morada é obrigatória'
-    if (!form.city.trim()) e.city = 'Cidade é obrigatória'
-    if (!form.pricePerNight || Number(form.pricePerNight) <= 0)
-      e.pricePerNight = 'Preço por noite é obrigatório'
-    if (!form.maxGuests || Number(form.maxGuests) < 1) e.maxGuests = 'Mínimo 1 hóspede'
-    setErrors(e)
-    return Object.keys(e).length === 0
   }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!validate()) return
-    if (form.hasRooms) {
-      onContinue()
-    } else {
-      onSaveDirect()
-    }
+    if (form.hasRooms) onContinue()
+    else onSaveDirect()
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {/* ── Informação básica ── */}
-      <section className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-5">
-        <h3 className="text-sm font-bold text-[#1a1a2e] uppercase tracking-wider">Informação básica</h3>
-
+      <Card title="Informação básica" icon="info">
         <Field label="Título" required error={errors.title}>
-          <input
-            className={INPUT}
-            placeholder="Apartamento moderno em Lisboa — Chiado"
-            value={form.title}
-            onChange={(e) => set('title', e.target.value)}
-          />
+          <input className={INPUT} placeholder="Apartamento moderno em Lisboa"
+            value={form.title} onChange={(e) => set('title', e.target.value)} />
         </Field>
 
         <Field label="Slug (URL)" required error={errors.slug}>
-          <input
-            className={INPUT}
-            placeholder="apartamento-moderno-lisboa-chiado"
-            value={form.slug}
-            onChange={(e) => {
-              setSlugManual(true)
-              set('slug', e.target.value)
-            }}
-          />
-          <p className="text-[11px] text-slate-400 mt-1">
-            Gerado automaticamente a partir do título. Apenas letras minúsculas, números e hífens.
-          </p>
+          <input className={INPUT} placeholder="apartamento-moderno-lisboa"
+            value={form.slug} onChange={(e) => { setSlugManual(true); set('slug', e.target.value) }} />
         </Field>
 
-        <Field label="Descrição" required error={errors.description}>
+        <Field label="Descrição principal" required error={errors.description}>
           <textarea
             className="w-full px-3 py-2.5 rounded-lg border border-slate-200 bg-white text-sm text-slate-800 resize-none focus:outline-none focus:ring-2 focus:ring-[#8b1a1a]/20 focus:border-[#8b1a1a] transition"
             rows={4}
-            placeholder="Descreva a propriedade em detalhe…"
+            placeholder="Breve descrição comercial…"
             value={form.description}
             onChange={(e) => set('description', e.target.value)}
           />
         </Field>
 
-        <div className="grid grid-cols-2 gap-4">
-          <Field label="Tipo">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Field label="Tipo de alojamento">
             <select className={SELECT} value={form.type} onChange={(e) => set('type', e.target.value)}>
               <option value="APARTMENT">Apartamento</option>
               <option value="HOUSE">Casa</option>
@@ -316,146 +296,66 @@ function Step1({
             </select>
           </Field>
         </div>
-      </section>
+      </Card>
 
-      {/* ── Localização ── */}
-      <section className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-5">
-        <h3 className="text-sm font-bold text-[#1a1a2e] uppercase tracking-wider">Localização</h3>
-
+      <Card title="Localização" icon="location_on">
         <Field label="Morada" required error={errors.address}>
-          <input
-            className={INPUT}
-            placeholder="Rua do Carmo 45, 3º Dto"
-            value={form.address}
-            onChange={(e) => set('address', e.target.value)}
-          />
+          <input className={INPUT} placeholder="Rua do Carmo 45"
+            value={form.address} onChange={(e) => set('address', e.target.value)} />
         </Field>
-
         <div className="grid grid-cols-2 gap-4">
           <Field label="Cidade" required error={errors.city}>
-            <input
-              className={INPUT}
-              placeholder="Lisboa"
-              value={form.city}
-              onChange={(e) => set('city', e.target.value)}
-            />
+            <input className={INPUT} placeholder="Lisboa"
+              value={form.city} onChange={(e) => set('city', e.target.value)} />
           </Field>
           <Field label="Código postal">
-            <input
-              className={INPUT}
-              placeholder="1200-094"
-              value={form.zipCode}
-              onChange={(e) => set('zipCode', e.target.value)}
-            />
+            <input className={INPUT} placeholder="1200-011"
+              value={form.zipCode} onChange={(e) => set('zipCode', e.target.value)} />
           </Field>
         </div>
+      </Card>
 
-        <Field label="País">
-          <input
-            className={INPUT}
-            placeholder="PT"
-            maxLength={2}
-            value={form.country}
-            onChange={(e) => set('country', e.target.value.toUpperCase())}
-          />
-        </Field>
-      </section>
-
-      {/* ── Detalhes ── */}
-      <section className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-5">
-        <h3 className="text-sm font-bold text-[#1a1a2e] uppercase tracking-wider">Detalhes</h3>
-
+      <Card title="Detalhes do alojamento" icon="home">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <Field label="Hóspedes máx." required error={errors.maxGuests}>
-            <input
-              className={INPUT}
-              type="number"
-              min={1}
-              max={50}
-              value={form.maxGuests}
-              onChange={(e) => set('maxGuests', e.target.value)}
-            />
+            <input className={INPUT} type="number" min={1} value={form.maxGuests}
+              onChange={(e) => set('maxGuests', e.target.value)} />
           </Field>
           <Field label="Quartos">
-            <input
-              className={INPUT}
-              type="number"
-              min={0}
-              max={50}
-              value={form.bedrooms}
-              onChange={(e) => set('bedrooms', e.target.value)}
-            />
+            <input className={INPUT} type="number" min={0} value={form.bedrooms}
+              onChange={(e) => set('bedrooms', e.target.value)} />
           </Field>
           <Field label="Casas de banho">
-            <input
-              className={INPUT}
-              type="number"
-              min={0}
-              max={50}
-              value={form.bathrooms}
-              onChange={(e) => set('bathrooms', e.target.value)}
-            />
+            <input className={INPUT} type="number" min={0} value={form.bathrooms}
+              onChange={(e) => set('bathrooms', e.target.value)} />
           </Field>
           <Field label="Camas">
-            <input
-              className={INPUT}
-              type="number"
-              min={1}
-              max={50}
-              value={form.beds}
-              onChange={(e) => set('beds', e.target.value)}
-            />
+            <input className={INPUT} type="number" min={1} value={form.beds}
+              onChange={(e) => set('beds', e.target.value)} />
           </Field>
         </div>
-
         <Field label="Área (m²)">
-          <input
-            className={INPUT}
-            type="number"
-            min={1}
-            placeholder="75"
-            value={form.area}
-            onChange={(e) => set('area', e.target.value)}
-          />
+          <input className={INPUT} type="number" min={1} value={form.area}
+            onChange={(e) => set('area', e.target.value)} placeholder="0" />
         </Field>
-      </section>
+      </Card>
 
-      {/* ── Detalhes do espaço ── */}
-      <section className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-6">
-        <h3 className="text-sm font-bold text-[#1a1a2e] uppercase tracking-wider">Detalhes do espaço</h3>
-        
+      {/* ── Detalhes do espaço (Modified from HEAD) ── */}
+      <Card title="Detalhes do espaço" icon="architecture">
         <Field label="Tipo de chegada">
           <div className="flex flex-wrap gap-4 mt-2">
             <label className="flex-1 min-w-[200px] cursor-pointer group">
-              <input
-                type="radio"
-                name="arrivalType"
-                className="sr-only"
-                checked={form.arrivalType === 'autonomous'}
-                onChange={() => set('arrivalType', 'autonomous')}
-              />
-              <div className={`p-4 rounded-xl border-2 transition-all ${
-                form.arrivalType === 'autonomous' 
-                ? 'border-[#8b1a1a] bg-[#8b1a1a]/5' 
-                : 'border-slate-100 hover:border-slate-200'
-              }`}>
+              <input type="radio" name="arrivalType" className="sr-only"
+                checked={form.arrivalType === 'autonomous'} onChange={() => set('arrivalType', 'autonomous')} />
+              <div className={`p-4 rounded-xl border-2 transition-all ${form.arrivalType === 'autonomous' ? 'border-[#8b1a1a] bg-[#8b1a1a]/5' : 'border-slate-100 hover:border-slate-200'}`}>
                 <p className="font-bold text-sm text-[#1a1a2e]">Chegada autónoma</p>
                 <p className="text-xs text-slate-500 mt-1">O hóspede recebe instruções e acede sozinho</p>
               </div>
             </label>
             <label className="flex-1 min-w-[200px] cursor-pointer group">
-              <input
-                type="radio"
-                name="arrivalType"
-                className="sr-only"
-                checked={form.arrivalType === 'guided'}
-                onChange={() => set('arrivalType', 'guided')}
-              />
-              <div className={`p-4 rounded-xl border-2 transition-all ${
-                form.arrivalType === 'guided' 
-                ? 'border-[#8b1a1a] bg-[#8b1a1a]/5' 
-                : 'border-slate-100 hover:border-slate-200'
-              }`}>
+              <input type="radio" name="arrivalType" className="sr-only"
+                checked={form.arrivalType === 'guided'} onChange={() => set('arrivalType', 'guided')} />
+              <div className={`p-4 rounded-xl border-2 transition-all ${form.arrivalType === 'guided' ? 'border-[#8b1a1a] bg-[#8b1a1a]/5' : 'border-slate-100 hover:border-slate-200'}`}>
                 <p className="font-bold text-sm text-[#1a1a2e]">Chegada acompanhada</p>
                 <p className="text-xs text-slate-500 mt-1">O anfitrião recebe o hóspede pessoalmente</p>
               </div>
@@ -465,364 +365,212 @@ function Step1({
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Field label="Número de pisos">
-            <input
-              className={INPUT}
-              type="number"
-              min="1"
-              max="20"
-              placeholder="1"
-              value={form.floors}
-              onChange={(e) => set('floors', e.target.value)}
-            />
+            <input className={INPUT} type="number" min="1" max="20" value={form.floors}
+              onChange={(e) => set('floors', e.target.value)} />
             <p className="text-[11px] text-slate-400 mt-1">Pisos totais do alojamento</p>
           </Field>
-          
           <div className="flex items-center">
             {Number(form.floors) > 1 && (
-              <ToggleSwitch
-                checked={form.hasElevator}
-                onChange={(v) => set('hasElevator', v)}
-                label="Tem elevador?"
-              />
+              <ToggleSwitch checked={form.hasElevator} onChange={(v) => set('hasElevator', v)} label="Tem elevador?" />
             )}
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-12 pt-2">
-          <ToggleSwitch
-            checked={form.towelsIncluded}
-            onChange={(v) => set('towelsIncluded', v)}
-            label="Toalhas e lençóis incluídos"
-            helper="Inclui toalhas de banho e roupa de cama"
-          />
-          <ToggleSwitch
-            checked={form.petsAllowed}
-            onChange={(v) => set('petsAllowed', v)}
-            label="Animais de estimação"
-          />
-          <ToggleSwitch
-            checked={form.childrenAllowed}
-            onChange={(v) => set('childrenAllowed', v)}
-            label="Apto para crianças"
-            helper="Crianças a partir de 2 anos"
-          />
-          <ToggleSwitch
-            checked={form.smokingAllowed}
-            onChange={(v) => set('smokingAllowed', v)}
-            label="Permitido fumar"
-          />
+          <ToggleSwitch checked={form.towelsIncluded} onChange={(v) => set('towelsIncluded', v)} label="Toalhas e lençóis incluídos" helper="Linho de cama e banho" />
+          <ToggleSwitch checked={form.petsAllowed} onChange={(v) => set('petsAllowed', v)} label="Animais de estimação" />
+          <ToggleSwitch checked={form.childrenAllowed} onChange={(v) => set('childrenAllowed', v)} label="Apto para crianças" helper="A partir de 2 anos" />
+          <ToggleSwitch checked={form.smokingAllowed} onChange={(v) => set('smokingAllowed', v)} label="Permitido fumar" />
         </div>
-      </section>
+      </Card>
 
-      {/* ── Informação para hóspedes ── */}
-      <section className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-6">
-        <h3 className="text-sm font-bold text-[#1a1a2e] uppercase tracking-wider">Informação para hóspedes</h3>
-        
+      {/* ── Informação para hóspedes (Modified from HEAD) ── */}
+      <Card title="Informação para hóspedes" icon="chat">
         <div className="space-y-5">
-          <Field label="Descrição do espaço">
-            <textarea
-              className="w-full px-3 py-2.5 rounded-lg border border-slate-200 bg-white text-sm text-slate-800 resize-none focus:outline-none focus:ring-2 focus:ring-[#8b1a1a]/20 focus:border-[#8b1a1a] transition"
-              rows={4}
-              placeholder="Descreva como está organizado o espaço, os quartos, casas de banho, áreas comuns..."
-              value={form.spaceDescription}
-              onChange={(e) => set('spaceDescription', e.target.value)}
-            />
-            <p className="text-[11px] text-slate-400 mt-1">Aparece na secção &quot;Espaço&quot; da página pública</p>
+          <Field label="Descrição detalhada do espaço">
+            <textarea className="w-full px-3 py-2.5 rounded-lg border border-slate-200 text-sm h-32 resize-none"
+              placeholder="Como está organizado o espaço, quartos, áreas comuns..."
+              value={form.spaceDescription} onChange={(e) => set('spaceDescription', e.target.value)} />
           </Field>
-          
-          <Field label="Informação de acesso">
-            <textarea
-              className="w-full px-3 py-2.5 rounded-lg border border-slate-200 bg-white text-sm text-slate-800 resize-none focus:outline-none focus:ring-2 focus:ring-[#8b1a1a]/20 focus:border-[#8b1a1a] transition"
-              rows={3}
-              placeholder="Como funciona o processo de entrada, localização das chaves, códigos de acesso..."
-              value={form.accessInfo}
-              onChange={(e) => set('accessInfo', e.target.value)}
-            />
-            <p className="text-[11px] text-slate-400 mt-1">Aparece na secção &quot;Acesso&quot; da página pública</p>
+          <Field label="Instruções de acesso">
+            <textarea className="w-full px-3 py-2.5 rounded-lg border border-slate-200 text-sm h-24 resize-none"
+              placeholder="Como entrar no prédio, códigos, chaves..."
+              value={form.accessInfo} onChange={(e) => set('accessInfo', e.target.value)} />
           </Field>
-          
           <Field label="Interação com hóspedes">
-            <textarea
-              className="w-full px-3 py-2.5 rounded-lg border border-slate-200 bg-white text-sm text-slate-800 resize-none focus:outline-none focus:ring-2 focus:ring-[#8b1a1a]/20 focus:border-[#8b1a1a] transition"
-              rows={3}
-              placeholder="Descreva a sua disponibilidade para ajudar os hóspedes durante a estadia..."
-              value={form.interactionInfo}
-              onChange={(e) => set('interactionInfo', e.target.value)}
-            />
-            <p className="text-[11px] text-slate-400 mt-1">Aparece na secção &quot;Interação&quot; da página pública</p>
+            <textarea className="w-full px-3 py-2.5 rounded-lg border border-slate-200 text-sm h-24 resize-none"
+              placeholder="Disponibilidade para apoio durante a estadia..."
+              value={form.interactionInfo} onChange={(e) => set('interactionInfo', e.target.value)} />
           </Field>
-          
-          <Field label="Informação adicional (opcional)">
-            <textarea
-              className="w-full px-3 py-2.5 rounded-lg border border-slate-200 bg-white text-sm text-slate-800 resize-none focus:outline-none focus:ring-2 focus:ring-[#8b1a1a]/20 focus:border-[#8b1a1a] transition"
-              rows={3}
-              placeholder="Qualquer informação extra relevante para os hóspedes..."
-              value={form.additionalInfo}
-              onChange={(e) => set('additionalInfo', e.target.value)}
-            />
-            <p className="text-[11px] text-slate-400 mt-1">Aparece na secção &quot;Informação adicional&quot; apenas se preenchida</p>
+          <Field label="Informação adicional">
+            <textarea className="w-full px-3 py-2.5 rounded-lg border border-slate-200 text-sm h-24 resize-none"
+              placeholder="Eventos locais, transportes, dicas..."
+              value={form.additionalInfo} onChange={(e) => set('additionalInfo', e.target.value)} />
           </Field>
         </div>
-      </section>
+      </Card>
 
-      {/* ── Regras da casa ── */}
-      <section className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-6">
-        <h3 className="text-sm font-bold text-[#1a1a2e] uppercase tracking-wider">Regras da casa</h3>
-        
+      <Card title="Regras e Comodidades extra" icon="rule">
         <div className="space-y-5">
           <Field label="Estacionamento">
-            <textarea
-              className="w-full px-3 py-2.5 rounded-lg border border-slate-200 bg-white text-sm text-slate-800 resize-none focus:outline-none focus:ring-2 focus:ring-[#8b1a1a]/20 focus:border-[#8b1a1a] transition"
-              rows={2}
-              placeholder="Informação sobre estacionamento disponível, preço, localização..."
-              value={form.parkingInfo}
-              onChange={(e) => set('parkingInfo', e.target.value)}
-            />
+            <textarea className="w-full px-3 py-2.5 rounded-lg border border-slate-200 text-sm h-20 resize-none"
+              placeholder="Informação sobre onde estacionar…"
+              value={form.parkingInfo} onChange={(e) => set('parkingInfo', e.target.value)} />
           </Field>
-          
-          <Field label="Serviços extra disponíveis">
-            <textarea
-              className="w-full px-3 py-2.5 rounded-lg border border-slate-200 bg-white text-sm text-slate-800 resize-none focus:outline-none focus:ring-2 focus:ring-[#8b1a1a]/20 focus:border-[#8b1a1a] transition"
-              rows={2}
-              placeholder="Serviços adicionales que pode oferecer (transfer, pequeno-almoço, etc.)..."
-              value={form.extraServices}
-              onChange={(e) => set('extraServices', e.target.value)}
-            />
+          <Field label="Serviços extra">
+            <textarea className="w-full px-3 py-2.5 rounded-lg border border-slate-200 text-sm h-20 resize-none"
+              placeholder="Pequeno-almoço, transfer, etc…"
+              value={form.extraServices} onChange={(e) => set('extraServices', e.target.value)} />
           </Field>
-          
-          <Field label="Normas específicas da casa">
-            <textarea
-              className="w-full px-3 py-2.5 rounded-lg border border-slate-200 bg-white text-sm text-slate-800 resize-none focus:outline-none focus:ring-2 focus:ring-[#8b1a1a]/20 focus:border-[#8b1a1a] transition"
-              rows={3}
-              placeholder="Regras específicas do seu alojamento (horário de silêncio, uso das instalações, etc.)..."
-              value={form.houseRules}
-              onChange={(e) => set('houseRules', e.target.value)}
-            />
+          <Field label="Normas da casa">
+            <textarea className="w-full px-3 py-2.5 rounded-lg border border-slate-200 text-sm h-24 resize-none"
+              placeholder="Horário de silêncio, lixo, etc…"
+              value={form.houseRules} onChange={(e) => set('houseRules', e.target.value)} />
           </Field>
-          
-          <div className="max-w-xs">
-            <Field label="Dias de cancelamento gratuito">
-              <input
-                className={INPUT}
-                type="number"
-                min="0"
-                max="365"
-                placeholder="0"
-                value={form.cancellationDays}
-                onChange={(e) => set('cancellationDays', e.target.value)}
-              />
-              <p className="text-[11px] text-slate-400 mt-1">Dias antes da llegada para cancelar (0 = sem cancelamento gratuito)</p>
-            </Field>
-          </div>
         </div>
-      </section>
+      </Card>
 
-      {/* ── Sobre el anfitrión ── */}
-      <section className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-6">
-        <h3 className="text-sm font-bold text-[#1a1a2e] uppercase tracking-wider">Sobre o anfitrião</h3>
-        
+      <Card title="Sobre o anfitrião" icon="person">
         <div className="space-y-5">
           <Field label="Número de licença AL">
-            <input
-              className={INPUT}
-              type="text"
-              placeholder="AL-XXXXX/XXXX"
-              value={form.licenseNumber}
-              onChange={(e) => set('licenseNumber', e.target.value)}
-            />
-            <p className="text-[11px] text-slate-400 mt-1">Número de registo de Alojamento Local</p>
+            <input className={INPUT} placeholder="XXXXX/AL" value={form.licenseNumber} onChange={(e) => set('licenseNumber', e.target.value)} />
           </Field>
-          
-          <Field label="Sobre mim">
-            <textarea
-              className="w-full px-3 py-2.5 rounded-lg border border-slate-200 bg-white text-sm text-slate-800 resize-none focus:outline-none focus:ring-2 focus:ring-[#8b1a1a]/20 focus:border-[#8b1a1a] transition"
-              rows={4}
-              placeholder="Apresente-se aos seus hóspedes. Fale sobre si, os seus intereses, porque aluga o seu espaço..."
-              value={form.hostDescription}
-              onChange={(e) => set('hostDescription', e.target.value)}
-            />
-            <p className="text-[11px] text-gray-400 mt-1">Aparece na secção &quot;Gerido por&quot; da página pública</p>
+          <Field label="Biografia do anfitrião">
+            <textarea className="w-full px-3 py-2.5 rounded-lg border border-slate-200 text-sm h-32 resize-none"
+              placeholder="Fale um pouco sobre si…"
+              value={form.hostDescription} onChange={(e) => set('hostDescription', e.target.value)} />
           </Field>
         </div>
-      </section>
+      </Card>
 
-      {/* ── Preços ── */}
-      <section className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-5">
-        <h3 className="text-sm font-bold text-[#1a1a2e] uppercase tracking-wider">Preços</h3>
+      <Card title="Preços e Datas" icon="payments">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <Field label="Preço por noite (€)" required error={errors.pricePerNight}>
-            <input
-              className={INPUT}
-              type="number"
-              min={0}
-              step="0.01"
-              placeholder="120"
-              value={form.pricePerNight}
-              onChange={(e) => set('pricePerNight', e.target.value)}
-            />
+          <Field label="Preço / noite (€)" required error={errors.pricePerNight}>
+            <input className={INPUT} type="number" min={0} step="0.01" value={form.pricePerNight}
+              onChange={(e) => set('pricePerNight', e.target.value)} />
           </Field>
-          <Field label="Taxa de limpeza (€)">
-            <input
-              className={INPUT}
-              type="number"
-              min={0}
-              step="0.01"
-              value={form.cleaningFee}
-              onChange={(e) => set('cleaningFee', e.target.value)}
-            />
+          <Field label="Taxa limpeza (€)">
+            <input className={INPUT} type="number" min={0} value={form.cleaningFee}
+              onChange={(e) => set('cleaningFee', e.target.value)} />
           </Field>
-          <Field label="Depósito segurança (€)">
-            <input
-              className={INPUT}
-              type="number"
-              min={0}
-              step="0.01"
-              value={form.securityDeposit}
-              onChange={(e) => set('securityDeposit', e.target.value)}
-            />
+          <Field label="Depósito (€)">
+            <input className={INPUT} type="number" min={0} value={form.securityDeposit}
+              onChange={(e) => set('securityDeposit', e.target.value)} />
           </Field>
         </div>
-      </section>
-
-      {/* ── Políticas ── */}
-      <section className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-5">
-        <h3 className="text-sm font-bold text-[#1a1a2e] uppercase tracking-wider">Políticas</h3>
         <div className="grid grid-cols-2 gap-4">
           <Field label="Check-in">
-            <input
-              className={INPUT}
-              type="time"
-              value={form.checkInTime}
-              onChange={(e) => set('checkInTime', e.target.value)}
-            />
+            <input className={INPUT} type="time" value={form.checkInTime}
+              onChange={(e) => set('checkInTime', e.target.value)} />
           </Field>
           <Field label="Check-out">
-            <input
-              className={INPUT}
-              type="time"
-              value={form.checkOutTime}
-              onChange={(e) => set('checkOutTime', e.target.value)}
-            />
+            <input className={INPUT} type="time" value={form.checkOutTime}
+              onChange={(e) => set('checkOutTime', e.target.value)} />
           </Field>
+        </div>
+        <div className="grid grid-cols-2 gap-4">
           <Field label="Noites mínimas">
-            <input
-              className={INPUT}
-              type="number"
-              min={1}
-              value={form.minNights}
-              onChange={(e) => set('minNights', e.target.value)}
-            />
+            <input className={INPUT} type="number" min={1} value={form.minNights}
+              onChange={(e) => set('minNights', e.target.value)} />
           </Field>
           <Field label="Noites máximas">
-            <input
-              className={INPUT}
-              type="number"
-              min={1}
-              value={form.maxNights}
-              onChange={(e) => set('maxNights', e.target.value)}
-            />
+            <input className={INPUT} type="number" min={1} value={form.maxNights}
+              onChange={(e) => set('maxNights', e.target.value)} />
           </Field>
         </div>
         <Field label="Política de cancelamento">
-          <select
-            className={SELECT}
-            value={form.cancellationPolicy}
-            onChange={(e) => set('cancellationPolicy', e.target.value)}
-          >
+          <select className={SELECT} value={form.cancellationPolicy}
+            onChange={(e) => set('cancellationPolicy', e.target.value)}>
             <option value="FLEXIBLE">Flexível — cancelamento gratuito até 24h antes</option>
             <option value="MODERATE">Moderada — reembolso parcial até 5 dias antes</option>
             <option value="STRICT">Estrita — não reembolsável</option>
           </select>
         </Field>
 
+        <div className="pt-2">
+          <Field label="Dias para cancelamento gratuito">
+            <input className={INPUT} type="number" min="0" value={form.cancellationDays}
+              onChange={(e) => set('cancellationDays', e.target.value)} />
+          </Field>
+        </div>
+
         {/* hasRooms toggle */}
-        <label className="flex items-center gap-3 cursor-pointer select-none">
+        <label className="flex items-center gap-3 cursor-pointer select-none pt-4">
           <input
             type="checkbox"
             className="w-4 h-4 rounded border-slate-200 text-[#8b1a1a] focus:ring-[#8b1a1a]/30"
             checked={form.hasRooms}
             onChange={(e) => set('hasRooms', e.target.checked)}
           />
-          <span className="text-sm text-slate-700">
-            Esta propriedade tem quartos individuais (permite reservar quartos separados)
+          <span className="text-sm font-semibold text-slate-700">
+            Esta propriedade permite reservar quartos individuais separadamente
           </span>
         </label>
-      </section>
+      </Card>
 
-      {/* ── Space config (only when hasRooms=false) ── */}
+      {/* ── hasRooms=true notice ── */}
+      {form.hasRooms && (
+        <div className="bg-blue-50 border border-blue-200 rounded-xl px-5 py-4 text-sm text-blue-800">
+          <p className="font-semibold mb-1">Propriedade com quartos individuais</p>
+          <p className="text-blue-700">
+            Os detalhes de camas e comodidades serão configurados em cada quarto individualmente no próximo passo.
+          </p>
+        </div>
+      )}
+
+      {/* ── Configuração do espaço (only when hasRooms=false) ── */}
       {!form.hasRooms && (
-        <section className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-6">
-          <h3 className="text-sm font-bold text-[#1a1a2e] uppercase tracking-wider">
-            Configuração do espaço
-          </h3>
+        <>
+          <Card title="Casa de banho" icon="bathtub">
+            <Field label="Tipo de casa de banho">
+              <select className={SELECT} value={form.bathroomType}
+                onChange={(e) => set('bathroomType', e.target.value)}>
+                <option value="private">Casa de banho privada</option>
+                <option value="shared">Casa de banho partilhada</option>
+              </select>
+            </Field>
+          </Card>
 
-          <Field label="Tipo de casa de banho">
-            <select
-              className={SELECT}
-              value={form.bathroomType}
-              onChange={(e) => set('bathroomType', e.target.value)}
-            >
-              <option value="private">Privada</option>
-              <option value="shared">Partilhada</option>
-              <option value="ensuite">En-suite</option>
-            </select>
-          </Field>
-
-          <Field label="Camas">
+          <Card title="Camas do alojamento" icon="bed">
             <BedPicker
               value={spaceConfig.bedsList}
               onChange={(v) => setSpaceConfig((p) => ({ ...p, bedsList: v }))}
             />
-          </Field>
+          </Card>
 
-          <Field label="Serviços e comodidades">
+          <Card title="Serviços incluídos" icon="check_circle">
             <ServicesChecklist
               value={spaceConfig.services}
               onChange={(v) => setSpaceConfig((p) => ({ ...p, services: v }))}
             />
-          </Field>
-        </section>
+          </Card>
+        </>
       )}
 
-      {form.hasRooms && (
-        <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 text-sm text-blue-700">
-          No passo seguinte poderá adicionar os quartos com as suas configurações individuais.
-        </div>
-      )}
-
+      {/* ── Error ── */}
       {apiError && (
         <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-700">
           {apiError}
         </div>
       )}
 
+      {/* ── Actions ── */}
       <div className="flex items-center gap-3 pb-8">
-        <Link
-          href="/dashboard/properties"
-          className="px-6 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
-        >
+        <Link href="/dashboard/properties"
+          className="px-6 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors">
           Cancelar
         </Link>
         <button
           type="submit"
           disabled={isSubmitting}
-          className="px-8 py-2.5 bg-[#8b1a1a] hover:bg-[#6d1414] text-white rounded-xl text-sm font-semibold transition-colors flex items-center gap-2 disabled:opacity-60"
+          className="ml-auto px-8 py-2.5 bg-[#8b1a1a] hover:bg-[#6d1414] text-white rounded-xl text-sm font-semibold transition-colors flex items-center gap-2 disabled:opacity-60"
         >
           {isSubmitting ? (
-            <>
-              <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              A guardar…
-            </>
+            <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> A guardar…</>
           ) : form.hasRooms ? (
-            <>
-              Continuar
-              <span className="material-symbols-outlined text-lg">arrow_forward</span>
-            </>
+            <>Continuar <span className="material-symbols-outlined text-base">arrow_forward</span></>
           ) : (
-            <>
-              <span className="material-symbols-outlined text-lg">add</span>
-              Criar Propriedade
-            </>
+            <><span className="material-symbols-outlined text-lg">add</span> Criar Propriedade</>
           )}
         </button>
       </div>
@@ -830,165 +578,126 @@ function Step1({
   )
 }
 
-// ─── InlineRoomForm ───────────────────────────────────────────────────────────
+// ─── Inline room form ─────────────────────────────────────────────────────────
 
-function InlineRoomForm({
-  propertyId,
-  onSaved,
-  onCancel,
-}: {
-  propertyId: string
-  onSaved: (room: RoomDraft) => void
-  onCancel: () => void
-}) {
-  const [name, setName] = useState('')
-  const [type, setType] = useState('DOUBLE')
-  const [price, setPrice] = useState('')
-  const [maxGuests, setMaxGuests] = useState('2')
-  const [bathroomType, setBathroomType] = useState('private')
-  const [bedsList, setBedsList] = useState<string[]>([])
-  const [services, setServices] = useState<string[]>([])
-  const [error, setError] = useState<string | null>(null)
-  const [saving, setSaving] = useState(false)
+interface InlineRoomFormProps {
+  propertyId:  string
+  onAdded:     (room: RoomDraft) => void
+  onCancel:    () => void
+  nextOrder:   number
+}
 
-  async function handleSave() {
-    if (!name.trim()) { setError('Nome é obrigatório'); return }
-    if (!price || Number(price) <= 0) { setError('Preço é obrigatório'); return }
-    setSaving(true)
-    setError(null)
+function InlineRoomForm({ propertyId, onAdded, onCancel, nextOrder }: InlineRoomFormProps) {
+  const [name,          setName]          = useState('')
+  const [type,          setType]          = useState('DOUBLE')
+  const [price,         setPrice]         = useState('')
+  const [maxGuests,     setMaxGuests]     = useState('2')
+  const [bathroomType,  setBathroomType]  = useState('private')
+  const [bedsList,      setBedsList]      = useState<string[]>([])
+  const [services,      setServices]      = useState<string[]>([])
+  const [servicesOpen,  setServicesOpen]  = useState(false)
+  const [saving,        setSaving]        = useState(false)
+  const [error,         setError]         = useState<string | null>(null)
+
+  async function handleAdd() {
+    if (!name.trim()) { setError('Nome do quarto é obrigatório.'); return }
+    if (!price || Number(price) <= 0) { setError('Preço por noite é obrigatório.'); return }
+    setSaving(true); setError(null)
+
     try {
       const res = await fetch(`/api/properties/${propertyId}/rooms`, {
-        method: 'POST',
+        method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name: name.trim(),
+          name:          name.trim(),
           type,
           pricePerNight: Number(price),
-          maxGuests: Number(maxGuests),
+          maxGuests:     Number(maxGuests),
           bathroomType,
-          bedsList: JSON.stringify(bedsList),
-          services: JSON.stringify(services),
+          bathrooms:     1,
+          bedrooms:      1,
+          beds:          Math.max(1, bedsList.length),
+          bedsList:      bedsList.length > 0 ? JSON.stringify(bedsList) : undefined,
+          services:      services.length  > 0 ? JSON.stringify(services) : undefined,
+          order:         nextOrder,
         }),
       })
-      const data = await res.json()
+      const json = await res.json()
       if (!res.ok) {
-        setError(typeof data.error === 'string' ? data.error : 'Erro ao guardar quarto')
+        setError(typeof json.error === 'string' ? json.error : 'Erro ao criar quarto.')
         return
       }
-      onSaved({
+      onAdded({
         localId: crypto.randomUUID(),
-        id: data.data.id,
-        name: name.trim(),
+        id:            json.data.id,
+        name:          name.trim(),
         type,
-        pricePerNight: price,
-        maxGuests,
+        pricePerNight: Number(price),
+        maxGuests:     Number(maxGuests),
         bathroomType,
         bedsList,
         services,
       })
     } catch {
-      setError('Erro de ligação.')
+      setError('Erro de ligação. Tente novamente.')
     } finally {
       setSaving(false)
     }
   }
 
-  return (
-    <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 space-y-4">
-      <h4 className="text-sm font-bold text-[#1a1a2e]">Novo quarto</h4>
+  const roomTypeLabel = ROOM_TYPES.find((t) => t.value === type)?.label ?? type
 
-      <div className="grid grid-cols-2 gap-4">
-        <Field label="Nome" required>
-          <input
-            className={INPUT}
-            placeholder="Quarto Duplo Standard"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
+  return (
+    <div className="border-2 border-[#8b1a1a]/20 rounded-2xl bg-white p-5 space-y-4">
+      <h4 className="text-sm font-bold text-[#1a1a2e] flex items-center gap-2">
+        <span className="material-symbols-outlined text-[#8b1a1a] text-base">add_box</span>
+        Novo quarto
+      </h4>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <Field label="Nome do quarto" required>
+          <input className={INPUT} placeholder="ex: Quarto Vista Mar" value={name} onChange={(e) => setName(e.target.value)} />
         </Field>
         <Field label="Tipo">
           <select className={SELECT} value={type} onChange={(e) => setType(e.target.value)}>
-            <option value="SINGLE">Individual</option>
-            <option value="DOUBLE">Duplo</option>
-            <option value="TWIN">Twin</option>
-            <option value="SUITE">Suite</option>
-            <option value="FAMILY">Familiar</option>
+            {ROOM_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
           </select>
         </Field>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <Field label="Preço/noite (€)" required>
-          <input
-            className={INPUT}
-            type="number"
-            min={0}
-            step="0.01"
-            placeholder="80"
-            value={price}
-            onChange={(e) => setPrice(e.target.value)}
-          />
+        <Field label="Preço por noite (€)" required>
+          <input className={INPUT} type="number" min={0} step="0.01" value={price} onChange={(e) => setPrice(e.target.value)} />
         </Field>
         <Field label="Hóspedes máx.">
-          <input
-            className={INPUT}
-            type="number"
-            min={1}
-            max={10}
-            value={maxGuests}
-            onChange={(e) => setMaxGuests(e.target.value)}
-          />
+          <input className={INPUT} type="number" min={1} value={maxGuests} onChange={(e) => setMaxGuests(e.target.value)} />
         </Field>
       </div>
 
       <Field label="Casa de banho">
         <select className={SELECT} value={bathroomType} onChange={(e) => setBathroomType(e.target.value)}>
-          <option value="private">Privada</option>
-          <option value="shared">Partilhada</option>
-          <option value="ensuite">En-suite</option>
+          <option value="private">Casa de banho privada</option>
+          <option value="shared">Casa de banho partilhada</option>
         </select>
       </Field>
 
-      <Field label="Camas">
+      <div>
+        <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Camas</p>
         <BedPicker value={bedsList} onChange={setBedsList} />
-      </Field>
+      </div>
 
-      <details className="group">
-        <summary className="text-sm font-semibold text-[#1a1a2e] cursor-pointer list-none flex items-center gap-2">
-          <span className="material-symbols-outlined text-base text-slate-400 group-open:rotate-90 transition-transform">
-            chevron_right
-          </span>
-          Serviços e comodidades
-        </summary>
-        <div className="mt-3">
-          <ServicesChecklist value={services} onChange={setServices} />
-        </div>
-      </details>
-
-      {error && (
-        <p className="text-xs text-red-600">{error}</p>
-      )}
-
-      <div className="flex gap-2 pt-1">
-        <button
-          type="button"
-          onClick={onCancel}
-          className="px-4 py-2 rounded-lg border border-slate-200 text-sm text-slate-600 hover:bg-white transition-colors"
-        >
-          Cancelar
+      <div>
+        <button type="button" onClick={() => setServicesOpen(!servicesOpen)}
+          className="flex items-center justify-between w-full text-xs font-bold uppercase tracking-wider text-slate-500 py-2 hover:text-slate-700 transition-colors">
+          <span>Serviços {services.length > 0 && `(${services.length})`}</span>
+          <span className="material-symbols-outlined text-base transition-transform" style={{ transform: servicesOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}>expand_more</span>
         </button>
-        <button
-          type="button"
-          onClick={handleSave}
-          disabled={saving}
-          className="px-5 py-2 bg-[#1a1a2e] text-white rounded-lg text-sm font-semibold hover:opacity-90 transition-all flex items-center gap-1.5 disabled:opacity-60"
-        >
-          {saving ? (
-            <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-          ) : (
-            <span className="material-symbols-outlined text-base">save</span>
-          )}
-          Guardar quarto
+        {servicesOpen && <div className="mt-2"><ServicesChecklist value={services} onChange={setServices} /></div>}
+      </div>
+
+      {error && <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-700">{error}</div>}
+
+      <div className="flex gap-3 pt-1">
+        <button type="button" onClick={onCancel} className="px-5 py-2 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors">Cancelar</button>
+        <button type="button" onClick={handleAdd} disabled={saving} className="ml-auto px-6 py-2 bg-[#1a1a2e] text-white rounded-xl text-sm font-semibold hover:opacity-90 transition-all active:scale-95 disabled:opacity-50 flex items-center gap-2">
+          {saving ? <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> A guardar…</> : <><span className="material-symbols-outlined text-base">add</span> Adicionar quarto — {roomTypeLabel}</>}
         </button>
       </div>
     </div>
@@ -998,114 +707,59 @@ function InlineRoomForm({
 // ─── Step 2 — Rooms ───────────────────────────────────────────────────────────
 
 function Step2({
-  propertyId,
-  rooms,
-  setRooms,
-  onBack,
-  onContinue,
+  propertyId, rooms, setRooms, onBack, onContinue,
 }: {
   propertyId: string
-  rooms: RoomDraft[]
-  setRooms: React.Dispatch<React.SetStateAction<RoomDraft[]>>
-  onBack: () => void
-  onContinue: () => void
+  rooms:       RoomDraft[]
+  setRooms:    React.Dispatch<React.SetStateAction<RoomDraft[]>>
+  onBack:      () => void
+  onContinue:  () => void
 }) {
-  const [showForm, setShowForm] = useState(rooms.length === 0)
+  const [showForm, setShowForm] = useState(false)
+  const ROOM_TYPE_LABELS: Record<string, string> = Object.fromEntries(ROOM_TYPES.map((t) => [t.value, t.label]))
 
-  const ROOM_TYPE_LABELS: Record<string, string> = {
-    SINGLE: 'Individual',
-    DOUBLE: 'Duplo',
-    TWIN: 'Twin',
-    SUITE: 'Suite',
-    FAMILY: 'Familiar',
-  }
-
-  async function removeRoom(room: RoomDraft) {
-    if (room.id) {
-      await fetch(`/api/rooms/${room.id}`, { method: 'DELETE' })
-    }
-    setRooms((prev) => prev.filter((r) => r.localId !== room.localId))
+  function removeRoom(localId: string) {
+    setRooms((prev) => prev.filter((r) => r.localId !== localId))
   }
 
   return (
     <div className="space-y-6">
-      <section className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-5">
-        <div className="flex items-center justify-between">
-          <h3 className="text-sm font-bold text-[#1a1a2e] uppercase tracking-wider">
-            Quartos ({rooms.length})
-          </h3>
-          {!showForm && (
-            <button
-              type="button"
-              onClick={() => setShowForm(true)}
-              className="flex items-center gap-1.5 px-4 py-2 bg-[#1a1a2e] text-white rounded-lg text-sm font-semibold hover:opacity-90 transition-all"
-            >
-              <span className="material-symbols-outlined text-base">add</span>
-              Adicionar quarto
-            </button>
-          )}
-        </div>
+      <div>
+        <h3 className="text-xl font-extrabold text-[#1a1a2e] tracking-tight">Adicione os quartos</h3>
+        <p className="text-sm text-slate-500 mt-1">Mínimo 1 quarto necessário para continuar.</p>
+      </div>
 
-        {/* Room cards */}
-        {rooms.length > 0 && (
-          <div className="space-y-3">
-            {rooms.map((room) => (
-              <div
-                key={room.localId}
-                className="flex items-center justify-between bg-slate-50 border border-slate-200 rounded-xl px-4 py-3"
-              >
-                <div>
-                  <p className="text-sm font-semibold text-[#1a1a2e]">{room.name}</p>
-                  <p className="text-xs text-slate-500">
-                    {ROOM_TYPE_LABELS[room.type] ?? room.type} · {room.maxGuests} hóspedes · €{room.pricePerNight}/noite
-                  </p>
+      {rooms.length > 0 && (
+        <div className="space-y-3">
+          {rooms.map((room) => (
+            <div key={room.localId} className="bg-white rounded-xl border border-slate-200 shadow-sm px-5 py-4 flex items-center justify-between gap-4">
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="font-bold text-[#1a1a2e] text-sm truncate">{room.name}</span>
+                  <span className="text-[10px] font-bold px-2 py-0.5 bg-slate-100 text-slate-600 rounded-full">{ROOM_TYPE_LABELS[room.type] ?? room.type}</span>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => removeRoom(room)}
-                  className="text-slate-400 hover:text-red-500 transition-colors p-1"
-                  title="Remover"
-                >
-                  <span className="material-symbols-outlined text-lg">delete</span>
-                </button>
+                <p className="text-xs text-slate-500 mt-0.5">€{room.pricePerNight}/noite · {room.maxGuests} hóspedes</p>
               </div>
-            ))}
-          </div>
-        )}
+              <button onClick={() => removeRoom(room.localId)} className="text-slate-400 hover:text-red-500 transition-colors p-1.5 rounded-lg hover:bg-red-50"><span className="material-symbols-outlined text-base">delete</span></button>
+            </div>
+          ))}
+        </div>
+      )}
 
-        {rooms.length === 0 && !showForm && (
-          <p className="text-sm text-slate-400 italic">Nenhum quarto adicionado ainda.</p>
-        )}
-
-        {showForm && (
-          <InlineRoomForm
-            propertyId={propertyId}
-            onSaved={(room) => {
-              setRooms((prev) => [...prev, room])
-              setShowForm(false)
-            }}
-            onCancel={() => setShowForm(false)}
-          />
-        )}
-      </section>
-
-      <div className="flex items-center gap-3 pb-8">
-        <button
-          type="button"
-          onClick={onBack}
-          className="px-6 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors flex items-center gap-1.5"
-        >
-          <span className="material-symbols-outlined text-lg">arrow_back</span>
-          Anterior
+      {showForm ? (
+        <InlineRoomForm propertyId={propertyId} nextOrder={rooms.length} onAdded={(r) => { setRooms((p) => [...p, r]); setShowForm(false) }} onCancel={() => setShowForm(false)} />
+      ) : (
+        <button type="button" onClick={() => setShowForm(true)} className="w-full py-4 border-2 border-dashed border-slate-200 rounded-xl text-sm font-semibold text-slate-400 hover:border-[#8b1a1a] hover:text-[#8b1a1a] hover:bg-[#8b1a1a]/5 transition-all flex items-center justify-center gap-2">
+          <span className="material-symbols-outlined text-base">add</span> Adicionar quarto
         </button>
-        <button
-          type="button"
-          onClick={onContinue}
-          disabled={rooms.length === 0}
-          className="px-8 py-2.5 bg-[#8b1a1a] hover:bg-[#6d1414] text-white rounded-xl text-sm font-semibold transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          Continuar
-          <span className="material-symbols-outlined text-lg">arrow_forward</span>
+      )}
+
+      <div className="flex items-center gap-3 pb-8 pt-4 border-t border-slate-100">
+        <button type="button" onClick={onBack} className="flex items-center gap-1.5 px-6 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors">
+          <span className="material-symbols-outlined text-base">arrow_back</span> Voltar
+        </button>
+        <button type="button" onClick={onContinue} disabled={rooms.length === 0} className="ml-auto px-8 py-2.5 bg-[#8b1a1a] hover:bg-[#6d1414] text-white rounded-xl text-sm font-semibold transition-colors flex items-center gap-2 disabled:opacity-40">
+          Continuar <span className="material-symbols-outlined text-base">arrow_forward</span>
         </button>
       </div>
     </div>
@@ -1115,295 +769,216 @@ function Step2({
 // ─── Step 3 — Review ──────────────────────────────────────────────────────────
 
 function Step3({
-  form,
-  rooms,
-  propertyId,
-  onBack,
+  form, rooms, propertyId, onBack,
 }: {
-  form: Step1State
-  rooms: RoomDraft[]
+  form:       Step1State
+  rooms:      RoomDraft[]
   propertyId: string
-  onBack: () => void
+  onBack:     () => void
 }) {
   const router = useRouter()
-  const [isActivating, setIsActivating] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [saving, setSaving] = useState(false)
+  const [apiError, setApiError] = useState<string | null>(null)
+  const ROOMS_LABELS = Object.fromEntries(ROOM_TYPES.map((t) => [t.value, t.label]))
 
-  const ROOM_TYPE_LABELS: Record<string, string> = {
-    SINGLE: 'Individual', DOUBLE: 'Duplo', TWIN: 'Twin', SUITE: 'Suite', FAMILY: 'Familiar',
-  }
-
-  async function handleActivate() {
-    setIsActivating(true)
-    setError(null)
+  async function handleFinalize() {
+    setSaving(true); setApiError(null)
     try {
       const res = await fetch(`/api/properties/${propertyId}`, {
-        method: 'PATCH',
+        method:  'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: 'ACTIVE' }),
       })
-      const data = await res.json()
       if (!res.ok) {
-        setError(typeof data.error === 'string' ? data.error : 'Erro ao ativar propriedade')
+        const json = await res.json()
+        setApiError(json.error || 'Erro ao publicar.')
         return
       }
       router.push(`/dashboard/properties/${propertyId}/images?created=1`)
     } catch {
-      setError('Erro de ligação.')
+      setApiError('Erro de ligação.')
     } finally {
-      setIsActivating(false)
+      setSaving(false)
     }
   }
 
   return (
     <div className="space-y-6">
-      {/* Property summary */}
-      <section className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4">
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4">
         <h3 className="text-sm font-bold text-[#1a1a2e] uppercase tracking-wider">Propriedade</h3>
-        <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
-          <div><span className="text-slate-500">Título:</span> <span className="font-semibold">{form.title}</span></div>
-          <div><span className="text-slate-500">Tipo:</span> <span className="font-semibold">{form.type}</span></div>
-          <div><span className="text-slate-500">Cidade:</span> <span className="font-semibold">{form.city}</span></div>
-          <div><span className="text-slate-500">Preço/noite:</span> <span className="font-semibold">€{form.pricePerNight}</span></div>
-          <div><span className="text-slate-500">Hóspedes máx.:</span> <span className="font-semibold">{form.maxGuests}</span></div>
-          <div><span className="text-slate-500">Cancelamento:</span> <span className="font-semibold">{form.cancellationPolicy}</span></div>
+        <p className="font-bold text-lg">{form.title}</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-slate-600">
+          <p>Localização: <strong>{form.city}, {form.country}</strong></p>
+          <p>Preço base: <strong>€{form.pricePerNight}/noite</strong></p>
+          <p>Ocupação: <strong>até {form.maxGuests} hóspedes</strong></p>
+          <p>Tipo: <strong>{form.type}</strong></p>
         </div>
-      </section>
+      </div>
 
-      {/* Rooms summary */}
       {rooms.length > 0 && (
-        <section className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4">
-          <h3 className="text-sm font-bold text-[#1a1a2e] uppercase tracking-wider">
-            Quartos ({rooms.length})
-          </h3>
-          <div className="space-y-2">
-            {rooms.map((room) => (
-              <div
-                key={room.localId}
-                className="flex items-center justify-between bg-slate-50 rounded-xl px-4 py-3 border border-slate-200"
-              >
-                <div>
-                  <p className="text-sm font-semibold text-[#1a1a2e]">{room.name}</p>
-                  <p className="text-xs text-slate-500">
-                    {ROOM_TYPE_LABELS[room.type] ?? room.type} · {room.maxGuests} hóspedes · €{room.pricePerNight}/noite
-                  </p>
-                </div>
-                <span className="material-symbols-outlined text-green-500 text-xl">check_circle</span>
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-3">
+          <h3 className="text-sm font-bold text-[#1a1a2e] uppercase tracking-wider">Quartos ({rooms.length})</h3>
+          <div className="divide-y divide-slate-100">
+            {rooms.map((r) => (
+              <div key={r.localId} className="py-2 flex justify-between text-sm">
+                <span>{r.name} ({ROOMS_LABELS[r.type] || r.type})</span>
+                <span className="font-bold">€{r.pricePerNight}/noite</span>
               </div>
             ))}
           </div>
-        </section>
-      )}
-
-      {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-700">
-          {error}
         </div>
       )}
 
-      <div className="flex items-center gap-3 pb-8">
-        <button
-          type="button"
-          onClick={onBack}
-          className="px-6 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors flex items-center gap-1.5"
-        >
-          <span className="material-symbols-outlined text-lg">arrow_back</span>
-          Anterior
-        </button>
-        <button
-          type="button"
-          onClick={handleActivate}
-          disabled={isActivating}
-          className="px-8 py-2.5 bg-[#8b1a1a] hover:bg-[#6d1414] text-white rounded-xl text-sm font-semibold transition-colors flex items-center gap-2 disabled:opacity-60"
-        >
-          {isActivating ? (
-            <>
-              <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              A ativar…
-            </>
-          ) : (
-            <>
-              <span className="material-symbols-outlined text-lg">check</span>
-              Criar Propriedade
-            </>
-          )}
+      {apiError && <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-700">{apiError}</div>}
+
+      <div className="flex items-center gap-3 pb-8 pt-4 border-t border-slate-100">
+        <button type="button" onClick={onBack} className="px-6 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors">Voltar</button>
+        <button type="button" onClick={handleFinalize} disabled={saving} className="ml-auto px-8 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold transition-all flex items-center gap-2 disabled:opacity-60">
+          {saving ? 'A publicar…' : <><span className="material-symbols-outlined text-base">check</span> Publicar propriedade</>}
         </button>
       </div>
     </div>
   )
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
+// ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function NewPropertyPage() {
   const router = useRouter()
-  const [step, setStep] = useState<1 | 2 | 3>(1)
-  const [form, setForm] = useState<Step1State>(STEP1_INITIAL)
-  const [slugManual, setSlugManual] = useState(false)
-  const [spaceConfig, setSpaceConfig] = useState<{ bedsList: string[]; services: string[] }>({
-    bedsList: [],
-    services: [],
-  })
-  const [rooms, setRooms] = useState<RoomDraft[]>([])
-  const [propertyId, setPropertyId] = useState<string | null>(null)
+  const [step,         setStep]         = useState<1 | 2 | 3>(1)
+  const [form,         setForm]         = useState<Step1State>(STEP1_INITIAL)
+  const [slugManual,   setSlugManual]   = useState(false)
+  const [propertyId,   setPropertyId]   = useState<string | null>(null)
+  const [rooms,        setRooms]        = useState<RoomDraft[]>([])
+  const [errors,       setErrors]       = useState<Partial<Record<keyof Step1State, string>>>({})
+  const [apiError,     setApiError]     = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [apiError, setApiError] = useState<string | null>(null)
+  const [spaceConfig,  setSpaceConfig]  = useState<{ bedsList: string[]; services: string[] }>({ bedsList: [], services: [] })
 
-  function buildPayload(status = 'DRAFT') {
+  function validateStep1(): boolean {
+    const e: Partial<Record<keyof Step1State, string>> = {}
+    if (!form.title.trim())        e.title = 'Título é obrigatório'
+    if (!form.slug.trim())         e.slug  = 'Slug é obrigatório'
+    if (!form.description.trim())  e.description = 'Descrição é obrigatória'
+    if (!form.address.trim())      e.address = 'Morada é obrigatória'
+    if (!form.city.trim())         e.city = 'Cidade é obrigatória'
+    if (!form.pricePerNight || Number(form.pricePerNight) <= 0) e.pricePerNight = 'Preço inválido'
+    setErrors(e)
+    return Object.keys(e).length === 0
+  }
+
+  function buildPayload(status: 'DRAFT' | 'ACTIVE') {
     return {
-      title: form.title.trim(),
-      slug: form.slug.trim(),
-      description: form.description.trim(),
-      type: form.type,
+      title:              form.title.trim(),
+      slug:               form.slug.trim(),
+      description:        form.description.trim(),
+      type:               form.type,
       status,
-      address: form.address.trim(),
-      city: form.city.trim(),
-      country: form.country || 'PT',
-      zipCode: form.zipCode.trim() || undefined,
-      maxGuests: Number(form.maxGuests),
-      bedrooms: Number(form.bedrooms),
-      bathrooms: Number(form.bathrooms),
-      beds: Number(form.beds),
-      area: form.area ? Number(form.area) : undefined,
-      pricePerNight: Number(form.pricePerNight),
-      cleaningFee: Number(form.cleaningFee) || 0,
-      securityDeposit: Number(form.securityDeposit) || 0,
-      checkInTime: form.checkInTime || '15:00',
-      checkOutTime: form.checkOutTime || '11:00',
-      minNights: Number(form.minNights) || 1,
-      maxNights: Number(form.maxNights) || 365,
+      address:            form.address.trim(),
+      city:               form.city.trim(),
+      country:            form.country || 'PT',
+      zipCode:            form.zipCode.trim() || undefined,
+      maxGuests:          Number(form.maxGuests),
+      bedrooms:           Number(form.bedrooms),
+      bathrooms:          Number(form.bathrooms),
+      beds:               Number(form.beds),
+      area:               form.area ? Number(form.area) : undefined,
+      pricePerNight:      Number(form.pricePerNight),
+      cleaningFee:        Number(form.cleaningFee) || 0,
+      securityDeposit:    Number(form.securityDeposit) || 0,
+      checkInTime:        form.checkInTime || '15:00',
+      checkOutTime:       form.checkOutTime || '11:00',
+      minNights:          Number(form.minNights) || 1,
+      maxNights:          Number(form.maxNights) || 365,
       cancellationPolicy: form.cancellationPolicy,
-      hasRooms: form.hasRooms,
-      bathroomType: form.hasRooms ? undefined : form.bathroomType,
-      bedsConfig: form.hasRooms ? undefined : JSON.stringify(spaceConfig.bedsList),
-      services: form.hasRooms ? undefined : JSON.stringify(spaceConfig.services),
+      hasRooms:           form.hasRooms,
+      bathroomType:       !form.hasRooms ? form.bathroomType : undefined,
+      bedsConfig:         !form.hasRooms && spaceConfig.bedsList.length > 0 ? JSON.stringify(spaceConfig.bedsList) : undefined,
+      services:           !form.hasRooms && spaceConfig.services.length > 0 ? JSON.stringify(spaceConfig.services) : undefined,
       // New fields from COMMIT 1
-      arrivalType: form.arrivalType || undefined,
-      floors: form.floors ? Number(form.floors) : undefined,
-      hasElevator: form.hasElevator,
-      towelsIncluded: form.towelsIncluded,
-      petsAllowed: form.petsAllowed,
-      childrenAllowed: form.childrenAllowed,
-      smokingAllowed: form.smokingAllowed,
-      spaceDescription: form.spaceDescription.trim() || undefined,
-      accessInfo: form.accessInfo.trim() || undefined,
-      interactionInfo: form.interactionInfo.trim() || undefined,
-      additionalInfo: form.additionalInfo.trim() || undefined,
-      parkingInfo: form.parkingInfo.trim() || undefined,
-      extraServices: form.extraServices.trim() || undefined,
-      houseRules: form.houseRules.trim() || undefined,
-      cancellationDays: form.cancellationDays ? Number(form.cancellationDays) : 0,
-      licenseNumber: form.licenseNumber.trim() || undefined,
-      hostDescription: form.hostDescription.trim() || undefined,
+      arrivalType:        form.arrivalType,
+      floors:             Number(form.floors) || 1,
+      hasElevator:        form.hasElevator,
+      towelsIncluded:     form.towelsIncluded,
+      petsAllowed:        form.petsAllowed,
+      childrenAllowed:    form.childrenAllowed,
+      smokingAllowed:     form.smokingAllowed,
+      spaceDescription:   form.spaceDescription.trim() || undefined,
+      accessInfo:         form.accessInfo.trim() || undefined,
+      interactionInfo:    form.interactionInfo.trim() || undefined,
+      additionalInfo:     form.additionalInfo.trim() || undefined,
+      parkingInfo:        form.parkingInfo.trim() || undefined,
+      extraServices:      form.extraServices.trim() || undefined,
+      houseRules:         form.houseRules.trim() || undefined,
+      cancellationDays:   Number(form.cancellationDays) || 0,
+      licenseNumber:      form.licenseNumber.trim() || undefined,
+      hostDescription:    form.hostDescription.trim() || undefined,
     }
   }
 
-  /** hasRooms=false: create as ACTIVE and go to images */
   async function handleSaveDirect() {
-    setIsSubmitting(true)
-    setApiError(null)
+    if (!validateStep1()) return
+    setIsSubmitting(true); setApiError(null)
     try {
       const res = await fetch('/api/properties', {
-        method: 'POST',
+        method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(buildPayload('ACTIVE')),
+        body:    JSON.stringify(buildPayload('ACTIVE')),
       })
       const data = await res.json()
-      if (!res.ok) {
-        setApiError(typeof data.error === 'string' ? data.error : 'Erro ao criar a propriedade.')
-        return
-      }
+      if (!res.ok) { setApiError(data.error || 'Erro ao criar.'); return }
       router.push(`/dashboard/properties/${data.data.id}/images?created=1`)
     } catch {
-      setApiError('Erro de ligação. Por favor tente novamente.')
+      setApiError('Erro de ligação.')
     } finally {
       setIsSubmitting(false)
     }
   }
 
-  /** hasRooms=true: save as DRAFT, go to step 2 */
-  async function handleContinueToRooms() {
-    setIsSubmitting(true)
-    setApiError(null)
+  async function handleContinue() {
+    if (!validateStep1()) return
+    setIsSubmitting(true); setApiError(null)
     try {
       const res = await fetch('/api/properties', {
-        method: 'POST',
+        method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(buildPayload('DRAFT')),
+        body:    JSON.stringify(buildPayload('DRAFT')),
       })
       const data = await res.json()
-      if (!res.ok) {
-        setApiError(typeof data.error === 'string' ? data.error : 'Erro ao criar a propriedade.')
-        return
-      }
-      setPropertyId(data.data.id)
-      setStep(2)
+      if (!res.ok) { setApiError(data.error || 'Erro ao guardar.'); return }
+      setPropertyId(data.data.id); setStep(2)
     } catch {
-      setApiError('Erro de ligação. Por favor tente novamente.')
+      setApiError('Erro de ligação.')
     } finally {
       setIsSubmitting(false)
     }
   }
 
-  const showStepIndicator = form.hasRooms || step > 1
+  const showIndicator = form.hasRooms || step > 1
 
   return (
-    <div className="max-w-3xl space-y-8">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Link
-          href="/dashboard/properties"
-          className="p-2 rounded-lg hover:bg-slate-100 transition-colors text-slate-400 hover:text-slate-600"
-          title="Voltar"
-        >
-          <span className="material-symbols-outlined text-lg">arrow_back</span>
-        </Link>
+    <div className="max-w-3xl pb-20">
+      <div className="flex items-center gap-4 mb-8">
+        <button onClick={() => step > 1 ? setStep((s) => (s-1) as any) : router.back()}
+          className="p-2 rounded-xl hover:bg-slate-100 text-slate-400 transition-colors"><span className="material-symbols-outlined text-lg">arrow_back</span></button>
         <div>
           <h2 className="text-2xl font-extrabold text-[#1a1a2e] tracking-tight">Nova Propriedade</h2>
-          <p className="text-slate-500 text-sm mt-0.5">
-            {step === 1
-              ? 'Preencha os dados da nova propriedade.'
-              : step === 2
-              ? 'Adicione os quartos da propriedade.'
-              : 'Reveja e confirme a criação.'}
-          </p>
+          <p className="text-sm text-slate-500">{step === 1 ? 'Configure os dados principais' : step === 2 ? 'Adicione os quartos' : 'Confirmação final'}</p>
         </div>
       </div>
 
-      {showStepIndicator && <StepIndicator current={step} />}
+      {showIndicator && <StepIndicator current={step} />}
 
       {step === 1 && (
-        <Step1
-          form={form}
-          setForm={setForm}
-          slugManual={slugManual}
-          setSlugManual={setSlugManual}
-          spaceConfig={spaceConfig}
-          setSpaceConfig={setSpaceConfig}
-          onSaveDirect={handleSaveDirect}
-          onContinue={handleContinueToRooms}
-          isSubmitting={isSubmitting}
-          apiError={apiError}
-        />
+        <Step1 form={form} setForm={setForm} slugManual={slugManual} setSlugManual={setSlugManual}
+          errors={errors} spaceConfig={spaceConfig} setSpaceConfig={setSpaceConfig}
+          apiError={apiError} isSubmitting={isSubmitting} onContinue={handleContinue} onSaveDirect={handleSaveDirect} />
       )}
-
       {step === 2 && propertyId && (
-        <Step2
-          propertyId={propertyId}
-          rooms={rooms}
-          setRooms={setRooms}
-          onBack={() => setStep(1)}
-          onContinue={() => setStep(3)}
-        />
+        <Step2 propertyId={propertyId} rooms={rooms} setRooms={setRooms} onBack={() => setStep(1)} onContinue={() => setStep(3)} />
       )}
-
       {step === 3 && propertyId && (
-        <Step3
-          form={form}
-          rooms={rooms}
-          propertyId={propertyId}
-          onBack={() => setStep(2)}
-        />
+        <Step3 form={form} rooms={rooms} propertyId={propertyId} onBack={() => setStep(2)} />
       )}
     </div>
   )

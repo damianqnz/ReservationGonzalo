@@ -253,14 +253,18 @@ model BlockedDate {
 model Review {
   id          String   @id @default(cuid())
   propertyId  String
-  bookingId   String   @unique
+  bookingId   String?  @unique
   guestName   String
   rating      Int
-  comment     String?
-  ownerReply  String?
+  comment     String?  @db.Text
+  ownerReply  String?  @db.Text
   isPublished Boolean  @default(false)
+  isRejected  Boolean  @default(false)
+  stayDate    DateTime?
+  source      String?  @default("website")
+  sourceUrl   String?
   createdAt   DateTime @default(now())
-  booking     Booking  @relation(fields: [bookingId], references: [id])
+  booking     Booking? @relation(fields: [bookingId], references: [id])
   property    Property @relation(fields: [propertyId], references: [id])
 
   @@map("reviews")

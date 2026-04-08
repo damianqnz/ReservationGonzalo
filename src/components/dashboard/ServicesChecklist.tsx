@@ -4,7 +4,7 @@ import { useState } from 'react'
 
 // ─── Services data ────────────────────────────────────────────────────────────
 
-const SERVICE_CATEGORIES = [
+export const SERVICE_CATEGORIES = [
   {
     id: 'general',
     label: 'Condições gerais',
@@ -126,7 +126,8 @@ export default function ServicesChecklist({ value, onChange }: Props) {
                     </span>
                   )}
                   {!query && (
-                    <span className="material-symbols-outlined text-slate-400 text-base transition-transform duration-200"
+                    <span
+                      className="material-symbols-outlined text-slate-400 text-base transition-transform duration-200"
                       style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}
                     >
                       expand_more
