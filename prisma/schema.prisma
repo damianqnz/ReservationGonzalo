@@ -263,15 +263,10 @@ model Review {
   source      String   @default("WEBSITE")
   sourceUrl   String?
   stayDate    DateTime?
-  isRejected  Boolean  @default(false)
-  stayDate    DateTime?
-  source      String?  @default("website")
-  sourceUrl   String?
-  createdAt   DateTime @default(now())
-  booking     Booking? @relation(fields: [bookingId], references: [id])
-  property    Property @relation(fields: [propertyId], references: [id])
-
   @@map("reviews")
+  createdAt   DateTime @default(now())
+  booking     Booking?  @relation(fields: [bookingId], references: [id])
+  property    Property @relation(fields: [propertyId], references: [id])
 }
 
 

@@ -582,14 +582,14 @@ function Step1({
 
 function InlineRoomForm({
   propertyId,
+  roomsCount,
   onSaved,
   onCancel,
-  onRequestNew,
 }: {
   propertyId: string
+  roomsCount: number
   onSaved: (room: RoomDraft) => void
   onCancel: () => void
-  onRequestNew: () => void
 }) {
   const [name, setName] = useState('')
   const [type, setType] = useState('DOUBLE')
@@ -601,6 +601,7 @@ function InlineRoomForm({
   const [bedsList, setBedsList] = useState<string[]>([])
   const [services, setServices] = useState<string[]>([])
   const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   function reset() {
     setName(''); setType('DOUBLE'); setPrice(''); setMaxGuests('2')
@@ -610,14 +611,15 @@ function InlineRoomForm({
 
   async function handleSave() {
     if (!name.trim()) {
-      sileo.error({ title: 'Campo obrigatório', description: 'O nome do quarto é obrigatório' })
+      setError('O nome do quarto é obrigatório')
       return
     }
     if (!price || Number(price) <= 0) {
-      sileo.error({ title: 'Campo obrigatório', description: 'O preço por noite é obrigatório' })
+      setError('O preço por noite é obrigatório')
       return
     }
     setSaving(true)
+    setError(null)
     try {
       const res = await fetch(`/api/properties/${propertyId}/rooms`, {
         method: 'POST',
@@ -629,30 +631,21 @@ function InlineRoomForm({
           maxGuests: Number(maxGuests),
           bedrooms: Number(bedrooms),
           bathrooms: Number(bathrooms),
-          beds: bedsList.length || Number(bedrooms) || 1,
-          bathroomType,
-          bathrooms: 1,
-          bedrooms: 1,
           beds: Math.max(1, bedsList.length),
+          bathroomType,
           bedsList: bedsList.length > 0 ? JSON.stringify(bedsList) : undefined,
           services: services.length > 0 ? JSON.stringify(services) : undefined,
-          order: nextOrder,
+          order: roomsCount,
         }),
       })
       const json = await res.json()
       if (!res.ok) {
-        sileo.error({
-          title: 'Erro ao guardar quarto',
-          description: typeof data.error === 'string'
-            ? data.error
-            : 'Verifique os campos e tente novamente',
-        })
+        setError(json.error || 'Erro ao guardar quarto')
         return
       }
-      const saved = name.trim()
-      onAdded({
+      onSaved({
         localId: crypto.randomUUID(),
-        id: data.data.id,
+        id: json.data.id,
         name: name.trim(),
         type,
         pricePerNight: Number(price),
@@ -662,17 +655,12 @@ function InlineRoomForm({
         services,
       })
       reset()
-      sileo.action({
+      sileo.success({
         title: 'Quarto adicionado!',
-        description: `${saved} foi adicionado com sucesso`,
-        duration: 6000,
-        button: {
-          title: 'Adicionar outro quarto',
-          onClick: onRequestNew,
-        },
+        description: `${name.trim()} foi adicionado com sucesso`,
       })
     } catch {
-      sileo.error({ title: 'Erro de ligação. Tente novamente', description: 'Por favor tente novamente' })
+      setError('Erro de ligação. Tente novamente')
     } finally {
       setSaving(false)
     }
@@ -701,29 +689,6 @@ function InlineRoomForm({
         </Field>
         <Field label="Hóspedes máx.">
           <input className={INPUT} type="number" min={1} value={maxGuests} onChange={(e) => setMaxGuests(e.target.value)} />
-        </Field>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <Field label="Quartos">
-          <input
-            className={INPUT}
-            type="number"
-            min={0}
-            max={20}
-            value={bedrooms}
-            onChange={(e) => setBedrooms(e.target.value)}
-          />
-        </Field>
-        <Field label="Casas de banho">
-          <input
-            className={INPUT}
-            type="number"
-            min={1}
-            max={20}
-            value={bathrooms}
-            onChange={(e) => setBathrooms(e.target.value)}
-          />
         </Field>
       </div>
 
@@ -780,7 +745,7 @@ function InlineRoomForm({
 
       <div className="flex gap-3 pt-1">
         <button type="button" onClick={onCancel} className="px-5 py-2 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors">Cancelar</button>
-        <button type="button" onClick={handleAdd} disabled={saving} className="ml-auto px-6 py-2 bg-[#1a1a2e] text-white rounded-xl text-sm font-semibold hover:opacity-90 transition-all active:scale-95 disabled:opacity-50 flex items-center gap-2">
+        <button type="button" onClick={handleSave} disabled={saving} className="ml-auto px-6 py-2 bg-[#1a1a2e] text-white rounded-xl text-sm font-semibold hover:opacity-90 transition-all active:scale-95 disabled:opacity-50 flex items-center gap-2">
           {saving ? <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> A guardar…</> : <><span className="material-symbols-outlined text-base">add</span> Adicionar quarto — {roomTypeLabel}</>}
         </button>
       </div>
@@ -813,22 +778,23 @@ function Step2({
         <p className="text-sm text-slate-500 mt-1">Mínimo 1 quarto necessário para continuar.</p>
       </div>
 
-      {rooms.length > 0 && (
-        <div className="space-y-3">
-          {rooms.map((room) => (
-            <div key={room.localId} className="bg-white rounded-xl border border-slate-200 shadow-sm px-5 py-4 flex items-center justify-between gap-4">
-              <div className="min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-bold text-[#1a1a2e] text-sm truncate">{room.name}</span>
-                  <span className="text-[10px] font-bold px-2 py-0.5 bg-slate-100 text-slate-600 rounded-full">{ROOM_TYPE_LABELS[room.type] ?? room.type}</span>
+      <section className="space-y-4">
+        {rooms.length > 0 && (
+          <div className="space-y-3">
+            {rooms.map((room) => (
+              <div key={room.localId} className="bg-white rounded-xl border border-slate-200 shadow-sm px-5 py-4 flex items-center justify-between gap-4">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-bold text-[#1a1a2e] text-sm truncate">{room.name}</span>
+                    <span className="text-[10px] font-bold px-2 py-0.5 bg-slate-100 text-slate-600 rounded-full">{ROOM_TYPE_LABELS[room.type] ?? room.type}</span>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-0.5">€{room.pricePerNight}/noite · {room.maxGuests} hóspedes</p>
                 </div>
-                <p className="text-xs text-slate-500 mt-0.5">€{room.pricePerNight}/noite · {room.maxGuests} hóspedes</p>
+                <button onClick={() => removeRoom(room.localId)} className="text-slate-400 hover:text-red-500 transition-colors p-1.5 rounded-lg hover:bg-red-50"><span className="material-symbols-outlined text-base">delete</span></button>
               </div>
-              <button onClick={() => removeRoom(room.localId)} className="text-slate-400 hover:text-red-500 transition-colors p-1.5 rounded-lg hover:bg-red-50"><span className="material-symbols-outlined text-base">delete</span></button>
-            </div>
-          ))}
-        </div>
-      )}
+            ))}
+          </div>
+        )}
 
         {rooms.length === 0 && !showForm && (
           <p className="text-sm text-slate-400 italic">Nenhum quarto adicionado ainda.</p>
@@ -837,6 +803,7 @@ function Step2({
         {showForm && (
           <InlineRoomForm
             propertyId={propertyId}
+            roomsCount={rooms.length}
             onSaved={(room) => {
               setRooms((prev) => [...prev, room])
               setShowForm(false)
@@ -854,7 +821,7 @@ function Step2({
           Continuar <span className="material-symbols-outlined text-base">arrow_forward</span>
         </button>
       </div>
-    </div >
+    </div>
   )
 }
 
