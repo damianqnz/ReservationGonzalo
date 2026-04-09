@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
+import { ImageCategory } from '@prisma/client'
 import { auth } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { getImageUrl } from '@/lib/cloudinary'
@@ -9,6 +10,7 @@ const createSchema = z.object({
   alt: z.string().max(200).optional(),
   order: z.number().int().min(0).optional(),
   isCover: z.boolean().optional(),
+  category: z.nativeEnum(ImageCategory).optional(),
 })
 
 export async function POST(
@@ -57,6 +59,7 @@ export async function POST(
         alt: validated.alt ?? null,
         order: validated.order ?? 0,
         isCover: validated.isCover ?? false,
+        ...(validated.category && { category: validated.category }),
       },
     })
 
