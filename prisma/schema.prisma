@@ -260,6 +260,10 @@ model Review {
   ownerReply  String?  @db.Text
   isPublished Boolean  @default(false)
   isRejected  Boolean  @default(false)
+  source      String   @default("WEBSITE")
+  sourceUrl   String?
+  stayDate    DateTime?
+  isRejected  Boolean  @default(false)
   stayDate    DateTime?
   source      String?  @default("website")
   sourceUrl   String?
@@ -269,6 +273,7 @@ model Review {
 
   @@map("reviews")
 }
+
 
 model Notification {
   id        String           @id @default(cuid())
