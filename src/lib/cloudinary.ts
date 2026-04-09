@@ -17,7 +17,10 @@ export function getImageUrl(publicId: string, options: ImageOptions = {}): strin
   // Use NEXT_PUBLIC_ for client-side access, fall back to server-side env for Node.js
   const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || process.env.CLOUDINARY_CLOUD_NAME
 
-  if (!cloudName) return publicId
+  if (!cloudName) {
+    console.warn('[cloudinary] Cloud name not configured. Set NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME.')
+    return ''
+  }
 
   const transforms: string[] = []
   if (options.width) transforms.push(`w_${options.width}`)
@@ -41,7 +44,7 @@ export function resolveImageUrl(
   // Old seed publicIds are simple strings without a slash (e.g. "property1_cover")
   // and the real URL is the Unsplash url field.
   if (image.publicId && image.publicId.includes('/')) {
-    return getImageUrl(image.publicId, options)
+    return getImageUrl(image.publicId, options) || image.url
   }
   return image.url
 }

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { sileo } from 'sileo'
 import BedPicker from '@/components/dashboard/BedPicker'
 import ServicesChecklist from '@/components/dashboard/ServicesChecklist'
 import ToggleSwitch from '@/components/ui/ToggleSwitch'
@@ -23,13 +24,13 @@ function generateSlug(val: string): string {
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const ROOM_TYPES = [
-  { value: 'SINGLE',       label: 'Individual'          },
-  { value: 'DOUBLE',       label: 'Duplo'               },
-  { value: 'TWIN',         label: 'Twin'                },
-  { value: 'SUITE',        label: 'Suite'               },
-  { value: 'JUNIOR_SUITE', label: 'Suite Junior'        },
-  { value: 'FAMILY',       label: 'Familiar'            },
-  { value: 'STUDIO',       label: 'Estúdio'             },
+  { value: 'SINGLE', label: 'Individual' },
+  { value: 'DOUBLE', label: 'Duplo' },
+  { value: 'TWIN', label: 'Twin' },
+  { value: 'SUITE', label: 'Suite' },
+  { value: 'JUNIOR_SUITE', label: 'Suite Junior' },
+  { value: 'FAMILY', label: 'Familiar' },
+  { value: 'STUDIO', label: 'Estúdio' },
   { value: 'ENTIRE_PLACE', label: 'Alojamento completo' },
 ]
 
@@ -182,24 +183,23 @@ function Card({ title, icon, children }: { title: string; icon?: string; childre
 function StepIndicator({ current }: { current: 1 | 2 | 3 }) {
   const steps = [
     { n: 1, label: 'Informação básica' },
-    { n: 2, label: 'Quartos'           },
-    { n: 3, label: 'Revisão'           },
+    { n: 2, label: 'Quartos' },
+    { n: 3, label: 'Revisão' },
   ]
 
   return (
     <div className="flex items-center gap-0 mb-8">
       {steps.map((s, i) => {
-        const done   = s.n < current
+        const done = s.n < current
         const active = s.n === current
         return (
           <div key={s.n} className="flex items-center flex-1 last:flex-none">
             <div className="flex items-center gap-2 shrink-0">
               <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors ${
-                  done   ? 'bg-emerald-500 text-white'
-                  : active ? 'bg-[#8b1a1a] text-white'
-                  : 'bg-slate-100 text-slate-400'
-                }`}
+                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors ${done ? 'bg-emerald-500 text-white'
+                    : active ? 'bg-[#8b1a1a] text-white'
+                      : 'bg-slate-100 text-slate-400'
+                  }`}
               >
                 {done
                   ? <span className="material-symbols-outlined text-base" style={{ fontVariationSettings: "'FILL' 1" }}>check</span>
@@ -234,17 +234,17 @@ function Step1({
   onContinue,
   onSaveDirect,
 }: {
-  form:            Step1State
-  setForm:         React.Dispatch<React.SetStateAction<Step1State>>
-  slugManual:      boolean
-  setSlugManual:   React.Dispatch<React.SetStateAction<boolean>>
-  errors:          Partial<Record<keyof Step1State, string>>
-  spaceConfig:     { bedsList: string[]; services: string[] }
-  setSpaceConfig:  React.Dispatch<React.SetStateAction<{ bedsList: string[]; services: string[] }>>
-  apiError:        string | null
-  isSubmitting:    boolean
-  onContinue:      () => void   // hasRooms=true: save DRAFT → step 2
-  onSaveDirect:    () => void   // hasRooms=false: save → redirect
+  form: Step1State
+  setForm: React.Dispatch<React.SetStateAction<Step1State>>
+  slugManual: boolean
+  setSlugManual: React.Dispatch<React.SetStateAction<boolean>>
+  errors: Partial<Record<keyof Step1State, string>>
+  spaceConfig: { bedsList: string[]; services: string[] }
+  setSpaceConfig: React.Dispatch<React.SetStateAction<{ bedsList: string[]; services: string[] }>>
+  apiError: string | null
+  isSubmitting: boolean
+  onContinue: () => void   // hasRooms=true: save DRAFT → step 2
+  onSaveDirect: () => void   // hasRooms=false: save → redirect
 }) {
   function set(field: keyof Step1State, value: string | boolean) {
     setForm((prev) => {
@@ -578,68 +578,101 @@ function Step1({
   )
 }
 
-// ─── Inline room form ─────────────────────────────────────────────────────────
+// ─── InlineRoomForm ───────────────────────────────────────────────────────────
 
-interface InlineRoomFormProps {
-  propertyId:  string
-  onAdded:     (room: RoomDraft) => void
-  onCancel:    () => void
-  nextOrder:   number
-}
+function InlineRoomForm({
+  propertyId,
+  onSaved,
+  onCancel,
+  onRequestNew,
+}: {
+  propertyId: string
+  onSaved: (room: RoomDraft) => void
+  onCancel: () => void
+  onRequestNew: () => void
+}) {
+  const [name, setName] = useState('')
+  const [type, setType] = useState('DOUBLE')
+  const [price, setPrice] = useState('')
+  const [maxGuests, setMaxGuests] = useState('2')
+  const [bedrooms, setBedrooms] = useState('1')
+  const [bathrooms, setBathrooms] = useState('1')
+  const [bathroomType, setBathroomType] = useState('private')
+  const [bedsList, setBedsList] = useState<string[]>([])
+  const [services, setServices] = useState<string[]>([])
+  const [saving, setSaving] = useState(false)
 
-function InlineRoomForm({ propertyId, onAdded, onCancel, nextOrder }: InlineRoomFormProps) {
-  const [name,          setName]          = useState('')
-  const [type,          setType]          = useState('DOUBLE')
-  const [price,         setPrice]         = useState('')
-  const [maxGuests,     setMaxGuests]     = useState('2')
-  const [bathroomType,  setBathroomType]  = useState('private')
-  const [bedsList,      setBedsList]      = useState<string[]>([])
-  const [services,      setServices]      = useState<string[]>([])
-  const [servicesOpen,  setServicesOpen]  = useState(false)
-  const [saving,        setSaving]        = useState(false)
-  const [error,         setError]         = useState<string | null>(null)
+  function reset() {
+    setName(''); setType('DOUBLE'); setPrice(''); setMaxGuests('2')
+    setBedrooms('1'); setBathrooms('1'); setBathroomType('private')
+    setBedsList([]); setServices([])
+  }
 
-  async function handleAdd() {
-    if (!name.trim()) { setError('Nome do quarto é obrigatório.'); return }
-    if (!price || Number(price) <= 0) { setError('Preço por noite é obrigatório.'); return }
-    setSaving(true); setError(null)
-
+  async function handleSave() {
+    if (!name.trim()) {
+      sileo.error({ title: 'Campo obrigatório', description: 'O nome do quarto é obrigatório' })
+      return
+    }
+    if (!price || Number(price) <= 0) {
+      sileo.error({ title: 'Campo obrigatório', description: 'O preço por noite é obrigatório' })
+      return
+    }
+    setSaving(true)
     try {
       const res = await fetch(`/api/properties/${propertyId}/rooms`, {
-        method:  'POST',
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name:          name.trim(),
+          name: name.trim(),
           type,
           pricePerNight: Number(price),
-          maxGuests:     Number(maxGuests),
+          maxGuests: Number(maxGuests),
+          bedrooms: Number(bedrooms),
+          bathrooms: Number(bathrooms),
+          beds: bedsList.length || Number(bedrooms) || 1,
           bathroomType,
-          bathrooms:     1,
-          bedrooms:      1,
-          beds:          Math.max(1, bedsList.length),
-          bedsList:      bedsList.length > 0 ? JSON.stringify(bedsList) : undefined,
-          services:      services.length  > 0 ? JSON.stringify(services) : undefined,
-          order:         nextOrder,
+          bathrooms: 1,
+          bedrooms: 1,
+          beds: Math.max(1, bedsList.length),
+          bedsList: bedsList.length > 0 ? JSON.stringify(bedsList) : undefined,
+          services: services.length > 0 ? JSON.stringify(services) : undefined,
+          order: nextOrder,
         }),
       })
       const json = await res.json()
       if (!res.ok) {
-        setError(typeof json.error === 'string' ? json.error : 'Erro ao criar quarto.')
+        sileo.error({
+          title: 'Erro ao guardar quarto',
+          description: typeof data.error === 'string'
+            ? data.error
+            : 'Verifique os campos e tente novamente',
+        })
         return
       }
+      const saved = name.trim()
       onAdded({
         localId: crypto.randomUUID(),
-        id:            json.data.id,
-        name:          name.trim(),
+        id: data.data.id,
+        name: name.trim(),
         type,
         pricePerNight: Number(price),
-        maxGuests:     Number(maxGuests),
+        maxGuests: Number(maxGuests),
         bathroomType,
         bedsList,
         services,
       })
+      reset()
+      sileo.action({
+        title: 'Quarto adicionado!',
+        description: `${saved} foi adicionado com sucesso`,
+        duration: 6000,
+        button: {
+          title: 'Adicionar outro quarto',
+          onClick: onRequestNew,
+        },
+      })
     } catch {
-      setError('Erro de ligação. Tente novamente.')
+      sileo.error({ title: 'Erro de ligação. Tente novamente', description: 'Por favor tente novamente' })
     } finally {
       setSaving(false)
     }
@@ -671,6 +704,52 @@ function InlineRoomForm({ propertyId, onAdded, onCancel, nextOrder }: InlineRoom
         </Field>
       </div>
 
+      <div className="grid grid-cols-2 gap-4">
+        <Field label="Quartos">
+          <input
+            className={INPUT}
+            type="number"
+            min={0}
+            max={20}
+            value={bedrooms}
+            onChange={(e) => setBedrooms(e.target.value)}
+          />
+        </Field>
+        <Field label="Casas de banho">
+          <input
+            className={INPUT}
+            type="number"
+            min={1}
+            max={20}
+            value={bathrooms}
+            onChange={(e) => setBathrooms(e.target.value)}
+          />
+        </Field>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <Field label="Quartos">
+          <input
+            className={INPUT}
+            type="number"
+            min={0}
+            max={20}
+            value={bedrooms}
+            onChange={(e) => setBedrooms(e.target.value)}
+          />
+        </Field>
+        <Field label="Casas de banho">
+          <input
+            className={INPUT}
+            type="number"
+            min={1}
+            max={20}
+            value={bathrooms}
+            onChange={(e) => setBathrooms(e.target.value)}
+          />
+        </Field>
+      </div>
+
       <Field label="Casa de banho">
         <select className={SELECT} value={bathroomType} onChange={(e) => setBathroomType(e.target.value)}>
           <option value="private">Casa de banho privada</option>
@@ -683,16 +762,21 @@ function InlineRoomForm({ propertyId, onAdded, onCancel, nextOrder }: InlineRoom
         <BedPicker value={bedsList} onChange={setBedsList} />
       </div>
 
-      <div>
-        <button type="button" onClick={() => setServicesOpen(!servicesOpen)}
-          className="flex items-center justify-between w-full text-xs font-bold uppercase tracking-wider text-slate-500 py-2 hover:text-slate-700 transition-colors">
-          <span>Serviços {services.length > 0 && `(${services.length})`}</span>
-          <span className="material-symbols-outlined text-base transition-transform" style={{ transform: servicesOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}>expand_more</span>
-        </button>
-        {servicesOpen && <div className="mt-2"><ServicesChecklist value={services} onChange={setServices} /></div>}
-      </div>
+      <details className="group">
+        <summary className="text-sm font-semibold text-[#1a1a2e] cursor-pointer list-none flex items-center gap-2">
+          <span className="material-symbols-outlined text-base text-slate-400 group-open:rotate-90 transition-transform">
+            chevron_right
+          </span>
+          Serviços e comodidades
+        </summary>
+        <div className="mt-3">
+          <ServicesChecklist value={services} onChange={setServices} />
+        </div>
+      </details>
 
-      {error && <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-700">{error}</div>}
+      {error && (
+        <p className="text-xs text-red-600">{error}</p>
+      )}
 
       <div className="flex gap-3 pt-1">
         <button type="button" onClick={onCancel} className="px-5 py-2 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors">Cancelar</button>
@@ -710,10 +794,10 @@ function Step2({
   propertyId, rooms, setRooms, onBack, onContinue,
 }: {
   propertyId: string
-  rooms:       RoomDraft[]
-  setRooms:    React.Dispatch<React.SetStateAction<RoomDraft[]>>
-  onBack:      () => void
-  onContinue:  () => void
+  rooms: RoomDraft[]
+  setRooms: React.Dispatch<React.SetStateAction<RoomDraft[]>>
+  onBack: () => void
+  onContinue: () => void
 }) {
   const [showForm, setShowForm] = useState(false)
   const ROOM_TYPE_LABELS: Record<string, string> = Object.fromEntries(ROOM_TYPES.map((t) => [t.value, t.label]))
@@ -746,13 +830,21 @@ function Step2({
         </div>
       )}
 
-      {showForm ? (
-        <InlineRoomForm propertyId={propertyId} nextOrder={rooms.length} onAdded={(r) => { setRooms((p) => [...p, r]); setShowForm(false) }} onCancel={() => setShowForm(false)} />
-      ) : (
-        <button type="button" onClick={() => setShowForm(true)} className="w-full py-4 border-2 border-dashed border-slate-200 rounded-xl text-sm font-semibold text-slate-400 hover:border-[#8b1a1a] hover:text-[#8b1a1a] hover:bg-[#8b1a1a]/5 transition-all flex items-center justify-center gap-2">
-          <span className="material-symbols-outlined text-base">add</span> Adicionar quarto
-        </button>
-      )}
+        {rooms.length === 0 && !showForm && (
+          <p className="text-sm text-slate-400 italic">Nenhum quarto adicionado ainda.</p>
+        )}
+
+        {showForm && (
+          <InlineRoomForm
+            propertyId={propertyId}
+            onSaved={(room) => {
+              setRooms((prev) => [...prev, room])
+              setShowForm(false)
+            }}
+            onCancel={() => setShowForm(false)}
+          />
+        )}
+      </section>
 
       <div className="flex items-center gap-3 pb-8 pt-4 border-t border-slate-100">
         <button type="button" onClick={onBack} className="flex items-center gap-1.5 px-6 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors">
@@ -762,7 +854,7 @@ function Step2({
           Continuar <span className="material-symbols-outlined text-base">arrow_forward</span>
         </button>
       </div>
-    </div>
+    </div >
   )
 }
 
@@ -771,10 +863,10 @@ function Step2({
 function Step3({
   form, rooms, propertyId, onBack,
 }: {
-  form:       Step1State
-  rooms:      RoomDraft[]
+  form: Step1State
+  rooms: RoomDraft[]
   propertyId: string
-  onBack:     () => void
+  onBack: () => void
 }) {
   const router = useRouter()
   const [saving, setSaving] = useState(false)
@@ -785,7 +877,7 @@ function Step3({
     setSaving(true); setApiError(null)
     try {
       const res = await fetch(`/api/properties/${propertyId}`, {
-        method:  'PATCH',
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: 'ACTIVE' }),
       })
@@ -845,23 +937,23 @@ function Step3({
 
 export default function NewPropertyPage() {
   const router = useRouter()
-  const [step,         setStep]         = useState<1 | 2 | 3>(1)
-  const [form,         setForm]         = useState<Step1State>(STEP1_INITIAL)
-  const [slugManual,   setSlugManual]   = useState(false)
-  const [propertyId,   setPropertyId]   = useState<string | null>(null)
-  const [rooms,        setRooms]        = useState<RoomDraft[]>([])
-  const [errors,       setErrors]       = useState<Partial<Record<keyof Step1State, string>>>({})
-  const [apiError,     setApiError]     = useState<string | null>(null)
+  const [step, setStep] = useState<1 | 2 | 3>(1)
+  const [form, setForm] = useState<Step1State>(STEP1_INITIAL)
+  const [slugManual, setSlugManual] = useState(false)
+  const [propertyId, setPropertyId] = useState<string | null>(null)
+  const [rooms, setRooms] = useState<RoomDraft[]>([])
+  const [errors, setErrors] = useState<Partial<Record<keyof Step1State, string>>>({})
+  const [apiError, setApiError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [spaceConfig,  setSpaceConfig]  = useState<{ bedsList: string[]; services: string[] }>({ bedsList: [], services: [] })
+  const [spaceConfig, setSpaceConfig] = useState<{ bedsList: string[]; services: string[] }>({ bedsList: [], services: [] })
 
   function validateStep1(): boolean {
     const e: Partial<Record<keyof Step1State, string>> = {}
-    if (!form.title.trim())        e.title = 'Título é obrigatório'
-    if (!form.slug.trim())         e.slug  = 'Slug é obrigatório'
-    if (!form.description.trim())  e.description = 'Descrição é obrigatória'
-    if (!form.address.trim())      e.address = 'Morada é obrigatória'
-    if (!form.city.trim())         e.city = 'Cidade é obrigatória'
+    if (!form.title.trim()) e.title = 'Título é obrigatório'
+    if (!form.slug.trim()) e.slug = 'Slug é obrigatório'
+    if (!form.description.trim()) e.description = 'Descrição é obrigatória'
+    if (!form.address.trim()) e.address = 'Morada é obrigatória'
+    if (!form.city.trim()) e.city = 'Cidade é obrigatória'
     if (!form.pricePerNight || Number(form.pricePerNight) <= 0) e.pricePerNight = 'Preço inválido'
     setErrors(e)
     return Object.keys(e).length === 0
@@ -869,50 +961,50 @@ export default function NewPropertyPage() {
 
   function buildPayload(status: 'DRAFT' | 'ACTIVE') {
     return {
-      title:              form.title.trim(),
-      slug:               form.slug.trim(),
-      description:        form.description.trim(),
-      type:               form.type,
+      title: form.title.trim(),
+      slug: form.slug.trim(),
+      description: form.description.trim(),
+      type: form.type,
       status,
-      address:            form.address.trim(),
-      city:               form.city.trim(),
-      country:            form.country || 'PT',
-      zipCode:            form.zipCode.trim() || undefined,
-      maxGuests:          Number(form.maxGuests),
-      bedrooms:           Number(form.bedrooms),
-      bathrooms:          Number(form.bathrooms),
-      beds:               Number(form.beds),
-      area:               form.area ? Number(form.area) : undefined,
-      pricePerNight:      Number(form.pricePerNight),
-      cleaningFee:        Number(form.cleaningFee) || 0,
-      securityDeposit:    Number(form.securityDeposit) || 0,
-      checkInTime:        form.checkInTime || '15:00',
-      checkOutTime:       form.checkOutTime || '11:00',
-      minNights:          Number(form.minNights) || 1,
-      maxNights:          Number(form.maxNights) || 365,
+      address: form.address.trim(),
+      city: form.city.trim(),
+      country: form.country || 'PT',
+      zipCode: form.zipCode.trim() || undefined,
+      maxGuests: Number(form.maxGuests),
+      bedrooms: Number(form.bedrooms),
+      bathrooms: Number(form.bathrooms),
+      beds: Number(form.beds),
+      area: form.area ? Number(form.area) : undefined,
+      pricePerNight: Number(form.pricePerNight),
+      cleaningFee: Number(form.cleaningFee) || 0,
+      securityDeposit: Number(form.securityDeposit) || 0,
+      checkInTime: form.checkInTime || '15:00',
+      checkOutTime: form.checkOutTime || '11:00',
+      minNights: Number(form.minNights) || 1,
+      maxNights: Number(form.maxNights) || 365,
       cancellationPolicy: form.cancellationPolicy,
-      hasRooms:           form.hasRooms,
-      bathroomType:       !form.hasRooms ? form.bathroomType : undefined,
-      bedsConfig:         !form.hasRooms && spaceConfig.bedsList.length > 0 ? JSON.stringify(spaceConfig.bedsList) : undefined,
-      services:           !form.hasRooms && spaceConfig.services.length > 0 ? JSON.stringify(spaceConfig.services) : undefined,
+      hasRooms: form.hasRooms,
+      bathroomType: !form.hasRooms ? form.bathroomType : undefined,
+      bedsConfig: !form.hasRooms && spaceConfig.bedsList.length > 0 ? JSON.stringify(spaceConfig.bedsList) : undefined,
+      services: !form.hasRooms && spaceConfig.services.length > 0 ? JSON.stringify(spaceConfig.services) : undefined,
       // New fields from COMMIT 1
-      arrivalType:        form.arrivalType,
-      floors:             Number(form.floors) || 1,
-      hasElevator:        form.hasElevator,
-      towelsIncluded:     form.towelsIncluded,
-      petsAllowed:        form.petsAllowed,
-      childrenAllowed:    form.childrenAllowed,
-      smokingAllowed:     form.smokingAllowed,
-      spaceDescription:   form.spaceDescription.trim() || undefined,
-      accessInfo:         form.accessInfo.trim() || undefined,
-      interactionInfo:    form.interactionInfo.trim() || undefined,
-      additionalInfo:     form.additionalInfo.trim() || undefined,
-      parkingInfo:        form.parkingInfo.trim() || undefined,
-      extraServices:      form.extraServices.trim() || undefined,
-      houseRules:         form.houseRules.trim() || undefined,
-      cancellationDays:   Number(form.cancellationDays) || 0,
-      licenseNumber:      form.licenseNumber.trim() || undefined,
-      hostDescription:    form.hostDescription.trim() || undefined,
+      arrivalType: form.arrivalType,
+      floors: Number(form.floors) || 1,
+      hasElevator: form.hasElevator,
+      towelsIncluded: form.towelsIncluded,
+      petsAllowed: form.petsAllowed,
+      childrenAllowed: form.childrenAllowed,
+      smokingAllowed: form.smokingAllowed,
+      spaceDescription: form.spaceDescription.trim() || undefined,
+      accessInfo: form.accessInfo.trim() || undefined,
+      interactionInfo: form.interactionInfo.trim() || undefined,
+      additionalInfo: form.additionalInfo.trim() || undefined,
+      parkingInfo: form.parkingInfo.trim() || undefined,
+      extraServices: form.extraServices.trim() || undefined,
+      houseRules: form.houseRules.trim() || undefined,
+      cancellationDays: Number(form.cancellationDays) || 0,
+      licenseNumber: form.licenseNumber.trim() || undefined,
+      hostDescription: form.hostDescription.trim() || undefined,
     }
   }
 
@@ -921,9 +1013,9 @@ export default function NewPropertyPage() {
     setIsSubmitting(true); setApiError(null)
     try {
       const res = await fetch('/api/properties', {
-        method:  'POST',
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify(buildPayload('ACTIVE')),
+        body: JSON.stringify(buildPayload('ACTIVE')),
       })
       const data = await res.json()
       if (!res.ok) { setApiError(data.error || 'Erro ao criar.'); return }
@@ -940,9 +1032,9 @@ export default function NewPropertyPage() {
     setIsSubmitting(true); setApiError(null)
     try {
       const res = await fetch('/api/properties', {
-        method:  'POST',
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify(buildPayload('DRAFT')),
+        body: JSON.stringify(buildPayload('DRAFT')),
       })
       const data = await res.json()
       if (!res.ok) { setApiError(data.error || 'Erro ao guardar.'); return }
@@ -959,7 +1051,7 @@ export default function NewPropertyPage() {
   return (
     <div className="max-w-3xl pb-20">
       <div className="flex items-center gap-4 mb-8">
-        <button onClick={() => step > 1 ? setStep((s) => (s-1) as any) : router.back()}
+        <button onClick={() => step > 1 ? setStep((s) => (s - 1) as any) : router.back()}
           className="p-2 rounded-xl hover:bg-slate-100 text-slate-400 transition-colors"><span className="material-symbols-outlined text-lg">arrow_back</span></button>
         <div>
           <h2 className="text-2xl font-extrabold text-[#1a1a2e] tracking-tight">Nova Propriedade</h2>
