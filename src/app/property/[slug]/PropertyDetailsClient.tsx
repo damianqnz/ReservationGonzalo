@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, type ComponentType } from "react";
+import { useState, useEffect, useRef, type ComponentType } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -47,9 +47,14 @@ import {
   Key,
   Home,
   MessageSquare,
+  Share2,
+  Mail,
+  Copy,
+  CheckCircle2,
 } from "lucide-react";
 import { format } from "date-fns";
 import { PROPERTY_SERVICES, AMENITY_TO_SERVICE_KEY } from "@/lib/propertyServices";
+import { sileo } from 'sileo';
 
 declare global {
   interface Window {
@@ -898,6 +903,164 @@ function GuestModal({
   );
 }
 
+// ─── Share Modal ─────────────────────────────────────────────────────────────
+function ShareModal({
+  isOpen,
+  onClose,
+  propertyTitle,
+  propertyUrl,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  propertyTitle: string;
+  propertyUrl: string;
+}) {
+  const [copied, setCopied] = useState(false);
+  const modalRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose();
+    }
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onClose]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    function handleClickOutside(e: MouseEvent) {
+      if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
+        onClose();
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isOpen, onClose]);
+
+  if (!isOpen) return null;
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(propertyUrl);
+    setCopied(true);
+    sileo.success({ title: 'Link copiado!' });
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const shareOptions = [
+    {
+      name: "WhatsApp",
+      icon: (
+        <div className="w-10 h-10 flex items-center justify-center">
+          <svg viewBox="0 0 24 24" fill="#25D366" xmlns="http://www.w3.org/2000/svg" className="w-8 h-8">
+            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+          </svg>
+        </div>
+      ),
+      url: `https://wa.me/?text=${encodeURIComponent(`🏠 ${propertyTitle}\n${propertyUrl}`)}`
+    },
+    {
+      name: "Facebook",
+      icon: (
+        <div className="w-10 h-10 flex items-center justify-center">
+          <svg viewBox="0 0 24 24" fill="#1877F2" xmlns="http://www.w3.org/2000/svg" className="w-8 h-8">
+            <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+          </svg>
+        </div>
+      ),
+      url: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(propertyUrl)}`
+    },
+    {
+      name: "Telegram",
+      icon: (
+        <div className="w-10 h-10 flex items-center justify-center">
+          <svg viewBox="0 0 24 24" fill="#0088CC" xmlns="http://www.w3.org/2000/svg" className="w-8 h-8">
+            <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
+          </svg>
+        </div>
+      ),
+      url: `https://t.me/share/url?url=${encodeURIComponent(propertyUrl)}&text=${encodeURIComponent(propertyTitle)}`
+    },
+    {
+      name: "X",
+      icon: (
+        <div className="w-10 h-10 flex items-center justify-center">
+          <svg viewBox="0 0 24 24" fill="#000000" xmlns="http://www.w3.org/2000/svg" className="w-8 h-8">
+            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.253 5.622 5.911-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+          </svg>
+        </div>
+      ),
+      url: `https://twitter.com/intent/tweet?text=${encodeURIComponent(propertyTitle)}&url=${encodeURIComponent(propertyUrl)}`
+    },
+    {
+      name: "Email",
+      icon: (
+        <div className="w-10 h-10 flex items-center justify-center bg-gray-100 rounded-full">
+          <Mail className="w-5 h-5 text-gray-600" />
+        </div>
+      ),
+      url: `mailto:?subject=${encodeURIComponent(`🏠 ${propertyTitle}`)}&body=${encodeURIComponent(`Olha este alojamento:\n${propertyUrl}`)}`
+    }
+  ];
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
+      <div 
+        ref={modalRef}
+        className="bg-white w-full max-w-[400px] rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200"
+      >
+        <div className="p-6 space-y-6">
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <h2 className="text-xl font-bold text-[#1a1a2e]">Partilhar alojamento</h2>
+              <p className="text-sm text-gray-500 truncate max-w-[280px]">{propertyTitle}</p>
+            </div>
+            <button 
+              onClick={onClose}
+              className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
+            >
+              <X size={20} className="text-gray-400" />
+            </button>
+          </div>
+
+          <div className="grid grid-cols-3 gap-4">
+            {shareOptions.map((option) => (
+              <a 
+                key={option.name}
+                href={option.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex flex-col items-center gap-2 p-3 rounded-2xl hover:bg-gray-50 transition-all group"
+              >
+                <div className="group-hover:scale-110 transition-transform">
+                  {option.icon}
+                </div>
+                <span className="text-xs font-medium text-gray-600">{option.name}</span>
+              </a>
+            ))}
+          </div>
+
+          <div className="space-y-3 pt-4 border-t border-gray-100">
+            <p className="text-sm font-semibold text-[#1a1a2e]">Ou copia o link</p>
+            <div className="flex gap-2">
+              <div className="flex-1 bg-gray-50 border border-gray-100 rounded-xl px-3 py-2 flex items-center min-w-0">
+                <span className="text-sm text-gray-500 truncate">{propertyUrl}</span>
+              </div>
+              <button 
+                onClick={handleCopy}
+                className="shrink-0 bg-[#8b1a1a] text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-[#6d1414] transition-all flex items-center gap-2"
+              >
+                {copied ? <CheckCircle2 size={16} /> : <Copy size={16} />}
+                {copied ? 'Copiado!' : 'Copiar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export default function PropertyDetailsClient({
@@ -910,7 +1073,12 @@ export default function PropertyDetailsClient({
 }: Props) {
   const router = useRouter();
   const [modalOpen, setModalOpen] = useState(false);
+  const [shareModalOpen, setShareModalOpen] = useState(false);
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
+
+  const propertyUrl = typeof window !== 'undefined'
+    ? window.location.href
+    : `${process.env.NEXT_PUBLIC_SITE_URL}/property/${property.slug}`;
 
   // ── Date picker state ────────────────────────────────────────────────────────
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -1004,12 +1172,14 @@ export default function PropertyDetailsClient({
           </h1>
         </div>
         <div className="flex gap-1">
-          <button aria-label="Partilhar" className="p-2">
+          <button onClick={() => setShareModalOpen(true)} aria-label="Partilhar" className="p-2">
             <span className="material-symbols-outlined text-text-main">share</span>
           </button>
+          {/* TODO: Implement save/wishlist feature
           <button aria-label="Guardar" className="p-2">
             <span className="material-symbols-outlined text-text-main">favorite_border</span>
           </button>
+          */}
         </div>
         </div>
       </header>
@@ -1942,6 +2112,14 @@ export default function PropertyDetailsClient({
           onClose={() => setShowDatePicker(false)}
         />
       )}
+
+      {/* ── Share Modal ──────────────────────────────────────────────────────── */}
+      <ShareModal
+        isOpen={shareModalOpen}
+        onClose={() => setShareModalOpen(false)}
+        propertyTitle={property.title}
+        propertyUrl={propertyUrl}
+      />
     </div>
   );
 }
