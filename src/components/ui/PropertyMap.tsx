@@ -66,12 +66,21 @@ export default function PropertyMap({
 
   return (
     <div>
-      <div className="h-[250px] sm:h-[400px] rounded-xl overflow-hidden">
+      <div 
+        className="relative h-[250px] sm:h-[400px] rounded-xl overflow-hidden"
+        style={{ isolation: "isolate", zIndex: 0 }}
+      >
         <MapContainer
           center={[lat, lng]}
           zoom={15}
           scrollWheelZoom={false}
-          style={{ height: "100%", width: "100%" }}
+          style={{ 
+            height: "100%", 
+            width: "100%",
+            position: "relative",
+            zIndex: 0,
+            isolation: "isolate"
+          }}
           aria-label={`Mapa de localização aproximada de ${propertyTitle}`}
         >
           <TileLayer
