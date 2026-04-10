@@ -2029,7 +2029,7 @@ export default function PropertyDetailsClient({
       </main>
 
       {/* ── Sticky Booking Bar ───────────────────────────────────────────────── */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-surface shadow-[0_-4px_20px_rgba(26,26,46,0.08)]">
+      <div className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-surface shadow-[0_-4px_20px_rgba(26,26,46,0.08)]">
         <div className="container-main py-3">
         <div className="max-w-2xl mx-auto flex items-center justify-between gap-4">
           <div className="min-w-0">
