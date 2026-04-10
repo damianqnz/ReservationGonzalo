@@ -1,3 +1,5 @@
+import Footer from "@/components/stitch/Footer";
+
 const stats = [
   { value: "+1.5M", label: "huéspedes felices" },
   { value: "150", label: "nuevos alojamientos/mes" },
@@ -30,24 +32,6 @@ const benefits = [
   "Atención 24/7",
 ];
 
-const footerColumns = [
-  {
-    title: "Empresa",
-    links: ["About Us", "Trayectoria", "Carreras"],
-  },
-  {
-    title: "Legal",
-    links: ["Privacy Policy", "Terms of Service", "Cookies"],
-  },
-  {
-    title: "Redes",
-    links: ["Instagram", "LinkedIn", "Twitter"],
-  },
-  {
-    title: "Contacto",
-    links: ["Contact Us", "Soporte"],
-  },
-];
 
 function StarRow({ count = 5 }: { count?: number }) {
   return (
@@ -240,77 +224,7 @@ export default function AboutUs() {
         </section>
       </main>
 
-      {/* Footer */}
-      <footer className="bg-white pt-20 pb-10 border-t border-gray-100">
-        <div className="container-main space-y-16">
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-12">
-            <div className="col-span-2 lg:col-span-1 space-y-6">
-              <span className="text-xl font-bold font-display">
-                ReservationGonzalo
-              </span>
-              <p className="text-gray-500 text-sm leading-relaxed">
-                Redefiniendo el lujo y la comodidad en el alquiler vacacional de
-                alta gama.
-              </p>
-              <div className="flex gap-4">
-                <a
-                  className="text-gray-400 hover:text-primary transition-colors"
-                  href="#"
-                >
-                  <span className="material-symbols-outlined">public</span>
-                </a>
-                <a
-                  className="text-gray-400 hover:text-primary transition-colors"
-                  href="#"
-                >
-                  <span className="material-symbols-outlined">camera</span>
-                </a>
-                <a
-                  className="text-gray-400 hover:text-primary transition-colors"
-                  href="#"
-                >
-                  <span className="material-symbols-outlined">business</span>
-                </a>
-              </div>
-            </div>
-            {footerColumns.map((col) => (
-              <div key={col.title} className="space-y-6">
-                <p className="font-bold text-sm uppercase tracking-widest text-gray-900">
-                  {col.title}
-                </p>
-                <ul className="space-y-4 text-sm text-gray-600">
-                  {col.links.map((link) => (
-                    <li key={link}>
-                      <a
-                        className="hover:text-primary transition-colors"
-                        href="#"
-                      >
-                        {link}
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-          <div className="pt-10 border-t border-gray-100 flex flex-col md:flex-row justify-between items-center gap-6">
-            <p className="text-sm text-gray-400">
-              © 2026 ReservationGonzalo. All rights reserved.
-            </p>
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-400">
-                Página oficial de Gonzalo
-              </span>
-              <span
-                className="material-symbols-outlined text-primary"
-                style={{ fontVariationSettings: "'FILL' 1" }}
-              >
-                favorite
-              </span>
-            </div>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

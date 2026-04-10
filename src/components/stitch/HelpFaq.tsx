@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from 'next/link';
 
 interface FaqQuestion {
   q: string;
@@ -102,9 +103,9 @@ export default function HelpFaq() {
                 Gestiona tus reservas, accede a información importante sobre la
                 propiedad o reserva complementos para mejorar tu estancia.
               </p>
-              <button className="bg-primary text-white px-16 py-8 rounded-xl font-semibold shadow-lg shadow-primary/20 hover:bg-primary/80 transition-all transform hover:-translate-y-0.5">
+              <Link href="/login?tab=guest" className="bg-primary text-white px-16 py-8 rounded-xl font-semibold shadow-lg shadow-primary/20 hover:bg-primary/80 transition-all transform hover:-translate-y-0.5">
                 Gestionar mi reserva
-              </button>
+              </Link>
             </div>
             <div className="w-full md:w-1/3 flex justify-center order-1 md:order-2">
               <div className="relative w-48 h-48 md:w-64 md:h-64 flex items-center justify-center">
@@ -197,31 +198,31 @@ export default function HelpFaq() {
 
       {/* Footer */}
       <footer className="bg-white border-t border-gray-100 py-24 container-main">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+          <a
+            className="text-xl font-display font-bold text-primary tracking-tight"
+            href="#"
+          >
+            ReservationGonzalo
+          </a>
+          <div className="flex items-center space-x-8 text-sm font-medium text-text-muted">
             <a
-              className="text-xl font-display font-bold text-primary tracking-tight"
+              className="hover:text-primary transition-colors"
               href="#"
             >
-              ReservationGonzalo
+              Privacy Policy
             </a>
-            <div className="flex items-center space-x-8 text-sm font-medium text-text-muted">
-              <a
-                className="hover:text-primary transition-colors"
-                href="#"
-              >
-                Privacy Policy
-              </a>
-              <a
-                className="hover:text-primary transition-colors"
-                href="#"
-              >
-                Terms of Service
-              </a>
-            </div>
-            <p className="text-sm text-text-muted">
-              © 2026 ReservationGonzalo
-            </p>
+            <a
+              className="hover:text-primary transition-colors"
+              href="#"
+            >
+              Terms of Service
+            </a>
           </div>
+          <p className="text-sm text-text-muted">
+            © 2026 ReservationGonzalo
+          </p>
+        </div>
       </footer>
     </div>
   );
