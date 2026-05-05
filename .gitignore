@@ -16,6 +16,8 @@
 # next.js
 /.next/
 /out/
+build
+dist
 
 # production
 /build
@@ -23,6 +25,7 @@
 # misc
 .DS_Store
 *.pem
+.npmrc
 
 # debug
 npm-debug.log*
@@ -32,6 +35,9 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+.env.local
+.env.example
+.env.development.local
 
 # vercel
 .vercel
@@ -40,11 +46,13 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# Antigravity / OpenClaw (local only)
+# AI Tooling
 .openclaw/
+CLAUDE.md
 AGENTS.md
 HEARTBEAT.md
 IDENTITY.md
-SOUL.md
 TOOLS.md
-USER.md
+.claude/settings.json
+.claude/skills/
+.agents/
