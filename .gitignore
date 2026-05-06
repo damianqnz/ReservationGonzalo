@@ -53,6 +53,21 @@ AGENTS.md
 HEARTBEAT.md
 IDENTITY.md
 TOOLS.md
-.claude/settings.json
+.claude/
+.claude/settings.local.json
 .claude/skills/
 .agents/
+
+# Internal documentation (kept local only)
+ARCHITECTURE.md
+DESIGN_SYSTEM.md
+STANDARDS.md
+TECH_STACK.md
+WORKFLOWS.md
+SOUL.md
+USER.md
+
+# Local dev infrastructure
+docker-compose.yml
+tsconfig.seed.json
+check-role.js
