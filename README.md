@@ -1,58 +1,58 @@
 # ReservationGonzalo
 
-Plataforma de reservas directas para alojamiento de corta estancia en Lisboa, Portugal. Diseñada para que propietarios de Alojamento Local (AL) gestionen reservas, pagos y huéspedes sin depender de plataformas intermediarias como Airbnb.
+Direct booking platform for short-term rentals in Lisbon, Portugal. Built for Alojamento Local (AL) property owners to manage reservations, payments, and guests without relying on intermediary platforms like Airbnb.
 
-## Stack tecnológico
+## Tech Stack
 
-| Capa | Tecnología |
-|------|-----------|
+| Layer | Technology |
+|-------|-----------|
 | Framework | Next.js 16 (App Router) + React 19 |
-| Lenguaje | TypeScript 5 (strict) |
-| Base de datos | PostgreSQL 16 + Prisma ORM 6 |
-| Autenticación | NextAuth v5 — Credentials + Google OAuth |
-| Pagos | Stripe (PaymentIntents + Webhooks) |
+| Language | TypeScript 5 (strict) |
+| Database | PostgreSQL 16 + Prisma ORM 6 |
+| Authentication | NextAuth v5 — Credentials + Google OAuth |
+| Payments | Stripe (PaymentIntents + Webhooks) |
 | Email | Resend + React Email |
-| Imágenes | Cloudinary |
-| Estilos | Tailwind CSS 4 |
-| Validación | Zod 4 + React Hook Form |
+| Images | Cloudinary |
+| Styles | Tailwind CSS 4 |
+| Validation | Zod 4 + React Hook Form |
 | Deploy | Vercel |
 
-## Funcionalidades
+## Features
 
-**Portal público**
-- Listado y detalle de propiedades con galería, mapa y descripción
-- Widget de reservas con disponibilidad en tiempo real
-- Precios dinámicos: temporada, fines de semana, estancias largas (≥7 noches)
-- Checkout completo con Stripe Elements
-- Portal del huésped para consultar y gestionar reservas por código de confirmación
+**Public portal**
+- Property listing and detail pages with gallery, map, and description
+- Real-time availability booking widget
+- Dynamic pricing: seasonal, weekends, long stays (≥7 nights)
+- Full checkout flow with Stripe Elements
+- Guest portal to view and manage reservations by confirmation code
 
-**Dashboard del propietario**
-- CRUD completo de propiedades y habitaciones
-- Calendario de reservas con bloqueos manuales
-- Gestión de reseñas (aprobar, rechazar, responder, importar externas)
-- Sistema de cupones con 7 tipos de validación
-- Analytics: revenue, ocupación, look-to-book ratio, desglose por nacionalidad
-- Sincronización iCal bidireccional (exportar + importar calendarios externos)
-- Notificaciones en tiempo real con push notifications (Web Push API)
-- Exportación de clientes a CSV
+**Owner dashboard**
+- Full CRUD for properties and rooms
+- Reservation calendar with manual date blocking
+- Review management (approve, reject, reply, import from external sources)
+- Coupon system with 7 validation types
+- Analytics: revenue, occupancy, look-to-book ratio, nationality breakdown
+- Bidirectional iCal sync (export + import external calendars)
+- Real-time notifications with Web Push API
+- Guest export to CSV
 
-**Infraestructura**
-- 11 servicios de negocio, 48 endpoints de API, 35+ páginas
-- Webhook de Stripe con verificación de firma e idempotencia
-- 7 plantillas de email transaccional (confirmación, recordatorio, cancelación, etc.)
-- Cron jobs: expiración de reservas pendientes, recordatorios, resumen mensual
-- Rate limiting en endpoints públicos
-- Autenticación con bcrypt (rounds=12) y sesiones JWT
+**Infrastructure**
+- 11 business services, 48 API endpoints, 35+ pages
+- Stripe webhook with signature verification and idempotency
+- 7 transactional email templates (confirmation, reminder, cancellation, etc.)
+- Cron jobs: pending reservation expiry, reminders, monthly summary
+- Rate limiting on public endpoints
+- Authentication with bcrypt (rounds=12) and JWT sessions
 
-## Requisitos previos
+## Prerequisites
 
 - Node.js ≥ 20
-- Docker (para PostgreSQL local)
-- Cuenta de Stripe (modo test para desarrollo)
-- Cuenta de Resend (para emails)
-- Cuenta de Cloudinary (para imágenes)
+- Docker (for local PostgreSQL)
+- Stripe account (test mode for development)
+- Resend account (for emails)
+- Cloudinary account (for images)
 
-## Instalación
+## Installation
 
 ```bash
 git clone https://github.com/damianqnz/ReservationGonzalo.git
@@ -60,13 +60,13 @@ cd ReservationGonzalo
 npm install
 ```
 
-Copia el archivo de variables de entorno y completa los valores:
+Create your local environment file and fill in the values:
 
 ```bash
 cp .env.example .env.local
 ```
 
-Levanta la base de datos y aplica las migraciones:
+Start the database and apply migrations:
 
 ```bash
 docker compose up -d
@@ -74,25 +74,25 @@ npx prisma migrate dev
 npx prisma db seed
 ```
 
-Inicia el servidor de desarrollo:
+Start the development server:
 
 ```bash
 npm run dev
 ```
 
-La aplicación estará disponible en [http://localhost:3000](http://localhost:3000).
+The application will be available at [http://localhost:3000](http://localhost:3000).
 
-## Variables de entorno
+## Environment Variables
 
 ```env
-# Base de datos
+# Database
 DATABASE_URL="postgresql://..."
 
 # NextAuth
 NEXTAUTH_SECRET="..."
 NEXTAUTH_URL="http://localhost:3000"
 
-# Google OAuth (opcional en desarrollo)
+# Google OAuth (optional in development)
 GOOGLE_CLIENT_ID="..."
 GOOGLE_CLIENT_SECRET="..."
 
@@ -118,45 +118,57 @@ VAPID_SUBJECT="mailto:..."
 CRON_SECRET="..."
 ```
 
-## Scripts disponibles
+## Scripts
 
 ```bash
-npm run dev          # Servidor de desarrollo
-npm run build        # Build de producción
+npm run dev          # Development server
+npm run build        # Production build
 npm run lint         # ESLint
-npm run tech-stack   # Actualiza TECH_STACK.md con versiones actuales
+npm run tech-stack   # Update TECH_STACK.md with current versions
 
-npx prisma studio    # Interfaz visual de la base de datos (puerto 5555)
-npx prisma migrate dev    # Aplica migraciones pendientes
-npx prisma generate       # Regenera el cliente tras cambios en el schema
+npx prisma studio         # Visual database browser (port 5555)
+npx prisma migrate dev    # Apply pending migrations
+npx prisma generate       # Regenerate client after schema changes
 
-# Para testing de webhooks de Stripe en local:
+# Stripe webhook forwarding for local testing:
 stripe listen --forward-to localhost:3000/api/webhooks/stripe
 ```
 
-## Arquitectura
+## Architecture
 
-El proyecto sigue una estructura orientada a dominio. La lógica de negocio reside exclusivamente en `src/lib/services/`, las rutas de API actúan como controladores delgados, y todo acceso a base de datos pasa por el singleton de Prisma en `src/lib/db.ts`.
+The project follows Screaming Architecture with a domain-driven structure. Business logic lives exclusively in `src/domains/{domain}/services/`, API routes act as thin controllers, and all shared infrastructure (database, auth, utilities) lives in `src/shared/lib/`.
 
 ```
 src/
 ├── app/
-│   ├── api/          # 48 endpoints organizados por dominio
-│   ├── dashboard/    # Panel del propietario (autenticado)
-│   ├── portal/       # Portal del huésped
-│   └── ...           # Páginas públicas
-├── components/       # Componentes React (Server por defecto)
-├── lib/
-│   ├── services/     # 11 servicios de negocio
-│   ├── db.ts         # Prisma singleton
-│   └── auth.ts       # NextAuth config
-└── types/            # Tipos TypeScript compartidos
+│   ├── api/               # 48 endpoints organized by domain
+│   ├── dashboard/         # Owner dashboard (authenticated)
+│   ├── portal/            # Guest portal
+│   └── ...                # Public pages
+├── components/
+│   ├── auth/              # LoginScreen
+│   ├── booking/           # SearchCard, search modals
+│   ├── dashboard/         # Layout, modals and forms for the dashboard
+│   ├── layout/            # Navbar, Footer
+│   ├── property/          # PropertyCard, gallery
+│   ├── sections/          # Hero, FeaturedProperties, public sections
+│   └── ui/                # Reusable primitives
+├── domains/
+│   ├── booking/services/  # availabilityService, pricingService, reservationService
+│   ├── payment/services/  # paymentService
+│   ├── notification/services/ # notificationService, emailService
+│   ├── review/services/   # reviewService
+│   ├── coupon/services/   # couponService
+│   ├── guest/services/    # guestService
+│   ├── calendar/services/ # icalService
+│   └── analytics/services/ # analyticsService
+└── shared/lib/            # db, auth, cloudinary, date, rateLimiter, webPush
 ```
 
-## Contexto del negocio
+## Business Context
 
-- **Mercado**: Portugal — EUR, IVA 6% en alojamiento
-- **Idiomas**: Portugués (PT), Español (ES), Inglés (EN)
-- **Marco legal**: Alojamento Local (AL)
-- **Zona horaria**: `Europe/Lisbon` (UTC+0 / UTC+1 DST)
-- **Modelo**: Sin comisiones de plataforma — pago directo al propietario vía Stripe
+- **Market**: Portugal — EUR, 6% VAT on accommodation
+- **Languages**: Portuguese (PT), Spanish (ES), English (EN)
+- **Legal framework**: Alojamento Local (AL)
+- **Timezone**: `Europe/Lisbon` (UTC+0 / UTC+1 DST)
+- **Model**: No platform commissions — direct payment to owner via Stripe
