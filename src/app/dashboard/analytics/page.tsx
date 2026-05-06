@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
-import { auth } from '@/lib/auth'
-import { db } from '@/lib/db'
-import { computeAnalytics } from '@/lib/services/analyticsService'
+import { auth } from '@/shared/lib/auth'
+import { db } from '@/shared/lib/db'
+import { computeAnalytics } from '@/domains/analytics/services/analyticsService'
 import AnalyticsClient from './AnalyticsClient'
 
 export const metadata = { title: 'Análises' }

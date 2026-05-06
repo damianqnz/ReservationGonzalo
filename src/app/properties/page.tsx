@@ -1,8 +1,8 @@
 import type { Metadata } from 'next'
 import { PropertyStatus } from '@prisma/client'
-import { db } from '@/lib/db'
-import { resolveImageUrl } from '@/lib/cloudinary'
-import PropertyCard from '@/components/stitch/PropertyCard'
+import { db } from '@/shared/lib/db'
+import { resolveImageUrl } from '@/shared/lib/cloudinary'
+import PropertyCard from '@/components/property/PropertyCard'
 
 export const metadata: Metadata = {
   title: 'Propriedades',

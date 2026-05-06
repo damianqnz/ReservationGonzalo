@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { auth } from '@/lib/auth'
-import { db } from '@/lib/db'
+import { auth } from '@/shared/lib/auth'
+import { db } from '@/shared/lib/db'
 import { BookingStatus } from '@prisma/client'
 import { z } from 'zod'
 

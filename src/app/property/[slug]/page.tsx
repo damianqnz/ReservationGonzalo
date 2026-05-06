@@ -1,10 +1,10 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { PropertyStatus } from '@prisma/client'
-import { db } from '@/lib/db'
-import { nightsBetween } from '@/lib/date'
-import { resolveImageUrl, getImageUrl } from '@/lib/cloudinary'
-import { getCategoryLabel } from '@/lib/imageCategories'
+import { db } from '@/shared/lib/db'
+import { nightsBetween } from '@/shared/lib/date'
+import { resolveImageUrl, getImageUrl } from '@/shared/lib/cloudinary'
+import { getCategoryLabel } from '@/shared/lib/imageCategories'
 import PropertyDetailsClient from './PropertyDetailsClient'
 
 interface Props {

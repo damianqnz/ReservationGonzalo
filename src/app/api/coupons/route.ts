@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { CouponType } from '@prisma/client'
-import { auth } from '@/lib/auth'
-import { getCoupons, createCoupon } from '@/lib/services/couponService'
+import { auth } from '@/shared/lib/auth'
+import { getCoupons, createCoupon } from '@/domains/coupon/services/couponService'
 
 // ─── Validation ───────────────────────────────────────────────────────────────
 

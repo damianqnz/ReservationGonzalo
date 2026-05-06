@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { BookingStatus, PaymentStatus } from '@prisma/client'
-import { auth } from '@/lib/auth'
+import { auth } from '@/shared/lib/auth'
 import {
   getReservation,
   updateReservation,
-} from '@/lib/services/reservationService'
+} from '@/domains/booking/services/reservationService'
 
 // ─── Validation schemas ───────────────────────────────────────────────────────
 

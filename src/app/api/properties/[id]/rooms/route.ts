@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { RoomType, RoomStatus } from '@prisma/client'
-import { auth } from '@/lib/auth'
-import { db } from '@/lib/db'
+import { auth } from '@/shared/lib/auth'
+import { db } from '@/shared/lib/db'
 
 const postSchema = z.object({
   name:          z.string().min(1).max(200),

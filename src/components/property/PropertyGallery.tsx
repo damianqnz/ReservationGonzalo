@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Image from 'next/image'
 import { ImageCategory } from '@prisma/client'
 import { Grid2x2, Camera } from 'lucide-react'
-import { resolveImageUrl } from '@/lib/cloudinary'
+import { resolveImageUrl } from '@/shared/lib/cloudinary'
 import GalleryModal from './GalleryModal'
 
 // ─── Types ────────────────────────────────────────────────────────────────────

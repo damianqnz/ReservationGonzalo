@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { auth } from '@/lib/auth'
-import { computeAnalytics } from '@/lib/services/analyticsService'
+import { auth } from '@/shared/lib/auth'
+import { computeAnalytics } from '@/domains/analytics/services/analyticsService'
 
 const querySchema = z.object({
   year:       z.coerce.number().int().min(2020).max(2100).optional(),

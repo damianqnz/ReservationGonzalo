@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { checkRateLimit } from '@/lib/rateLimiter'
-import { findGuestBookingById } from '@/lib/services/guestService'
+import { checkRateLimit } from '@/shared/lib/rateLimiter'
+import { findGuestBookingById } from '@/domains/guest/services/guestService'
 
 const querySchema = z.object({
   code: z.string().min(1).max(32),

@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
-import { auth } from '@/lib/auth'
-import { db } from '@/lib/db'
-import { getImageUrl } from '@/lib/cloudinary'
+import { auth } from '@/shared/lib/auth'
+import { db } from '@/shared/lib/db'
+import { getImageUrl } from '@/shared/lib/cloudinary'
 
 const createSchema = z.object({
   publicId: z.string().min(1),

@@ -2,7 +2,7 @@ export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 import { NextRequest, NextResponse } from 'next/server'
-import { handleStripeWebhook } from '@/lib/services/paymentService'
+import { handleStripeWebhook } from '@/domains/payment/services/paymentService'
 
 // ─── POST /api/webhooks/stripe ────────────────────────────────────────────────
 //

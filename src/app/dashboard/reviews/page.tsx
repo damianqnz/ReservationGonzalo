@@ -1,7 +1,7 @@
-import { auth } from '@/lib/auth'
+import { auth } from '@/shared/lib/auth'
 import { redirect } from 'next/navigation'
-import { listReviews } from '@/lib/services/reviewService'
-import { db } from '@/lib/db'
+import { listReviews } from '@/domains/review/services/reviewService'
+import { db } from '@/shared/lib/db'
 import { Role } from '@prisma/client'
 import ReviewsClient from './ReviewsClient'
 

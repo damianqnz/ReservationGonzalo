@@ -2,7 +2,7 @@
 
 import { useRef, useState, useEffect, useMemo } from 'react'
 import { ImageCategory } from '@prisma/client'
-import { IMAGE_CATEGORIES } from '@/lib/imageCategories'
+import { IMAGE_CATEGORIES } from '@/shared/lib/imageCategories'
 import { sileo } from 'sileo'
 import { Star, X, Upload, ImageOff, ChevronDown } from 'lucide-react'
 import { type UploadedImage } from '@/components/ui/ImageUploader'

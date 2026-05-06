@@ -3,7 +3,7 @@
 import { useRef, useState } from 'react'
 import { Upload, X, Star, GripVertical, ImageOff } from 'lucide-react'
 import { ImageCategory } from '@prisma/client'
-import { IMAGE_CATEGORIES } from '@/lib/imageCategories'
+import { IMAGE_CATEGORIES } from '@/shared/lib/imageCategories'
 import { sileo } from 'sileo'
 
 // ─── Types ────────────────────────────────────────────────────────────────────

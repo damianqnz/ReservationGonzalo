@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { db } from '@/lib/db'
-import { generatePropertyICalFeed } from '@/lib/services/icalService'
+import { db } from '@/shared/lib/db'
+import { generatePropertyICalFeed } from '@/domains/calendar/services/icalService'
 
 /**
  * GET /api/ical/[propertyId]

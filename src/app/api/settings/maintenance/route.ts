@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { auth } from '@/lib/auth'
+import { auth } from '@/shared/lib/auth'
 import { z } from 'zod'
 
 const bodySchema = z.object({

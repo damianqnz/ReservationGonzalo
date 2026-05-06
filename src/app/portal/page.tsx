@@ -4,7 +4,7 @@ import { useEffect, useState, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Calendar, MapPin, Euro } from 'lucide-react'
-import type { GuestBooking } from '@/lib/services/guestService'
+import type { GuestBooking } from '@/domains/guest/services/guestService'
 
 // ── Status badge ─────────────────────────────────────────────────────────────
 

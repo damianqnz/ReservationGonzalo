@@ -1,6 +1,6 @@
 import { Suspense } from 'react'
-import Navbar from '@/components/stitch/Navbar'
-import LoginScreen from '@/components/stitch/LoginScreen'
+import Navbar from '@/components/layout/Navbar'
+import LoginScreen from '@/components/auth/LoginScreen'
 
 export default function LoginPage() {
   return (

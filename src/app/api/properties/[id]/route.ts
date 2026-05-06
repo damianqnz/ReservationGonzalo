@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { BookingStatus, PropertyStatus, PropertyType } from '@prisma/client'
-import { auth } from '@/lib/auth'
-import { db } from '@/lib/db'
-import { deleteImage } from '@/lib/cloudinary-server'
+import { auth } from '@/shared/lib/auth'
+import { db } from '@/shared/lib/db'
+import { deleteImage } from '@/shared/lib/cloudinary-server'
 
 // ─── Validation schemas ───────────────────────────────────────────────────────
 

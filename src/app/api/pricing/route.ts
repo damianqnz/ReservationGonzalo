@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { calculateTotalPrice } from '@/lib/services/pricingService'
+import { calculateTotalPrice } from '@/domains/booking/services/pricingService'
 
 const querySchema = z.object({
   propertyId: z.string().min(1),

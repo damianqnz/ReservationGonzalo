@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-import { getReservation } from '@/lib/services/reservationService'
+import { getReservation } from '@/domains/booking/services/reservationService'
 import { BookingStatus } from '@prisma/client'
 import PendingPolling from './PendingPolling'
 

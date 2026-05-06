@@ -1,8 +1,8 @@
 import Link from 'next/link'
 import { ArrowLeft, Calendar, MapPin, Users, Download } from 'lucide-react'
-import { findGuestBookingByCode } from '@/lib/services/guestService'
-import type { GuestBooking } from '@/lib/services/guestService'
-import { resolveImageUrl } from '@/lib/cloudinary'
+import { findGuestBookingByCode } from '@/domains/guest/services/guestService'
+import type { GuestBooking } from '@/domains/guest/services/guestService'
+import { resolveImageUrl } from '@/shared/lib/cloudinary'
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 

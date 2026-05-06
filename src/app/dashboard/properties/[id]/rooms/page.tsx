@@ -1,8 +1,8 @@
 import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
-import { auth } from '@/lib/auth'
-import { db } from '@/lib/db'
-import { resolveImageUrl } from '@/lib/cloudinary'
+import { auth } from '@/shared/lib/auth'
+import { db } from '@/shared/lib/db'
+import { resolveImageUrl } from '@/shared/lib/cloudinary'
 import DeleteRoomButton from '@/components/dashboard/DeleteRoomButton'
 
 interface Props {

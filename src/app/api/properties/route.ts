@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { PropertyStatus, PropertyType } from '@prisma/client'
-import { auth } from '@/lib/auth'
-import { db } from '@/lib/db'
+import { auth } from '@/shared/lib/auth'
+import { db } from '@/shared/lib/db'
 
 // ─── Validation schemas ───────────────────────────────────────────────────────
 

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
-import { auth } from '@/lib/auth'
-import { markAllAsRead } from '@/lib/services/notificationService'
+import { auth } from '@/shared/lib/auth'
+import { markAllAsRead } from '@/domains/notification/services/notificationService'
 
 // ─── PATCH /api/notifications/read-all ───────────────────────────────────────
 

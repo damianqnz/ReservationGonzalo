@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
-import { auth } from '@/lib/auth'
-import { db } from '@/lib/db'
+import { auth } from '@/shared/lib/auth'
+import { db } from '@/shared/lib/db'
 import SettingsClient from './SettingsClient'
 
 export default async function SettingsPage() {

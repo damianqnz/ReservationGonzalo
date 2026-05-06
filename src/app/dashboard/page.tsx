@@ -1,8 +1,8 @@
 import { redirect } from 'next/navigation'
-import { auth } from '@/lib/auth'
-import { db } from '@/lib/db'
+import { auth } from '@/shared/lib/auth'
+import { db } from '@/shared/lib/db'
 import { BookingStatus } from '@prisma/client'
-import StatCard from '@/components/stitch/StatCard'
+import StatCard from '@/components/dashboard/StatCard'
 import Link from 'next/link'
 import SparklineSection from './SparklineSection'
 

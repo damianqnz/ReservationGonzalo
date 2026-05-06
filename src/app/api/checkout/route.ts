@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { db } from '@/lib/db'
-import { createCheckoutSession } from '@/lib/services/paymentService'
+import { db } from '@/shared/lib/db'
+import { createCheckoutSession } from '@/domains/payment/services/paymentService'
 
 // ─── Rate limiter (3 req / IP / 10 min) ──────────────────────────────────────
 

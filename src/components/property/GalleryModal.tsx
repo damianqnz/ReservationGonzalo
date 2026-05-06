@@ -4,8 +4,8 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import Image from 'next/image'
 import { ImageCategory } from '@prisma/client'
 import { X, ChevronLeft, ChevronRight, Camera } from 'lucide-react'
-import { IMAGE_CATEGORIES, getCategoryLabel, groupImagesByCategory } from '@/lib/imageCategories'
-import { resolveImageUrl } from '@/lib/cloudinary'
+import { IMAGE_CATEGORIES, getCategoryLabel, groupImagesByCategory } from '@/shared/lib/imageCategories'
+import { resolveImageUrl } from '@/shared/lib/cloudinary'
 import type { GalleryImage } from './PropertyGallery'
 
 // ─── Types ────────────────────────────────────────────────────────────────────

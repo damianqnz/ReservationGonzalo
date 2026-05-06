@@ -1,5 +1,5 @@
-import Navbar from "@/components/stitch/Navbar";
-import AboutUs from "@/components/stitch/AboutUs";
+import Navbar from "@/components/layout/Navbar";
+import AboutUs from "@/components/sections/AboutUs";
 
 export default function AboutPage() {
   return (

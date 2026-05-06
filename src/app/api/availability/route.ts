@@ -5,8 +5,8 @@ import {
   checkRoomAvailability,
   getUnavailableDates,
   getUnavailableDatesForRoom,
-} from '@/lib/services/availabilityService'
-import { db } from '@/lib/db'
+} from '@/domains/booking/services/availabilityService'
+import { db } from '@/shared/lib/db'
 
 // ─── Schema: check a specific date range ──────────────────────────────────────
 const rangeSchema = z.object({

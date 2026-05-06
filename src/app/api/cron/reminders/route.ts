@@ -1,15 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { BookingStatus, NotificationType } from '@prisma/client'
-import { db } from '@/lib/db'
+import { db } from '@/shared/lib/db'
 import {
   EMAIL_BOOKING_SELECT,
   sendCheckInReminderToGuest,
   sendCheckInReminderToOwner,
   sendCheckOutReminderToOwner,
   sendReviewInvitationToGuest,
-} from '@/lib/services/emailService'
-import { notifyAllOwnerAdmins } from '@/lib/services/notificationService'
-import { sendPushToOwner } from '@/lib/webPush'
+} from '@/domains/notification/services/emailService'
+import { notifyAllOwnerAdmins } from '@/domains/notification/services/notificationService'
+import { sendPushToOwner } from '@/shared/lib/webPush'
 
 // ─── GET /api/cron/reminders ──────────────────────────────────────────────────
 //

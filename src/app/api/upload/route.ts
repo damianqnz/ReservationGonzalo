@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
-import { auth } from '@/lib/auth'
-import { uploadImage } from '@/lib/cloudinary-server'
+import { auth } from '@/shared/lib/auth'
+import { uploadImage } from '@/shared/lib/cloudinary-server'
 
 const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
 const MAX_SIZE_BYTES = 10 * 1024 * 1024 // 10 MB

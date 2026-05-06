@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { PropertyStatus } from '@prisma/client'
-import { db } from '@/lib/db'
-import { checkAvailability } from '@/lib/services/availabilityService'
+import { db } from '@/shared/lib/db'
+import { checkAvailability } from '@/domains/booking/services/availabilityService'
 
 // ─── Validation ───────────────────────────────────────────────────────────────
 

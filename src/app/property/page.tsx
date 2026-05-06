@@ -1,5 +1,5 @@
-import PropertyDetails from "@/components/stitch/PropertyDetails";
+import { permanentRedirect } from 'next/navigation'
 
 export default function PropertyPage() {
-  return <PropertyDetails />;
+  permanentRedirect('/properties')
 }

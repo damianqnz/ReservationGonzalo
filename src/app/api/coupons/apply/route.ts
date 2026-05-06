@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import Stripe from 'stripe'
 import { BookingStatus } from '@prisma/client'
-import { db } from '@/lib/db'
-import { validateCoupon, applyCoupon } from '@/lib/services/couponService'
+import { db } from '@/shared/lib/db'
+import { validateCoupon, applyCoupon } from '@/domains/coupon/services/couponService'
 
 // ─── Validation ───────────────────────────────────────────────────────────────
 

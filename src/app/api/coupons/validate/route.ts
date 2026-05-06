@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { validateCoupon } from '@/lib/services/couponService'
-import { db } from '@/lib/db'
+import { validateCoupon } from '@/domains/coupon/services/couponService'
+import { db } from '@/shared/lib/db'
 
 // ─── Rate limiter (5 req / IP / 10 min) ──────────────────────────────────────
 

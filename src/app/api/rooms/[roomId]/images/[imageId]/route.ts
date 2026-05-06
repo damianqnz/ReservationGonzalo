@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { ImageCategory } from '@prisma/client'
-import { auth } from '@/lib/auth'
-import { db } from '@/lib/db'
-import { deleteImage } from '@/lib/cloudinary-server'
+import { auth } from '@/shared/lib/auth'
+import { db } from '@/shared/lib/db'
+import { deleteImage } from '@/shared/lib/cloudinary-server'
 
 const patchSchema = z.object({
   order:    z.number().int().min(0).optional(),

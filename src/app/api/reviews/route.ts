@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { auth } from '@/lib/auth'
+import { auth } from '@/shared/lib/auth'
 import { Role } from '@prisma/client'
 import { z } from 'zod'
-import { listReviews } from '@/lib/services/reviewService'
+import { listReviews } from '@/domains/review/services/reviewService'
 
 const QuerySchema = z.object({
   propertyId: z.string().optional(),

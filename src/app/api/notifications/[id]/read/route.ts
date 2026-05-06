@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { auth } from '@/lib/auth'
-import { markAsRead } from '@/lib/services/notificationService'
-import { db } from '@/lib/db'
+import { auth } from '@/shared/lib/auth'
+import { markAsRead } from '@/domains/notification/services/notificationService'
+import { db } from '@/shared/lib/db'
 
 // ─── PATCH /api/notifications/[id]/read ──────────────────────────────────────
 

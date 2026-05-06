@@ -53,7 +53,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { format } from "date-fns";
-import { PROPERTY_SERVICES, AMENITY_TO_SERVICE_KEY } from "@/lib/propertyServices";
+import { PROPERTY_SERVICES, AMENITY_TO_SERVICE_KEY } from "@/shared/lib/propertyServices";
 import { sileo } from 'sileo';
 
 declare global {

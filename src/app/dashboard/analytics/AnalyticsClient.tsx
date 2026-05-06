@@ -17,7 +17,7 @@ import {
   Tooltip,
   Legend,
 } from 'recharts'
-import type { AnalyticsData } from '@/lib/services/analyticsService'
+import type { AnalyticsData } from '@/domains/analytics/services/analyticsService'
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 

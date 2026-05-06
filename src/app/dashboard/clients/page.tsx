@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
-import { auth } from '@/lib/auth'
-import { db } from '@/lib/db'
+import { auth } from '@/shared/lib/auth'
+import { db } from '@/shared/lib/db'
 import { BookingStatus } from '@prisma/client'
 import ClientsClient from './ClientsClient'
 import type { ClientRow } from '@/app/api/dashboard/clients/route'

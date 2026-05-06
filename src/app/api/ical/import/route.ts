@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { auth } from '@/lib/auth'
-import { db } from '@/lib/db'
-import { syncExternalCalendar } from '@/lib/services/icalService'
+import { auth } from '@/shared/lib/auth'
+import { db } from '@/shared/lib/db'
+import { syncExternalCalendar } from '@/domains/calendar/services/icalService'
 import { z } from 'zod'
 
 const importSchema = z.object({

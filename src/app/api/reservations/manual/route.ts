@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { auth } from '@/lib/auth'
-import { db } from '@/lib/db'
-import { createManualBooking } from '@/lib/services/reservationService'
-import { createNotification } from '@/lib/services/notificationService'
+import { auth } from '@/shared/lib/auth'
+import { db } from '@/shared/lib/db'
+import { createManualBooking } from '@/domains/booking/services/reservationService'
+import { createNotification } from '@/domains/notification/services/notificationService'
 import { NotificationType } from '@prisma/client'
 
 // ─── Validation ───────────────────────────────────────────────────────────────

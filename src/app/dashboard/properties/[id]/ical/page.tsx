@@ -1,7 +1,7 @@
 import { redirect, notFound } from 'next/navigation'
-import { auth } from '@/lib/auth'
-import { db } from '@/lib/db'
-import { getICalUrl } from '@/lib/services/icalService'
+import { auth } from '@/shared/lib/auth'
+import { db } from '@/shared/lib/db'
+import { getICalUrl } from '@/domains/calendar/services/icalService'
 import { format } from 'date-fns'
 import ICalClient from './ICalClient'
 

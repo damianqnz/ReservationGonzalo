@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { auth } from '@/lib/auth'
+import { auth } from '@/shared/lib/auth'
 import { Role } from '@prisma/client'
 import { z } from 'zod'
-import { updateReview } from '@/lib/services/reviewService'
-import { db } from '@/lib/db'
+import { updateReview } from '@/domains/review/services/reviewService'
+import { db } from '@/shared/lib/db'
 
 const ActionSchema = z.object({
   action: z.enum(['approve', 'reject', 'reply', 'toggle']),

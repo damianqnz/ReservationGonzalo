@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
-import { auth } from '@/lib/auth'
-import { db } from '@/lib/db'
-import DashboardLayout from '@/components/stitch/DashboardLayout'
+import { auth } from '@/shared/lib/auth'
+import { db } from '@/shared/lib/db'
+import DashboardLayout from '@/components/dashboard/DashboardLayout'
 
 export default async function RootDashboardLayout({
   children,

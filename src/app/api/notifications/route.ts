@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { auth } from '@/lib/auth'
-import { listNotifications, getUnreadCount } from '@/lib/services/notificationService'
+import { auth } from '@/shared/lib/auth'
+import { listNotifications, getUnreadCount } from '@/domains/notification/services/notificationService'
 
 // ─── GET /api/notifications ───────────────────────────────────────────────────
 

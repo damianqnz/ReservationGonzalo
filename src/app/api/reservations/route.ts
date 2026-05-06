@@ -3,7 +3,7 @@ import { z } from 'zod'
 import {
   createReservation,
   listReservations,
-} from '@/lib/services/reservationService'
+} from '@/domains/booking/services/reservationService'
 import { BookingStatus } from '@prisma/client'
 
 // ─── Validation schemas ───────────────────────────────────────────────────────

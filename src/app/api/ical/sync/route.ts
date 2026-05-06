@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { syncAllCalendars } from '@/lib/services/icalService'
+import { syncAllCalendars } from '@/domains/calendar/services/icalService'
 
 /**
  * GET /api/ical/sync

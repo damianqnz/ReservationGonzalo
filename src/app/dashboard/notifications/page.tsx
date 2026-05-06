@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
-import { auth } from '@/lib/auth'
-import { listNotifications } from '@/lib/services/notificationService'
+import { auth } from '@/shared/lib/auth'
+import { listNotifications } from '@/domains/notification/services/notificationService'
 import NotificationsClient from './NotificationsClient'
 
 export const dynamic = 'force-dynamic'
