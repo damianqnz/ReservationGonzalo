@@ -16,7 +16,7 @@ import {
   Search,
   ExternalLink
 } from 'lucide-react'
-import { ReviewWithDetails } from '@/domains/review/services/reviewService'
+import type { ReviewWithDetails } from '@/domains/review/types'
 import { Property } from '@prisma/client'
 import { sileo } from 'sileo'
 import ImportReviewModal from '@/components/dashboard/ImportReviewModal'

@@ -2,14 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/shared/lib/auth'
 import { db } from '@/shared/lib/db'
 import { syncExternalCalendar } from '@/domains/calendar/services/icalService'
-import { z } from 'zod'
-
-const importSchema = z.object({
-  propertyId: z.string().min(1),
-  roomId: z.string().optional().nullable(),
-  source: z.string().min(1).max(100),
-  icalUrl: z.string().url(),
-})
+import { importICalSchema } from '@/domains/calendar/validations/calendarSchema'
 
 /**
  * POST /api/ical/import
@@ -26,7 +19,7 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json().catch(() => null)
-  const parsed = importSchema.safeParse(body)
+  const parsed = importICalSchema.safeParse(body)
   if (!parsed.success) {
     return NextResponse.json(
       { data: null, error: parsed.error.flatten().fieldErrors },
@@ -36,7 +29,6 @@ export async function POST(req: NextRequest) {
 
   const { propertyId, roomId = null, source, icalUrl } = parsed.data
 
-  // Verify property ownership
   const property = await db.property.findUnique({
     where: { id: propertyId },
     select: { ownerId: true },
@@ -49,7 +41,6 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    // Create ICalSync record
     const sync = await db.iCalSync.create({
       data: {
         propertyId,
@@ -59,7 +50,6 @@ export async function POST(req: NextRequest) {
       },
     })
 
-    // Run first sync immediately
     const result = await syncExternalCalendar(
       propertyId,
       roomId ?? null,

@@ -1,5 +1,6 @@
 import { db } from '@/shared/lib/db'
 import { BookingStatus } from '@prisma/client'
+import type { GuestBooking } from '@/domains/booking/types'
 
 /** Fields exposed to guests — never includes ownerId, owner data, paymentIntentId, ownerNotes */
 const guestBookingSelect = {
@@ -42,37 +43,7 @@ const guestBookingSelect = {
   },
 } as const
 
-export type GuestBooking = {
-  id: string
-  confirmationCode: string
-  guestName: string
-  guestEmail: string
-  guestCount: number
-  checkIn: Date
-  checkOut: Date
-  nights: number
-  pricePerNight: number
-  cleaningFee: number
-  securityDeposit: number
-  totalPrice: number
-  discountAmount: number | null
-  currency: string
-  status: BookingStatus
-  paymentStatus: import('@prisma/client').PaymentStatus
-  source: import('@prisma/client').BookingSource
-  guestMessage: string | null
-  property: {
-    title: string
-    address: string
-    city: string
-    country: string
-    checkInTime: string
-    checkOutTime: string
-    cancellationPolicy: import('@prisma/client').CancellationPolicy
-    images: Array<{ url: string; publicId: string; alt: string | null }>
-  }
-  room: { name: string; type: import('@prisma/client').RoomType } | null
-}
+export type { GuestBooking }
 
 /**
  * Finds a single booking by confirmation code.

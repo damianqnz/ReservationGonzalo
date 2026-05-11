@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { z } from 'zod'
 import {
   checkAvailability,
   checkRoomAvailability,
@@ -7,20 +6,10 @@ import {
   getUnavailableDatesForRoom,
 } from '@/domains/booking/services/availabilityService'
 import { db } from '@/shared/lib/db'
-
-// ─── Schema: check a specific date range ──────────────────────────────────────
-const rangeSchema = z.object({
-  propertyId: z.string().optional(),
-  roomId: z.string().optional(),
-  startDate: z.coerce.date(),
-  endDate: z.coerce.date(),
-})
-
-// ─── Schema: get all unavailable dates ────────────────────────────────────────
-const blockedSchema = z.object({
-  propertyId: z.string().optional(),
-  roomId: z.string().optional(),
-})
+import {
+  availabilityRangeSchema,
+  unavailableDatesSchema,
+} from '@/domains/booking/validations/bookingSchema'
 
 /**
  * GET /api/availability
@@ -38,7 +27,7 @@ export async function GET(req: NextRequest) {
 
   // Mode 2: get unavailable dates list
   if (!('startDate' in params) && !('endDate' in params)) {
-    const result = blockedSchema.safeParse(params)
+    const result = unavailableDatesSchema.safeParse(params)
     if (!result.success) {
       return NextResponse.json(
         { data: null, error: result.error.flatten().fieldErrors },
@@ -75,7 +64,7 @@ export async function GET(req: NextRequest) {
   }
 
   // Mode 1: range check
-  const result = rangeSchema.safeParse(params)
+  const result = availabilityRangeSchema.safeParse(params)
   if (!result.success) {
     return NextResponse.json(
       { data: null, error: result.error.flatten().fieldErrors },
@@ -105,7 +94,6 @@ export async function GET(req: NextRequest) {
       )
     }
 
-    // Silent background SearchEvent save — never blocks the response
     const sessionId = req.cookies.get('rg-session-id')?.value ?? crypto.randomUUID()
     const ipAddress = req.headers.get('x-forwarded-for')?.split(',')[0].trim() ?? req.headers.get('x-real-ip') ?? undefined
     const response = NextResponse.json({ data: { available }, error: null })

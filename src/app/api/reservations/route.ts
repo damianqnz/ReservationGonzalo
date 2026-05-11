@@ -4,38 +4,17 @@ import {
   createReservation,
   listReservations,
 } from '@/domains/booking/services/reservationService'
-import { BookingStatus } from '@prisma/client'
-
-// ─── Validation schemas ───────────────────────────────────────────────────────
-
-const reservationSchema = z.object({
-  propertyId: z.string().min(1, 'Property ID is required'),
-  roomId: z.string().optional(),
-  checkIn: z.string().refine((val) => !isNaN(Date.parse(val)), 'Invalid check-in date'),
-  checkOut: z.string().refine((val) => !isNaN(Date.parse(val)), 'Invalid check-out date'),
-  guestName: z.string().min(2, 'Guest name is required'),
-  guestEmail: z.string().email('Invalid guest email'),
-  guestPhone: z.string().optional(),
-  guestCount: z.number().int().min(1, 'At least 1 guest required'),
-  guestMessage: z.string().max(500, 'Message is too long').optional(),
-  guestCountry: z.string().min(2).max(2),
-  acceptedTerms: z.boolean().refine((v) => v === true, { message: 'Terms must be accepted' }),
-  acceptedPrivacy: z.boolean().refine((v) => v === true, { message: 'Privacy policy must be accepted' }),
-  acceptedMarketing: z.boolean().default(false),
-})
-
-const getQuerySchema = z.object({
-  propertyId: z.string().optional(),
-  guestEmail: z.string().optional(),
-  status: z.nativeEnum(BookingStatus).optional(),
-})
+import {
+  createReservationSchema,
+  listReservationsQuerySchema,
+} from '@/domains/booking/validations/bookingSchema'
 
 // ─── Handlers ─────────────────────────────────────────────────────────────────
 
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url)
-    const filters = getQuerySchema.parse(Object.fromEntries(searchParams))
+    const filters = listReservationsQuerySchema.parse(Object.fromEntries(searchParams))
 
     const reservations = await listReservations(filters)
 
@@ -55,7 +34,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const validated = reservationSchema.parse(body)
+    const validated = createReservationSchema.parse(body)
     const sessionId = req.cookies.get('rg-session-id')?.value
 
     const reservation = await createReservation({

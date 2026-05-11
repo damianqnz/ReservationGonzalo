@@ -1,16 +1,8 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
-import { ImageCategory } from '@prisma/client'
 import { auth } from '@/shared/lib/auth'
-import { db } from '@/shared/lib/db'
-import { deleteImage } from '@/shared/lib/cloudinary-server'
-
-const patchSchema = z.object({
-  order:    z.number().int().min(0).optional(),
-  isCover:  z.boolean().optional(),
-  alt:      z.string().max(200).optional(),
-  category: z.nativeEnum(ImageCategory).optional(),
-})
+import { updateRoomImage, deleteRoomImage } from '@/domains/room/services/roomService'
+import { updateRoomImageSchema } from '@/domains/room/validations/roomSchema'
 
 type RouteContext = { params: Promise<{ roomId: string; imageId: string }> }
 
@@ -26,37 +18,19 @@ export async function PATCH(req: Request, { params }: RouteContext) {
 
     const { roomId, imageId } = await params
     const body = await req.json()
-    const validated = patchSchema.parse(body)
+    const validated = updateRoomImageSchema.parse(body)
 
-    const existing = await db.roomImage.findUnique({
-      where: { id: imageId },
-      include: { room: { include: { property: { select: { ownerId: true } } } } },
-    })
-    if (!existing || existing.roomId !== roomId) {
-      return NextResponse.json({ data: null, error: 'Image not found' }, { status: 404 })
+    const result = await updateRoomImage(
+      roomId,
+      imageId,
+      validated,
+      session.user.id,
+      session.user.role
+    )
+    if (result.error) {
+      return NextResponse.json({ data: null, error: result.error }, { status: result.status })
     }
-    if (existing.room.property.ownerId !== session.user.id && session.user.role !== 'ADMIN') {
-      return NextResponse.json({ data: null, error: 'Forbidden' }, { status: 403 })
-    }
-
-    if (validated.isCover) {
-      await db.roomImage.updateMany({
-        where: { roomId, isCover: true, id: { not: imageId } },
-        data: { isCover: false },
-      })
-    }
-
-    const updated = await db.roomImage.update({
-      where: { id: imageId },
-      data: {
-        ...(validated.order    !== undefined && { order:    validated.order }),
-        ...(validated.isCover  !== undefined && { isCover:  validated.isCover }),
-        ...(validated.alt      !== undefined && { alt:      validated.alt }),
-        ...(validated.category !== undefined && { category: validated.category }),
-      },
-    })
-
-    return NextResponse.json({ data: updated, error: null })
+    return NextResponse.json({ data: result.data, error: null })
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
@@ -81,24 +55,16 @@ export async function DELETE(_req: Request, { params }: RouteContext) {
 
     const { roomId, imageId } = await params
 
-    const existing = await db.roomImage.findUnique({
-      where: { id: imageId },
-      include: { room: { include: { property: { select: { ownerId: true } } } } },
-    })
-    if (!existing || existing.roomId !== roomId) {
-      return NextResponse.json({ data: null, error: 'Image not found' }, { status: 404 })
+    const result = await deleteRoomImage(
+      roomId,
+      imageId,
+      session.user.id,
+      session.user.role
+    )
+    if (result.error) {
+      return NextResponse.json({ data: null, error: result.error }, { status: result.status })
     }
-    if (existing.room.property.ownerId !== session.user.id && session.user.role !== 'ADMIN') {
-      return NextResponse.json({ data: null, error: 'Forbidden' }, { status: 403 })
-    }
-
-    if (existing.publicId.includes('/')) {
-      await deleteImage(existing.publicId)
-    }
-
-    await db.roomImage.delete({ where: { id: imageId } })
-
-    return NextResponse.json({ data: { success: true }, error: null })
+    return NextResponse.json({ data: result.data, error: null })
   } catch (error) {
     console.error('[ROOM_IMAGE_DELETE]', error)
     return NextResponse.json({ data: null, error: 'Internal server error' }, { status: 500 })

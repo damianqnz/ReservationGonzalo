@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/shared/lib/auth'
-import { toggleCoupon, deleteCoupon } from '@/domains/coupon/services/couponService'
+import { toggleCoupon, deleteCoupon } from '@/domains/pricing/services/couponService'
 
 // ─── PATCH /api/coupons/[id] — toggle active/inactive ────────────────────────
 

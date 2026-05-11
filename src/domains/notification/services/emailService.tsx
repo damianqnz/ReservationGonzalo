@@ -24,31 +24,9 @@ function getFrom(): string {
   return process.env.RESEND_FROM_EMAIL
 }
 
-// ─── Shared booking type for emails ──────────────────────────────────────────
+import type { BookingWithProperty, EmailResult } from '@/domains/notification/types'
 
-export type BookingWithProperty = {
-  id: string
-  confirmationCode: string
-  guestName: string
-  guestEmail: string
-  guestPhone?: string | null
-  checkIn: Date
-  checkOut: Date
-  nights: number
-  pricePerNight: number
-  cleaningFee: number
-  securityDeposit: number
-  totalPrice: number
-  currency: string
-  property: {
-    title: string
-    address: string
-    city: string
-    country: string
-    checkInTime: string
-    checkOutTime: string
-  } | null
-}
+export type { BookingWithProperty, EmailResult }
 
 /** Prisma select shape that satisfies BookingWithProperty */
 export const EMAIL_BOOKING_SELECT = {
@@ -76,10 +54,6 @@ export const EMAIL_BOOKING_SELECT = {
     },
   },
 } as const
-
-// ─── Shared result type ───────────────────────────────────────────────────────
-
-export type EmailResult = { success: boolean; error?: string }
 
 // ─── Formatters ───────────────────────────────────────────────────────────────
 

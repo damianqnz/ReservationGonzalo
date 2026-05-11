@@ -1,5 +1,6 @@
 import { NotificationType, Role } from '@prisma/client'
 import { db } from '@/shared/lib/db'
+import type { CreateNotificationInput } from '@/domains/notification/types'
 
 // ─── Notify all OWNER + ADMIN users ──────────────────────────────────────────
 
@@ -34,14 +35,7 @@ export async function notifyAllOwnerAdmins(data: CreateNotificationInput) {
   }
 }
 
-// ─── Input types ─────────────────────────────────────────────────────────────
-
-export interface CreateNotificationInput {
-  type: NotificationType
-  title: string
-  message: string
-  data?: Record<string, unknown>
-}
+export type { CreateNotificationInput }
 
 // ─── Shared select (never exposes userId or owner PII) ───────────────────────
 

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/shared/lib/auth'
 import { db } from '@/shared/lib/db'
 import { BookingStatus } from '@prisma/client'
-import { z } from 'zod'
+import { listClientsQuerySchema } from '@/domains/analytics/validations/analyticsSchema'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -21,15 +21,6 @@ export interface ClientRow {
   sourceCount: number    // number of distinct sources
 }
 
-// ─── Query schema ─────────────────────────────────────────────────────────────
-
-const querySchema = z.object({
-  search:     z.string().optional(),
-  country:    z.string().optional(),
-  marketing:  z.enum(['true', 'false']).optional(),
-  propertyId: z.string().optional(),
-  period:     z.enum(['30d', '90d', '1y', 'all']).optional().default('all'),
-})
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -57,7 +48,7 @@ export async function GET(req: NextRequest) {
   }
 
   const sp = Object.fromEntries(new URL(req.url).searchParams.entries())
-  const parsed = querySchema.safeParse(sp)
+  const parsed = listClientsQuerySchema.safeParse(sp)
   if (!parsed.success) {
     return NextResponse.json(
       { data: null, error: parsed.error.flatten().fieldErrors },

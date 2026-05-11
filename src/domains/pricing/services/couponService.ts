@@ -1,11 +1,8 @@
 import { CouponType, BookingStatus } from '@prisma/client'
 import { db } from '@/shared/lib/db'
+import type { ValidateCouponResult } from '@/domains/pricing/types'
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-export type ValidateCouponResult =
-  | { valid: true; couponId: string; discount: number; finalPrice: number; description: string }
-  | { valid: false; error: string }
+export type { ValidateCouponResult }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 

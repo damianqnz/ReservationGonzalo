@@ -1,17 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { z } from 'zod'
 import { auth } from '@/shared/lib/auth'
 import { db } from '@/shared/lib/db'
-
-// ─── Validation ───────────────────────────────────────────────────────────────
-
-const bodySchema = z.object({
-  propertyId: z.string().min(1),
-  startDate:  z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'startDate must be YYYY-MM-DD'),
-  endDate:    z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'endDate must be YYYY-MM-DD'),
-  reason:     z.string().max(200).optional(),
-  roomId:     z.string().optional(),
-})
+import { blockDatesSchema } from '@/domains/calendar/validations/calendarSchema'
 
 // ─── Helper ───────────────────────────────────────────────────────────────────
 
@@ -43,7 +33,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ data: null, error: 'Invalid JSON.' }, { status: 400 })
   }
 
-  const result = bodySchema.safeParse(body)
+  const result = blockDatesSchema.safeParse(body)
   if (!result.success) {
     return NextResponse.json({ data: null, error: result.error.flatten().fieldErrors }, { status: 400 })
   }
@@ -57,7 +47,6 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  // Verify ownership
   const property = await db.property.findUnique({
     where:  { id: propertyId },
     select: { ownerId: true },

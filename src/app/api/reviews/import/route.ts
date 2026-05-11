@@ -1,24 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/shared/lib/auth'
 import { Role } from '@prisma/client'
-import { z } from 'zod'
 import { importReview } from '@/domains/review/services/reviewService'
 import { db } from '@/shared/lib/db'
-
-const ImportSchema = z.object({
-  propertyId: z.string().min(1, 'Propriedade é obrigatória'),
-  guestName: z.string().min(1, 'Nome do hóspede é obrigatório'),
-  rating: z.number().min(1).max(5),
-  comment: z.string().min(1, 'Comentário é obrigatório'),
-  source: z.enum(['AIRBNB', 'BOOKING', 'MANUAL']),
-  sourceUrl: z.string().url('URL inválida').optional().or(z.literal('')),
-  stayDate: z.string().optional().or(z.literal('')),
-})
+import { importReviewSchema } from '@/domains/review/validations/reviewSchema'
 
 /**
  * POST /api/reviews/import
  * Manually import a review from an external source or manual entry.
- * 
+ *
  * Auth: OWNER or ADMIN
  */
 export async function POST(req: NextRequest) {
@@ -39,7 +29,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ data: null, error: 'Invalid JSON body' }, { status: 400 })
     }
 
-    const result = ImportSchema.safeParse(body)
+    const result = importReviewSchema.safeParse(body)
     if (!result.success) {
       return NextResponse.json(
         { data: null, error: result.error.flatten().fieldErrors },
@@ -49,7 +39,6 @@ export async function POST(req: NextRequest) {
 
     const { propertyId, stayDate, ...rest } = result.data
 
-    // Verify property ownership if OWNER
     if (session.user.role === Role.OWNER) {
       const property = await db.property.findUnique({
         where: { id: propertyId },

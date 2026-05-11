@@ -1,13 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { z } from 'zod'
-import { calculateTotalPrice } from '@/domains/booking/services/pricingService'
-
-const querySchema = z.object({
-  propertyId: z.string().min(1),
-  roomId: z.string().optional(),
-  checkIn: z.string().refine((v) => !isNaN(Date.parse(v)), 'Invalid check-in date'),
-  checkOut: z.string().refine((v) => !isNaN(Date.parse(v)), 'Invalid check-out date'),
-})
+import { calculateTotalPrice } from '@/domains/pricing/services/pricingService'
+import { calculatePriceQuerySchema } from '@/domains/pricing/validations/pricingSchema'
 
 /**
  * GET /api/pricing — calculate price breakdown for given dates.
@@ -16,7 +9,7 @@ const querySchema = z.object({
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
 
-  const result = querySchema.safeParse(Object.fromEntries(searchParams))
+  const result = calculatePriceQuerySchema.safeParse(Object.fromEntries(searchParams))
   if (!result.success) {
     return NextResponse.json(
       { data: null, error: result.error.flatten().fieldErrors },

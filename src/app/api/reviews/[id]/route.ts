@@ -1,23 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/shared/lib/auth'
 import { Role } from '@prisma/client'
-import { z } from 'zod'
 import { updateReview } from '@/domains/review/services/reviewService'
 import { db } from '@/shared/lib/db'
-
-const ActionSchema = z.object({
-  action: z.enum(['approve', 'reject', 'reply', 'toggle']),
-  ownerReply: z.string().optional(),
-})
+import { reviewActionSchema } from '@/domains/review/validations/reviewSchema'
 
 /**
  * PATCH /api/reviews/[id]
  * Updates a review (approve, reject, reply, toggle).
- * 
+ *
  * Auth: OWNER or ADMIN
  */
 export async function PATCH(
-  req: NextRequest, 
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -31,7 +26,7 @@ export async function PATCH(
     }
 
     const { id } = await params
-    
+
     let body: unknown
     try {
       body = await req.json()
@@ -39,7 +34,7 @@ export async function PATCH(
       return NextResponse.json({ data: null, error: 'Invalid JSON body' }, { status: 400 })
     }
 
-    const result = ActionSchema.safeParse(body)
+    const result = reviewActionSchema.safeParse(body)
     if (!result.success) {
       return NextResponse.json(
         { data: null, error: result.error.flatten().fieldErrors },
@@ -53,7 +48,6 @@ export async function PATCH(
       return NextResponse.json({ data: null, error: 'Reply text is required' }, { status: 400 })
     }
 
-    // Verify ownership if OWNER
     if (session.user.role === Role.OWNER) {
       const review = await db.review.findUnique({
         where: { id },

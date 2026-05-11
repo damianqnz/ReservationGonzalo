@@ -1,13 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { z } from 'zod'
 import { auth } from '@/shared/lib/auth'
 import { db } from '@/shared/lib/db'
-
-// ─── Validation ───────────────────────────────────────────────────────────────
-
-const bodySchema = z.object({
-  bookingId: z.string().min(1),
-})
+import { checkinReminderSchema } from '@/domains/notification/validations/notificationSchema'
 
 // ─── Email HTML builder ───────────────────────────────────────────────────────
 
@@ -117,7 +111,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ data: null, error: 'Invalid JSON body.' }, { status: 400 })
   }
 
-  const result = bodySchema.safeParse(body)
+  const result = checkinReminderSchema.safeParse(body)
   if (!result.success) {
     return NextResponse.json(
       { data: null, error: result.error.flatten().fieldErrors },

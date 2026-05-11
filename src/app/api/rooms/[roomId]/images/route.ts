@@ -1,15 +1,8 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/shared/lib/auth'
-import { db } from '@/shared/lib/db'
-import { getImageUrl } from '@/shared/lib/cloudinary'
-
-const createSchema = z.object({
-  publicId: z.string().min(1),
-  alt: z.string().max(200).optional(),
-  order: z.number().int().min(0).optional(),
-  isCover: z.boolean().optional(),
-})
+import { listRoomImages, createRoomImage } from '@/domains/room/services/roomService'
+import { createRoomImageSchema } from '@/domains/room/validations/roomSchema'
 
 export async function POST(
   req: Request,
@@ -26,41 +19,18 @@ export async function POST(
 
     const { roomId } = await params
     const body = await req.json()
-    const validated = createSchema.parse(body)
+    const validated = createRoomImageSchema.parse(body)
 
-    // Verify room exists and belongs to the session user's property
-    const room = await db.room.findUnique({
-      where: { id: roomId },
-      include: { property: { select: { ownerId: true } } },
-    })
-    if (!room) {
-      return NextResponse.json({ data: null, error: 'Room not found' }, { status: 404 })
+    const result = await createRoomImage(
+      roomId,
+      validated,
+      session.user.id,
+      session.user.role
+    )
+    if (result.error) {
+      return NextResponse.json({ data: null, error: result.error }, { status: result.status })
     }
-    if (room.property.ownerId !== session.user.id && session.user.role !== 'ADMIN') {
-      return NextResponse.json({ data: null, error: 'Forbidden' }, { status: 403 })
-    }
-
-    // If isCover, unset any existing cover first
-    if (validated.isCover) {
-      await db.roomImage.updateMany({
-        where: { roomId, isCover: true },
-        data: { isCover: false },
-      })
-    }
-
-    const url = getImageUrl(validated.publicId)
-    const image = await db.roomImage.create({
-      data: {
-        roomId,
-        publicId: validated.publicId,
-        url,
-        alt: validated.alt ?? null,
-        order: validated.order ?? 0,
-        isCover: validated.isCover ?? false,
-      },
-    })
-
-    return NextResponse.json({ data: image, error: null }, { status: 201 })
+    return NextResponse.json({ data: result.data, error: null }, { status: 201 })
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
@@ -84,12 +54,11 @@ export async function GET(
     }
 
     const { roomId } = await params
-    const images = await db.roomImage.findMany({
-      where: { roomId },
-      orderBy: { order: 'asc' },
-    })
-
-    return NextResponse.json({ data: images, error: null })
+    const result = await listRoomImages(roomId)
+    if (result.error) {
+      return NextResponse.json({ data: null, error: result.error }, { status: result.status })
+    }
+    return NextResponse.json({ data: result.data, error: null })
   } catch (error) {
     console.error('[ROOM_IMAGES_GET]', error)
     return NextResponse.json({ data: null, error: 'Internal server error' }, { status: 500 })

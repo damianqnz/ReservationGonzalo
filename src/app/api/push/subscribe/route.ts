@@ -1,23 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { z } from 'zod'
 import { auth } from '@/shared/lib/auth'
 import { db } from '@/shared/lib/db'
-
-// ─── Schemas ──────────────────────────────────────────────────────────────────
-
-const subscribeSchema = z.object({
-  subscription: z.object({
-    endpoint: z.string().url(),
-    keys: z.object({
-      p256dh: z.string().min(1),
-      auth:   z.string().min(1),
-    }),
-  }),
-})
-
-const unsubscribeSchema = z.object({
-  endpoint: z.string().url(),
-})
+import {
+  pushSubscribeSchema,
+  pushUnsubscribeSchema,
+} from '@/domains/notification/validations/notificationSchema'
 
 // ─── POST /api/push/subscribe ─────────────────────────────────────────────────
 
@@ -28,7 +15,7 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json()
-  const result = subscribeSchema.safeParse(body)
+  const result = pushSubscribeSchema.safeParse(body)
   if (!result.success) {
     return NextResponse.json(
       { data: null, error: result.error.flatten().fieldErrors },
@@ -69,7 +56,7 @@ export async function DELETE(req: NextRequest) {
   }
 
   const body = await req.json()
-  const result = unsubscribeSchema.safeParse(body)
+  const result = pushUnsubscribeSchema.safeParse(body)
   if (!result.success) {
     return NextResponse.json(
       { data: null, error: result.error.flatten().fieldErrors },

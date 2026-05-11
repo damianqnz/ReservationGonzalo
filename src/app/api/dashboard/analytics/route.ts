@@ -1,12 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { z } from 'zod'
 import { auth } from '@/shared/lib/auth'
 import { computeAnalytics } from '@/domains/analytics/services/analyticsService'
-
-const querySchema = z.object({
-  year:       z.coerce.number().int().min(2020).max(2100).optional(),
-  propertyId: z.string().optional(),
-})
+import { analyticsQuerySchema } from '@/domains/analytics/validations/analyticsSchema'
 
 export async function GET(req: NextRequest) {
   try {
@@ -19,7 +14,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ data: null, error: 'Acesso negado' }, { status: 403 })
     }
 
-    const parsed = querySchema.safeParse(Object.fromEntries(req.nextUrl.searchParams))
+    const parsed = analyticsQuerySchema.safeParse(Object.fromEntries(req.nextUrl.searchParams))
     if (!parsed.success) {
       return NextResponse.json({ data: null, error: 'Parâmetros inválidos' }, { status: 400 })
     }

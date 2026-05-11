@@ -2,6 +2,7 @@ import { db } from '@/shared/lib/db'
 import { parseICalFeed, generateICalFeed } from '@/domains/calendar/lib/ical'
 import type { BookingForICal, BlockedDateForICal } from '@/domains/calendar/lib/ical'
 import { BookingStatus } from '@prisma/client'
+import type { SyncResult } from '@/domains/calendar/types'
 
 const BASE_URL = process.env.NEXTAUTH_URL ?? 'http://localhost:3000'
 
@@ -76,10 +77,7 @@ export async function generatePropertyICalFeed(
 
 // ─── syncExternalCalendar ─────────────────────────────────────────────────────
 
-export interface SyncResult {
-  syncedDates: number
-  source: string
-}
+export type { SyncResult } from '@/domains/calendar/types'
 
 /**
  * Fetches an external iCal feed (Airbnb, Booking.com, etc.), parses it, and

@@ -1,19 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/shared/lib/auth'
 import { Role } from '@prisma/client'
-import { z } from 'zod'
 import { listReviews } from '@/domains/review/services/reviewService'
-
-const QuerySchema = z.object({
-  propertyId: z.string().optional(),
-  status: z.enum(['pending', 'approved', 'rejected', 'all']).default('all'),
-  source: z.enum(['WEBSITE', 'AIRBNB', 'BOOKING', 'MANUAL', 'all']).default('all'),
-})
+import { listReviewsQuerySchema } from '@/domains/review/validations/reviewSchema'
 
 /**
  * GET /api/reviews
  * Lists reviews for owner's properties or all properties for admins.
- * 
+ *
  * Auth: OWNER or ADMIN
  */
 export async function GET(req: NextRequest) {
@@ -34,7 +28,7 @@ export async function GET(req: NextRequest) {
       source: searchParams.get('source') || 'all',
     }
 
-    const result = QuerySchema.safeParse(rawParams)
+    const result = listReviewsQuerySchema.safeParse(rawParams)
     if (!result.success) {
       return NextResponse.json(
         { data: null, error: result.error.flatten().fieldErrors },

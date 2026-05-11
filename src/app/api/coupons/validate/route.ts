@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { z } from 'zod'
-import { validateCoupon } from '@/domains/coupon/services/couponService'
+import { validateCoupon } from '@/domains/pricing/services/couponService'
 import { db } from '@/shared/lib/db'
+import { validateCouponSchema } from '@/domains/pricing/validations/couponSchema'
 
 // ─── Rate limiter (5 req / IP / 10 min) ──────────────────────────────────────
 
@@ -29,13 +29,6 @@ function getIp(req: NextRequest): string {
   )
 }
 
-// ─── Validation ───────────────────────────────────────────────────────────────
-
-const bodySchema = z.object({
-  code: z.string().min(1),
-  bookingId: z.string().cuid(),
-})
-
 // ─── POST /api/coupons/validate — public ─────────────────────────────────────
 
 /**
@@ -57,7 +50,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ data: null, error: 'Invalid JSON body.' }, { status: 400 })
   }
 
-  const result = bodySchema.safeParse(body)
+  const result = validateCouponSchema.safeParse(body)
   if (!result.success) {
     return NextResponse.json(
       { data: null, error: result.error.flatten().fieldErrors },
@@ -67,7 +60,6 @@ export async function POST(req: NextRequest) {
 
   const { code, bookingId } = result.data
 
-  // Fetch guest email from booking — never trust client-provided email
   const booking = await db.booking.findUnique({
     where: { id: bookingId },
     select: { guestEmail: true },

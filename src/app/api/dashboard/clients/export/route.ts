@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/shared/lib/auth'
 import { db } from '@/shared/lib/db'
 import { BookingStatus } from '@prisma/client'
-import { z } from 'zod'
 import { format } from 'date-fns'
+import { exportClientsQuerySchema } from '@/domains/analytics/validations/analyticsSchema'
 
 // ─── Country names (PT locale) ────────────────────────────────────────────────
 
@@ -22,15 +22,6 @@ function countryName(code: string | null): string {
   return COUNTRY_NAMES[code.toUpperCase()] ?? code
 }
 
-// ─── Query schema ─────────────────────────────────────────────────────────────
-
-const querySchema = z.object({
-  search:     z.string().optional(),
-  country:    z.string().optional(),
-  marketing:  z.enum(['true', 'false']).optional(),
-  propertyId: z.string().optional(),
-  period:     z.enum(['30d', '90d', '1y', 'all']).optional().default('all'),
-})
 
 function periodStart(period: string): Date | null {
   const now = new Date()
@@ -71,7 +62,7 @@ export async function GET(req: NextRequest) {
   }
 
   const sp = Object.fromEntries(new URL(req.url).searchParams.entries())
-  const parsed = querySchema.safeParse(sp)
+  const parsed = exportClientsQuerySchema.safeParse(sp)
   if (!parsed.success) {
     return NextResponse.json(
       { data: null, error: parsed.error.flatten().fieldErrors },

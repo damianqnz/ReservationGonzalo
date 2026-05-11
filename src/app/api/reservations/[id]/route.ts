@@ -1,29 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { z } from 'zod'
-import { BookingStatus, PaymentStatus } from '@prisma/client'
+import { BookingStatus } from '@prisma/client'
 import { auth } from '@/shared/lib/auth'
 import {
   getReservation,
   updateReservation,
 } from '@/domains/booking/services/reservationService'
-
-// ─── Validation schemas ───────────────────────────────────────────────────────
-
-const patchSchema = z
-  .object({
-    status:        z.nativeEnum(BookingStatus).optional(),
-    ownerNotes:    z.string().max(1000).optional(),
-    paymentStatus: z.nativeEnum(PaymentStatus).optional(),
-    action:        z.enum(['checkin', 'checkout']).optional(),
-  })
-  .refine(
-    (d) =>
-      d.status !== undefined ||
-      d.ownerNotes !== undefined ||
-      d.paymentStatus !== undefined ||
-      d.action !== undefined,
-    { message: 'At least one field (status, ownerNotes, paymentStatus, action) must be provided.' },
-  )
+import { updateReservationSchema } from '@/domains/booking/validations/bookingSchema'
 
 // ─── GET /api/reservations/[id] ───────────────────────────────────────────────
 
@@ -56,7 +38,6 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  // Auth — owner or admin
   const session = await auth()
   if (!session?.user) {
     return NextResponse.json({ data: null, error: 'Unauthorized.' }, { status: 401 })
@@ -74,7 +55,7 @@ export async function PATCH(
     return NextResponse.json({ data: null, error: 'Invalid JSON body.' }, { status: 400 })
   }
 
-  const result = patchSchema.safeParse(body)
+  const result = updateReservationSchema.safeParse(body)
   if (!result.success) {
     return NextResponse.json(
       { data: null, error: result.error.flatten().fieldErrors },
@@ -85,7 +66,6 @@ export async function PATCH(
   try {
     const { action, ...rest } = result.data
 
-    // Build update payload — translate special actions to field updates
     const updateData: Record<string, unknown> = { ...rest }
     if (action === 'checkin') {
       updateData.checkedInAt = new Date()

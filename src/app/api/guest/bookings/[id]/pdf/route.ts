@@ -1,11 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { z } from 'zod'
 import { checkRateLimit } from '@/shared/lib/rateLimiter'
-import { findGuestBookingById } from '@/domains/guest/services/guestService'
-
-const querySchema = z.object({
-  code: z.string().min(1).max(32),
-})
+import { findGuestBookingById } from '@/domains/booking/services/guestService'
+import { guestBookingPdfSchema } from '@/domains/booking/validations/bookingSchema'
 
 function maskEmail(email: string): string {
   const [local, domain] = email.split('@')
@@ -58,7 +54,7 @@ export async function GET(
 
   const { id } = await params
 
-  const parsed = querySchema.safeParse({
+  const parsed = guestBookingPdfSchema.safeParse({
     code: req.nextUrl.searchParams.get('code') ?? undefined,
   })
 

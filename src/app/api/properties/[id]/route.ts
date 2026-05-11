@@ -1,60 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { z } from 'zod'
-import { BookingStatus, PropertyStatus, PropertyType } from '@prisma/client'
 import { auth } from '@/shared/lib/auth'
-import { db } from '@/shared/lib/db'
-import { deleteImage } from '@/shared/lib/cloudinary-server'
-
-// ─── Validation schemas ───────────────────────────────────────────────────────
-
-const patchSchema = z
-  .object({
-    title: z.string().min(3).max(200).optional(),
-    description: z.string().min(10).max(5000).optional(),
-    type: z.nativeEnum(PropertyType).optional(),
-    status: z.nativeEnum(PropertyStatus).optional(),
-    address: z.string().min(5).max(300).optional(),
-    city: z.string().min(2).max(100).optional(),
-    zipCode: z.string().max(20).optional(),
-    maxGuests: z.number().int().min(1).max(50).optional(),
-    bedrooms: z.number().int().min(0).max(50).optional(),
-    bathrooms: z.number().int().min(0).max(50).optional(),
-    beds: z.number().int().min(1).max(50).optional(),
-    area: z.number().positive().optional(),
-    pricePerNight: z.number().positive().optional(),
-    cleaningFee: z.number().min(0).optional(),
-    latitude:     z.number().optional(),
-    longitude:    z.number().optional(),
-    bedsConfig:   z.string().optional(),
-    bathroomType: z.string().optional(),
-    services:     z.string().optional(),
-    // Access data
-    accessCode:          z.string().max(100).nullish(),
-    wifiName:            z.string().max(100).nullish(),
-    wifiPassword:        z.string().max(100).nullish(),
-    floor:               z.string().max(50).nullish(),
-    accessInstructions:  z.string().max(2000).nullish(),
-    contactPhone:        z.string().max(30).nullish(),
-    // New fields from COMMIT 1
-    arrivalType: z.enum(['autonomous', 'guided']).optional(),
-    floors: z.number().int().min(1).max(20).optional(),
-    hasElevator: z.boolean().optional(),
-    towelsIncluded: z.boolean().optional(),
-    petsAllowed: z.boolean().optional(),
-    childrenAllowed: z.boolean().optional(),
-    smokingAllowed: z.boolean().optional(),
-    spaceDescription: z.string().max(5000).optional(),
-    accessInfo: z.string().max(5000).optional(),
-    interactionInfo: z.string().max(5000).optional(),
-    additionalInfo: z.string().max(5000).optional(),
-    parkingInfo: z.string().max(2000).optional(),
-    extraServices: z.string().max(2000).optional(),
-    houseRules: z.string().max(5000).optional(),
-    cancellationDays: z.number().int().min(0).optional(),
-    licenseNumber: z.string().max(100).optional(),
-    hostDescription: z.string().max(5000).optional(),
-  })
-  .refine((d) => Object.keys(d).length > 0, { message: 'At least one field must be provided.' })
+import {
+  getPropertyById,
+  updateProperty,
+  deleteProperty,
+} from '@/domains/property/services/propertyService'
+import {
+  updatePropertySchema,
+} from '@/domains/property/validations/propertySchema'
 
 // ─── GET /api/properties/[id] — public ───────────────────────────────────────
 
@@ -63,49 +16,11 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params
-
-  try {
-    const property = await db.property.findUnique({
-      where: { id, status: PropertyStatus.ACTIVE },
-      select: {
-        id: true,
-        title: true,
-        slug: true,
-        description: true,
-        type: true,
-        status: true,
-        address: true,
-        city: true,
-        country: true,
-        zipCode: true,
-        latitude: true,
-        longitude: true,
-        maxGuests: true,
-        bedrooms: true,
-        bathrooms: true,
-        beds: true,
-        area: true,
-        pricePerNight: true,
-        cleaningFee: true,
-        images: {
-          select: { id: true, url: true, alt: true, isCover: true, order: true },
-          orderBy: { order: 'asc' },
-        },
-        amenities: {
-          select: { amenity: { select: { name: true, icon: true, category: true } } },
-        },
-      },
-    })
-
-    if (!property) {
-      return NextResponse.json({ data: null, error: 'Property not found.' }, { status: 404 })
-    }
-
-    return NextResponse.json({ data: property, error: null })
-  } catch (error) {
-    console.error('[properties/[id]/GET]', error)
-    return NextResponse.json({ data: null, error: 'An unexpected error occurred.' }, { status: 500 })
+  const result = await getPropertyById(id)
+  if (result.error) {
+    return NextResponse.json({ data: null, error: result.error }, { status: result.status })
   }
+  return NextResponse.json({ data: result.data, error: null })
 }
 
 // ─── PATCH /api/properties/[id] — owner auth, verify ownerId ─────────────────
@@ -131,47 +46,19 @@ export async function PATCH(
     return NextResponse.json({ data: null, error: 'Invalid JSON body.' }, { status: 400 })
   }
 
-  const result = patchSchema.safeParse(body)
-  if (!result.success) {
+  const parsed = updatePropertySchema.safeParse(body)
+  if (!parsed.success) {
     return NextResponse.json(
-      { data: null, error: result.error.flatten().fieldErrors },
+      { data: null, error: parsed.error.flatten().fieldErrors },
       { status: 400 },
     )
   }
 
-  try {
-    // Verify property belongs to this owner (ADMIN bypasses ownership check)
-    const existing = await db.property.findUnique({
-      where: { id },
-      select: { ownerId: true },
-    })
-
-    if (!existing) {
-      return NextResponse.json({ data: null, error: 'Property not found.' }, { status: 404 })
-    }
-
-    if (existing.ownerId !== session.user.id && session.user.role !== 'ADMIN') {
-      return NextResponse.json({ data: null, error: 'Forbidden.' }, { status: 403 })
-    }
-
-    const updated = await db.property.update({
-      where: { id },
-      data: result.data,
-      select: {
-        id: true,
-        title: true,
-        slug: true,
-        status: true,
-        pricePerNight: true,
-        updatedAt: true,
-      },
-    })
-
-    return NextResponse.json({ data: updated, error: null })
-  } catch (error) {
-    console.error('[properties/[id]/PATCH]', error)
-    return NextResponse.json({ data: null, error: 'An unexpected error occurred.' }, { status: 500 })
+  const result = await updateProperty(id, parsed.data, session.user.id, session.user.role)
+  if (result.error) {
+    return NextResponse.json({ data: null, error: result.error }, { status: result.status })
   }
+  return NextResponse.json({ data: result.data, error: null })
 }
 
 // ─── DELETE /api/properties/[id] — owner or admin, hard delete ───────────────
@@ -190,67 +77,9 @@ export async function DELETE(
 
   const { id } = await params
 
-  try {
-    const existing = await db.property.findUnique({
-      where: { id },
-      select: { ownerId: true },
-    })
-
-    if (!existing) {
-      return NextResponse.json({ data: null, error: 'Property not found.' }, { status: 404 })
-    }
-
-    if (session.user.role === 'OWNER' && existing.ownerId !== session.user.id) {
-      return NextResponse.json({ data: null, error: 'Forbidden.' }, { status: 403 })
-    }
-
-    // Guard: block deletion if active bookings exist
-    const activeCount = await db.booking.count({
-      where: {
-        propertyId: id,
-        status: { in: [BookingStatus.CONFIRMED, BookingStatus.PENDING] },
-      },
-    })
-
-    if (activeCount > 0) {
-      return NextResponse.json(
-        {
-          data: null,
-          error:
-            'Não é possível eliminar uma propriedade com reservas ativas. Cancele as reservas primeiro.',
-        },
-        { status: 409 },
-      )
-    }
-
-    // Collect all Cloudinary publicIds before deletion
-    const [propertyImages, roomImages] = await Promise.all([
-      db.propertyImage.findMany({
-        where: { propertyId: id },
-        select: { publicId: true },
-      }),
-      db.roomImage.findMany({
-        where: { room: { propertyId: id } },
-        select: { publicId: true },
-      }),
-    ])
-
-    const publicIds = [
-      ...propertyImages.map((i) => i.publicId),
-      ...roomImages.map((i) => i.publicId),
-    ].filter((pid) => pid && pid.includes('/')) // only real Cloudinary paths
-
-    // Hard delete — DB cascades handle rooms, images, amenities, pricing, etc.
-    await db.property.delete({ where: { id } })
-
-    // Clean up Cloudinary assets (non-blocking — don't fail the request if this errors)
-    if (publicIds.length > 0) {
-      void Promise.allSettled(publicIds.map((pid) => deleteImage(pid)))
-    }
-
-    return NextResponse.json({ data: { deleted: true }, error: null })
-  } catch (error) {
-    console.error('[properties/[id]/DELETE]', error)
-    return NextResponse.json({ data: null, error: 'An unexpected error occurred.' }, { status: 500 })
+  const result = await deleteProperty(id, session.user.id, session.user.role)
+  if (result.error) {
+    return NextResponse.json({ data: null, error: result.error }, { status: result.status })
   }
+  return NextResponse.json({ data: result.data, error: null })
 }

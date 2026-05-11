@@ -1,20 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { z } from 'zod'
 import { checkRateLimit } from '@/shared/lib/rateLimiter'
 import {
   findGuestBookingByCode,
   findGuestBookingsByEmail,
   logGuestAccess,
-} from '@/domains/guest/services/guestService'
-
-const querySchema = z
-  .object({
-    email: z.string().email().optional(),
-    code: z.string().min(1).max(32).optional(),
-  })
-  .refine((d) => d.email || d.code, {
-    message: 'email or code is required',
-  })
+} from '@/domains/booking/services/guestService'
+import { guestLookupSchema } from '@/domains/booking/validations/bookingSchema'
 
 export async function GET(req: NextRequest) {
   const ip = req.headers.get('x-forwarded-for') ?? 'unknown'
@@ -27,7 +18,7 @@ export async function GET(req: NextRequest) {
   }
 
   const { searchParams } = req.nextUrl
-  const parsed = querySchema.safeParse({
+  const parsed = guestLookupSchema.safeParse({
     email: searchParams.get('email') ?? undefined,
     code: searchParams.get('code') ?? undefined,
   })
@@ -46,7 +37,6 @@ export async function GET(req: NextRequest) {
       const booking = await findGuestBookingByCode(code)
 
       if (!booking) {
-        // Always return empty array — never reveal if a code exists
         return NextResponse.json({ data: [], error: null })
       }
 
@@ -60,7 +50,6 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ data: [booking], error: null })
     }
 
-    // Email search — never reveal if the email exists in the system
     const bookings = await findGuestBookingsByEmail(email!)
 
     if (bookings.length > 0) {

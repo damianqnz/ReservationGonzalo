@@ -1,14 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { z } from 'zod'
 import { checkRateLimit } from '@/shared/lib/rateLimiter'
 import {
   findGuestBookingById,
   logGuestAccess,
-} from '@/domains/guest/services/guestService'
-
-const querySchema = z.object({
-  code: z.string().min(1).max(32),
-})
+} from '@/domains/booking/services/guestService'
+import { guestBookingByIdSchema } from '@/domains/booking/validations/bookingSchema'
 
 export async function GET(
   req: NextRequest,
@@ -25,7 +21,7 @@ export async function GET(
 
   const { id } = await params
 
-  const parsed = querySchema.safeParse({
+  const parsed = guestBookingByIdSchema.safeParse({
     code: req.nextUrl.searchParams.get('code') ?? undefined,
   })
 

@@ -1,24 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { z } from 'zod'
-import { RoomType, RoomStatus } from '@prisma/client'
 import { auth } from '@/shared/lib/auth'
-import { db } from '@/shared/lib/db'
-
-const postSchema = z.object({
-  name:          z.string().min(1).max(200),
-  description:   z.string().max(2000).optional(),
-  type:          z.nativeEnum(RoomType).optional(),
-  status:        z.nativeEnum(RoomStatus).optional(),
-  maxGuests:     z.number().int().min(1).max(20),
-  bedrooms:      z.number().int().min(0).max(20),
-  bathrooms:     z.number().int().min(0).max(20),
-  bathroomType:  z.string().optional(),
-  beds:          z.number().int().min(1).max(20),
-  bedsList:      z.string().optional(),
-  services:      z.string().optional(),
-  pricePerNight: z.number().positive(),
-  order:         z.number().int().min(0).optional(),
-})
+import {
+  listRoomsByProperty,
+  createRoom,
+} from '@/domains/property/services/propertyService'
+import { createRoomInPropertySchema } from '@/domains/property/validations/propertySchema'
 
 // ─── GET /api/properties/[id]/rooms ──────────────────────────────────────────
 
@@ -35,49 +21,11 @@ export async function GET(
   }
 
   const { id } = await params
-
-  const property = await db.property.findUnique({
-    where: { id },
-    select: { id: true, ownerId: true },
-  })
-
-  if (!property) {
-    return NextResponse.json({ data: null, error: 'Property not found.' }, { status: 404 })
+  const result = await listRoomsByProperty(id, session.user.id, session.user.role)
+  if (result.error) {
+    return NextResponse.json({ data: null, error: result.error }, { status: result.status })
   }
-  if (property.ownerId !== session.user.id && session.user.role !== 'ADMIN') {
-    return NextResponse.json({ data: null, error: 'Forbidden.' }, { status: 403 })
-  }
-
-  try {
-    const rooms = await db.room.findMany({
-      where: { propertyId: id },
-      select: {
-        id: true,
-        name: true,
-        description: true,
-        type: true,
-        status: true,
-        maxGuests: true,
-        bedrooms: true,
-        bathrooms: true,
-        beds: true,
-        pricePerNight: true,
-        order: true,
-        createdAt: true,
-        images: {
-          where: { isCover: true },
-          select: { url: true, publicId: true, alt: true },
-          take: 1,
-        },
-      },
-      orderBy: { order: 'asc' },
-    })
-
-    return NextResponse.json({ data: rooms, error: null })
-  } catch (error) {
-    console.error('[properties/[id]/rooms/GET]', error)
-    return NextResponse.json({ data: null, error: 'An unexpected error occurred.' }, { status: 500 })
-  }
+  return NextResponse.json({ data: result.data, error: null })
 }
 
 // ─── POST /api/properties/[id]/rooms ─────────────────────────────────────────
@@ -96,18 +44,6 @@ export async function POST(
 
   const { id } = await params
 
-  const property = await db.property.findUnique({
-    where: { id },
-    select: { id: true, ownerId: true },
-  })
-
-  if (!property) {
-    return NextResponse.json({ data: null, error: 'Property not found.' }, { status: 404 })
-  }
-  if (property.ownerId !== session.user.id && session.user.role !== 'ADMIN') {
-    return NextResponse.json({ data: null, error: 'Forbidden.' }, { status: 403 })
-  }
-
   let body: unknown
   try {
     body = await req.json()
@@ -115,42 +51,17 @@ export async function POST(
     return NextResponse.json({ data: null, error: 'Invalid JSON body.' }, { status: 400 })
   }
 
-  const result = postSchema.safeParse(body)
-  if (!result.success) {
+  const parsed = createRoomInPropertySchema.safeParse(body)
+  if (!parsed.success) {
     return NextResponse.json(
-      { data: null, error: result.error.flatten().fieldErrors },
+      { data: null, error: parsed.error.flatten().fieldErrors },
       { status: 400 },
     )
   }
 
-  try {
-    const room = await db.room.create({
-      data: {
-        ...result.data,
-        propertyId: id,
-        type: result.data.type ?? RoomType.DOUBLE,
-        status: result.data.status ?? RoomStatus.ACTIVE,
-        order: result.data.order ?? 0,
-      },
-      select: {
-        id: true,
-        name: true,
-        type: true,
-        status: true,
-        pricePerNight: true,
-        createdAt: true,
-      },
-    })
-
-    // Ensure the property is marked as having rooms
-    await db.property.update({
-      where: { id },
-      data: { hasRooms: true },
-    })
-
-    return NextResponse.json({ data: room, error: null }, { status: 201 })
-  } catch (error) {
-    console.error('[properties/[id]/rooms/POST]', error)
-    return NextResponse.json({ data: null, error: 'An unexpected error occurred.' }, { status: 500 })
+  const result = await createRoom(id, parsed.data, session.user.id, session.user.role)
+  if (result.error) {
+    return NextResponse.json({ data: null, error: result.error }, { status: result.status })
   }
+  return NextResponse.json({ data: result.data, error: null }, { status: 201 })
 }

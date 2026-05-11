@@ -2,7 +2,10 @@ import { db } from '@/shared/lib/db'
 import { BookingStatus, BookingSource, PaymentStatus, PropertyStatus, NotificationType } from '@prisma/client'
 import { v4 as uuidv4 } from 'uuid'
 import { checkAvailability, checkRoomAvailability } from '@/domains/booking/services/availabilityService'
-import { calculateTotalPrice } from '@/domains/booking/services/pricingService'
+import { calculateTotalPrice } from '@/domains/pricing/services/pricingService'
+import type { CreateReservationInput, CreateManualBookingInput } from '@/domains/booking/types'
+
+export type { CreateReservationInput, CreateManualBookingInput }
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -65,24 +68,6 @@ function generateConfirmationCode(): string {
   return Math.random().toString(36).substring(2, 8).toUpperCase()
 }
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-export interface CreateReservationInput {
-  propertyId: string
-  roomId?: string
-  checkIn: Date
-  checkOut: Date
-  guestName: string
-  guestEmail: string
-  guestPhone?: string
-  guestCount: number
-  guestMessage?: string
-  guestCountry?: string
-  acceptedTerms?: boolean
-  acceptedPrivacy?: boolean
-  acceptedMarketing?: boolean
-  sessionId?: string
-}
 
 // ─── Service ──────────────────────────────────────────────────────────────────
 
@@ -332,23 +317,6 @@ export async function updateReservation(id: string, data: any) {
 
 // ─── Manual booking ──────────────────────────────────────────────────────────
 
-export interface CreateManualBookingInput {
-  propertyId:      string
-  roomId?:         string
-  guestName:       string
-  guestEmail:      string
-  guestPhone?:     string
-  guestCountry?:   string
-  guestCount:      number
-  checkIn:         Date
-  checkOut:        Date
-  pricePerNight:   number
-  cleaningFee:     number
-  securityDeposit: number
-  paymentStatus:   'PAID' | 'UNPAID'
-  guestMessage?:   string
-  ownerNotes?:     string
-}
 
 /**
  * Creates a manual booking (CONFIRMED, source: MANUAL, no Stripe payment).

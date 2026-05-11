@@ -1,25 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { z } from 'zod'
-import { CouponType } from '@prisma/client'
 import { auth } from '@/shared/lib/auth'
-import { getCoupons, createCoupon } from '@/domains/coupon/services/couponService'
-
-// ─── Validation ───────────────────────────────────────────────────────────────
-
-const postSchema = z.object({
-  code: z
-    .string()
-    .min(3, 'Mínimo 3 caracteres')
-    .max(20, 'Máximo 20 caracteres')
-    .regex(/^[A-Z0-9_-]+$/i, 'Apenas letras, números, hífens e underscores'),
-  type: z.nativeEnum(CouponType),
-  discountValue: z.number().positive('Deve ser um valor positivo'),
-  description: z.string().max(200).optional(),
-  maxUses: z.number().int().positive().optional(),
-  minNights: z.number().int().positive().optional(),
-  minOrderAmount: z.number().positive().optional(),
-  expiresAt: z.coerce.date().optional(),
-})
+import { getCoupons, createCoupon } from '@/domains/pricing/services/couponService'
+import { createCouponSchema } from '@/domains/pricing/validations/couponSchema'
 
 // ─── GET /api/coupons — owner only ───────────────────────────────────────────
 
@@ -62,7 +44,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ data: null, error: 'Invalid JSON body.' }, { status: 400 })
   }
 
-  const result = postSchema.safeParse(body)
+  const result = createCouponSchema.safeParse(body)
   if (!result.success) {
     return NextResponse.json(
       { data: null, error: result.error.flatten().fieldErrors },

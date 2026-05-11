@@ -1,16 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { z } from 'zod'
 import Stripe from 'stripe'
 import { BookingStatus } from '@prisma/client'
 import { db } from '@/shared/lib/db'
-import { validateCoupon, applyCoupon } from '@/domains/coupon/services/couponService'
-
-// ─── Validation ───────────────────────────────────────────────────────────────
-
-const bodySchema = z.object({
-  code: z.string().min(1),
-  bookingId: z.string().cuid(),
-})
+import { validateCoupon, applyCoupon } from '@/domains/pricing/services/couponService'
+import { applyCouponSchema } from '@/domains/pricing/validations/couponSchema'
 
 // ─── POST /api/coupons/apply — public ────────────────────────────────────────
 
@@ -26,7 +19,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ data: null, error: 'Invalid JSON body.' }, { status: 400 })
   }
 
-  const result = bodySchema.safeParse(body)
+  const result = applyCouponSchema.safeParse(body)
   if (!result.success) {
     return NextResponse.json(
       { data: null, error: result.error.flatten().fieldErrors },
@@ -36,7 +29,6 @@ export async function POST(req: NextRequest) {
 
   const { code, bookingId } = result.data
 
-  // Fetch booking — source of truth for email and status
   const booking = await db.booking.findUnique({
     where: { id: bookingId },
     select: {
@@ -58,7 +50,6 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    // Re-validate to get fresh discount values
     const validation = await validateCoupon(code, bookingId, booking.guestEmail)
     if (!validation.valid) {
       return NextResponse.json({ data: null, error: validation.error }, { status: 400 })
@@ -66,7 +57,6 @@ export async function POST(req: NextRequest) {
 
     await applyCoupon(code, bookingId, booking.guestEmail, validation.discount)
 
-    // Update Stripe PaymentIntent amount if it already exists
     if (booking.paymentIntentId && process.env.STRIPE_SECRET_KEY) {
       try {
         const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
@@ -74,7 +64,6 @@ export async function POST(req: NextRequest) {
           amount: Math.round(validation.finalPrice * 100),
         })
       } catch (stripeErr) {
-        // Non-fatal — log but don't fail the request
         console.error('[coupons/apply/POST] Stripe update failed', stripeErr)
       }
     }

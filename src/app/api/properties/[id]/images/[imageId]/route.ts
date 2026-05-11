@@ -1,16 +1,11 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
-import { ImageCategory } from '@prisma/client'
 import { auth } from '@/shared/lib/auth'
-import { db } from '@/shared/lib/db'
-import { deleteImage } from '@/shared/lib/cloudinary-server'
-
-const patchSchema = z.object({
-  order:    z.number().int().min(0).optional(),
-  isCover:  z.boolean().optional(),
-  alt:      z.string().max(200).optional(),
-  category: z.nativeEnum(ImageCategory).optional(),
-})
+import {
+  updatePropertyImage,
+  deletePropertyImage,
+} from '@/domains/property/services/propertyService'
+import { updatePropertyImageSchema } from '@/domains/property/validations/propertySchema'
 
 type RouteContext = { params: Promise<{ id: string; imageId: string }> }
 
@@ -26,39 +21,19 @@ export async function PATCH(req: Request, { params }: RouteContext) {
 
     const { id: propertyId, imageId } = await params
     const body = await req.json()
-    const validated = patchSchema.parse(body)
+    const validated = updatePropertyImageSchema.parse(body)
 
-    // Verify ownership
-    const existing = await db.propertyImage.findUnique({
-      where: { id: imageId },
-      include: { property: { select: { ownerId: true } } },
-    })
-    if (!existing || existing.propertyId !== propertyId) {
-      return NextResponse.json({ data: null, error: 'Image not found' }, { status: 404 })
+    const result = await updatePropertyImage(
+      propertyId,
+      imageId,
+      validated,
+      session.user.id,
+      session.user.role
+    )
+    if (result.error) {
+      return NextResponse.json({ data: null, error: result.error }, { status: result.status })
     }
-    if (existing.property.ownerId !== session.user.id && session.user.role !== 'ADMIN') {
-      return NextResponse.json({ data: null, error: 'Forbidden' }, { status: 403 })
-    }
-
-    // If setting as cover, unset existing cover
-    if (validated.isCover) {
-      await db.propertyImage.updateMany({
-        where: { propertyId, isCover: true, id: { not: imageId } },
-        data: { isCover: false },
-      })
-    }
-
-    const updated = await db.propertyImage.update({
-      where: { id: imageId },
-      data: {
-        ...(validated.order    !== undefined && { order:    validated.order }),
-        ...(validated.isCover  !== undefined && { isCover:  validated.isCover }),
-        ...(validated.alt      !== undefined && { alt:      validated.alt }),
-        ...(validated.category !== undefined && { category: validated.category }),
-      },
-    })
-
-    return NextResponse.json({ data: updated, error: null })
+    return NextResponse.json({ data: result.data, error: null })
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
@@ -83,25 +58,16 @@ export async function DELETE(_req: Request, { params }: RouteContext) {
 
     const { id: propertyId, imageId } = await params
 
-    const existing = await db.propertyImage.findUnique({
-      where: { id: imageId },
-      include: { property: { select: { ownerId: true } } },
-    })
-    if (!existing || existing.propertyId !== propertyId) {
-      return NextResponse.json({ data: null, error: 'Image not found' }, { status: 404 })
+    const result = await deletePropertyImage(
+      propertyId,
+      imageId,
+      session.user.id,
+      session.user.role
+    )
+    if (result.error) {
+      return NextResponse.json({ data: null, error: result.error }, { status: result.status })
     }
-    if (existing.property.ownerId !== session.user.id && session.user.role !== 'ADMIN') {
-      return NextResponse.json({ data: null, error: 'Forbidden' }, { status: 403 })
-    }
-
-    // Delete from Cloudinary only if it's a real Cloudinary publicId (has a slash)
-    if (existing.publicId.includes('/')) {
-      await deleteImage(existing.publicId)
-    }
-
-    await db.propertyImage.delete({ where: { id: imageId } })
-
-    return NextResponse.json({ data: { success: true }, error: null })
+    return NextResponse.json({ data: result.data, error: null })
   } catch (error) {
     console.error('[PROPERTY_IMAGE_DELETE]', error)
     return NextResponse.json({ data: null, error: 'Internal server error' }, { status: 500 })

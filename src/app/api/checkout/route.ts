@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { z } from 'zod'
 import { db } from '@/shared/lib/db'
 import { createCheckoutSession } from '@/domains/payment/services/paymentService'
+import { createCheckoutSchema } from '@/domains/booking/validations/bookingSchema'
 
 // ─── Rate limiter (3 req / IP / 10 min) ──────────────────────────────────────
 
@@ -34,18 +34,9 @@ function getClientIp(req: NextRequest): string {
   )
 }
 
-// ─── Validation schema ────────────────────────────────────────────────────────
-
-const postSchema = z.object({
-  bookingId: z.string().cuid({ message: 'Invalid booking ID' }),
-  successUrl: z.string().url({ message: 'successUrl must be a valid URL' }),
-  cancelUrl: z.string().url({ message: 'cancelUrl must be a valid URL' }),
-})
-
 // ─── POST /api/checkout ───────────────────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
-  // Rate limiting
   const ip = getClientIp(req)
   if (isRateLimited(ip)) {
     return NextResponse.json(
@@ -54,7 +45,6 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  // Parse JSON body
   let body: unknown
   try {
     body = await req.json()
@@ -62,8 +52,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ data: null, error: 'Invalid JSON body.' }, { status: 400 })
   }
 
-  // Validate input
-  const result = postSchema.safeParse(body)
+  const result = createCheckoutSchema.safeParse(body)
   if (!result.success) {
     return NextResponse.json(
       { data: null, error: result.error.flatten().fieldErrors },
@@ -80,7 +69,6 @@ export async function POST(req: NextRequest) {
       cancelUrl,
     )
 
-    // Store paymentIntentId on the booking for webhook correlation
     await db.booking.update({
       where: { id: bookingId },
       data: { paymentIntentId },
