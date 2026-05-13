@@ -3,9 +3,9 @@ import { auth } from '@/shared/lib/auth'
 import { db } from '@/shared/lib/db'
 import { BookingStatus, PropertyStatus, RoomStatus } from '@prisma/client'
 import { Suspense } from 'react'
-import SearchFilters from './SearchFilters'
-import ReservationsTable from './ReservationsTable'
-import AddBookingButton from '@/components/dashboard/AddBookingButton'
+import SearchFilters from '@/domains/booking/components/SearchFilters'
+import ReservationsTable from '@/domains/booking/components/ReservationsTable'
+import AddBookingButton from '@/domains/booking/components/AddBookingButton'
 
 const PAGE_SIZE = 20
 

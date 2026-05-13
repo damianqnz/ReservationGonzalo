@@ -2,9 +2,9 @@ import { redirect } from 'next/navigation'
 import { auth } from '@/shared/lib/auth'
 import { db } from '@/shared/lib/db'
 import { BookingStatus } from '@prisma/client'
-import StatCard from '@/components/dashboard/StatCard'
+import StatCard from '@/domains/analytics/components/StatCard'
 import Link from 'next/link'
-import SparklineSection from './SparklineSection'
+import SparklineSection from '@/domains/analytics/components/SparklineSection'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 

@@ -2,7 +2,7 @@ import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
 import { auth } from '@/shared/lib/auth'
 import { db } from '@/shared/lib/db'
-import RoomEditForm from './RoomEditForm'
+import RoomEditForm from '@/domains/room/components/RoomEditForm'
 
 interface Props {
   params: Promise<{ id: string; roomId: string }>

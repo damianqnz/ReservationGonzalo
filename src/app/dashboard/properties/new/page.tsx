@@ -4,9 +4,9 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { sileo } from 'sileo'
-import BedPicker from '@/components/dashboard/BedPicker'
-import ServicesChecklist from '@/components/dashboard/ServicesChecklist'
-import ToggleSwitch from '@/components/ui/ToggleSwitch'
+import BedPicker from '@/domains/room/components/BedPicker'
+import ServicesChecklist from '@/domains/room/components/ServicesChecklist'
+import ToggleSwitch from '@/shared/components/ui/ToggleSwitch'
 
 // ─── Slug helper ──────────────────────────────────────────────────────────────
 

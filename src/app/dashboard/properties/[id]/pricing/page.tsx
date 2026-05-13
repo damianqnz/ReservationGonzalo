@@ -1,7 +1,7 @@
 import { redirect, notFound } from 'next/navigation'
 import { auth } from '@/shared/lib/auth'
 import { db } from '@/shared/lib/db'
-import PricingClient from './PricingClient'
+import PricingClient from '@/domains/pricing/components/PricingClient'
 
 interface Props {
   params: Promise<{ id: string }>

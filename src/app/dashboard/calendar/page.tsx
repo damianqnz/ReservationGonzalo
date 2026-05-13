@@ -7,7 +7,7 @@ import {
   startOfWeek, endOfWeek,
   format,
 } from 'date-fns'
-import CalendarClient from './CalendarClient'
+import CalendarClient from '@/domains/calendar/components/CalendarClient'
 
 // ─── Types exported to client ─────────────────────────────────────────────────
 

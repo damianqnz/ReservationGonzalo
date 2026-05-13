@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import { auth } from '@/shared/lib/auth'
 import { db } from '@/shared/lib/db'
-import DashboardLayout from '@/components/dashboard/DashboardLayout'
+import DashboardLayout from '@/shared/components/layout/DashboardLayout'
 
 export default async function RootDashboardLayout({
   children,

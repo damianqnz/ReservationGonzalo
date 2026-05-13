@@ -3,7 +3,7 @@ import { auth } from '@/shared/lib/auth'
 import { db } from '@/shared/lib/db'
 import { getICalUrl } from '@/domains/calendar/services/icalService'
 import { format } from 'date-fns'
-import ICalClient from './ICalClient'
+import ICalClient from '@/domains/calendar/components/ICalClient'
 
 export interface ICalSyncRow {
   id: string

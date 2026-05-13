@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "tech-stack": "node scripts/update-tech-stack.mjs"
+    "tech-stack": "node scripts/update-tech-stack.mjs",
+    "preinstall": "npx only-allow pnpm",
+    "packageManager": "pnpm@11.1.1"
   },
   "prisma": {
     "seed": "ts-node --project tsconfig.seed.json prisma/seed.ts"

@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import { auth } from '@/shared/lib/auth'
 import { getCoupons } from '@/domains/pricing/services/couponService'
-import CouponsClient from './CouponsClient'
+import CouponsClient from '@/domains/pricing/components/CouponsClient'
 
 export const metadata = { title: 'Cupões — Dashboard' }
 

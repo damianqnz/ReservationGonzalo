@@ -1,6 +1,6 @@
 import { BookingStatus } from '@prisma/client'
 import { db } from '@/shared/lib/db'
-import { isDateOverlap, normalizeDate } from '@/shared/lib/date'
+import { isDateOverlap, normalizeDate } from '@/shared/utils/date'
 
 const ACTIVE_STATUSES: BookingStatus[] = [
   BookingStatus.PENDING,

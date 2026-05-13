@@ -2,7 +2,7 @@ import { redirect, notFound } from 'next/navigation'
 import { auth } from '@/shared/lib/auth'
 import { db } from '@/shared/lib/db'
 import Link from 'next/link'
-import AccessForm from './AccessForm'
+import AccessForm from '@/domains/property/components/AccessForm'
 
 interface PageProps {
   params: Promise<{ id: string }>

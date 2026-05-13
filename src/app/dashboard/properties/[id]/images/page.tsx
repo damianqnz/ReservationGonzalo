@@ -3,8 +3,8 @@ import Link from 'next/link'
 import { auth } from '@/shared/lib/auth'
 import { db } from '@/shared/lib/db'
 import { resolveImageUrl } from '@/shared/lib/cloudinary'
-import { type UploadedImage } from '@/components/ui/ImageUploader'
-import ImagesClient from './ImagesClient'
+import { type UploadedImage } from '@/domains/property/components/ImageUploader'
+import ImagesClient from '@/domains/property/components/ImagesClient'
 
 interface Props {
   params: Promise<{ id: string }>

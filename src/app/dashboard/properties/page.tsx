@@ -3,8 +3,8 @@ import { auth } from '@/shared/lib/auth'
 import { db } from '@/shared/lib/db'
 import { BookingStatus, PropertyStatus } from '@prisma/client'
 import Link from 'next/link'
-import PropertyManageButton from '@/components/dashboard/PropertyManageButton'
-import DeletePropertyButton from '@/components/dashboard/DeletePropertyButton'
+import PropertyManageButton from '@/domains/property/components/PropertyManageButton'
+import DeletePropertyButton from '@/domains/property/components/DeletePropertyButton'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 

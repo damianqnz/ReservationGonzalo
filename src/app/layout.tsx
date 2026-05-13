@@ -1,10 +1,10 @@
 import type { Metadata } from 'next'
 import { Plus_Jakarta_Sans, Outfit } from 'next/font/google'
 import './globals.css'
-import { Providers } from '@/components/providers'
-import CookieBanner from '@/components/CookieBanner'
+import { Providers } from '@/shared/providers/Providers'
+import CookieBanner from '@/shared/components/ui/CookieBanner'
 import { Toaster } from 'sileo'
-import TawkChat from '@/components/TawkChat'
+import TawkChat from '@/shared/components/ui/TawkChat'
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   variable: '--font-display',

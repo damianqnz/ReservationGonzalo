@@ -2,13 +2,7 @@
 
 # dependencies
 /node_modules
-/.pnp
-.pnp.*
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/versions
+package-lock.json
 
 # testing
 /coverage
@@ -57,6 +51,7 @@ TOOLS.md
 .claude/settings.local.json
 .claude/skills/
 .agents/
+prompts/*
 
 # Internal documentation (kept local only)
 ARCHITECTURE.md

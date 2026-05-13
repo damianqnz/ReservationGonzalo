@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation'
 import { listReviews } from '@/domains/review/services/reviewService'
 import { db } from '@/shared/lib/db'
 import { Role } from '@prisma/client'
-import ReviewsClient from './ReviewsClient'
+import ReviewsClient from '@/domains/review/components/ReviewsClient'
 
 /**
  * Reviews management dashboard page.
