@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
+import { auth } from '@/shared/lib/auth'
+import { checkRateLimit } from '@/shared/lib/rateLimiter'
 import {
   createReservation,
   listReservations,
@@ -12,6 +14,14 @@ import {
 // ─── Handlers ─────────────────────────────────────────────────────────────────
 
 export async function GET(req: NextRequest) {
+  const session = await auth()
+  if (!session?.user) {
+    return NextResponse.json({ data: null, error: 'Unauthorized.' }, { status: 401 })
+  }
+  if (session.user.role !== 'OWNER' && session.user.role !== 'ADMIN') {
+    return NextResponse.json({ data: null, error: 'Forbidden.' }, { status: 403 })
+  }
+
   try {
     const { searchParams } = new URL(req.url)
     const filters = listReservationsQuerySchema.parse(Object.fromEntries(searchParams))
@@ -32,6 +42,14 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  const ip = req.headers.get('x-forwarded-for') ?? req.headers.get('x-real-ip') ?? 'unknown'
+  if (!checkRateLimit(`reservations:${ip}`, 10, 15 * 60 * 1000)) {
+    return NextResponse.json(
+      { data: null, error: 'Too many requests. Please try again later.' },
+      { status: 429 }
+    )
+  }
+
   try {
     const body = await req.json()
     const validated = createReservationSchema.parse(body)
@@ -58,11 +76,9 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const message = error instanceof Error ? error.message : 'Internal Server Error'
     console.error('[RESERVATIONS_POST_ERROR]', error)
-
     return NextResponse.json(
-      { data: null, error: message },
+      { data: null, error: 'An unexpected error occurred.' },
       { status: 500 }
     )
   }

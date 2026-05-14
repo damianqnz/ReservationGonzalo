@@ -90,32 +90,14 @@ export async function createCheckoutSession(
 }
 
 /**
- * Verifies the Stripe webhook signature and processes the event.
+ * Processes an already-verified Stripe event.
+ * Call this after constructEvent succeeds — signature verification is the caller's responsibility.
+ *
  * Handles:
  *   - payment_intent.succeeded → confirmReservation()
  *   - payment_intent.payment_failed → cancelReservation()
- *
- * @param payload - Raw request body as string (must NOT be parsed)
- * @param signature - Value of the stripe-signature header
- * @returns The verified Stripe event
- * @throws {Error} If signature verification fails
  */
-export async function handleStripeWebhook(
-  payload: string,
-  signature: string,
-): Promise<Stripe.Event> {
-  if (!process.env.STRIPE_WEBHOOK_SECRET) {
-    throw new Error('STRIPE_WEBHOOK_SECRET is not set')
-  }
-
-  const stripe = getStripe()
-
-  const event = stripe.webhooks.constructEvent(
-    payload,
-    signature,
-    process.env.STRIPE_WEBHOOK_SECRET,
-  )
-
+export async function processStripeEvent(event: Stripe.Event): Promise<void> {
   switch (event.type) {
     case 'payment_intent.succeeded': {
       const paymentIntent = event.data.object as Stripe.PaymentIntent
@@ -136,8 +118,6 @@ export async function handleStripeWebhook(
       // Ignore unhandled event types
       break
   }
-
-  return event
 }
 
 /**

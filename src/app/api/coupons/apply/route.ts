@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { BookingStatus } from '@prisma/client'
 import { db } from '@/shared/lib/db'
+import { checkRateLimit } from '@/shared/lib/rateLimiter'
 import { validateCoupon, applyCoupon } from '@/domains/pricing/services/couponService'
 import { applyCouponSchema } from '@/domains/pricing/validations/couponSchema'
 
@@ -12,6 +13,14 @@ import { applyCouponSchema } from '@/domains/pricing/validations/couponSchema'
  * Also updates the Stripe PaymentIntent amount if one already exists.
  */
 export async function POST(req: NextRequest) {
+  const ip = req.headers.get('x-forwarded-for') ?? req.headers.get('x-real-ip') ?? 'unknown'
+  if (!checkRateLimit(`coupons-apply:${ip}`, 5, 10 * 60 * 1000)) {
+    return NextResponse.json(
+      { data: null, error: 'Too many requests. Please try again later.' },
+      { status: 429 },
+    )
+  }
+
   let body: unknown
   try {
     body = await req.json()

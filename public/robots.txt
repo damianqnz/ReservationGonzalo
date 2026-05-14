@@ -1,0 +1,4 @@
+# FASE 3-4: Deploy invisible — todos los crawlers bloqueados
+# Actualizar en Fase 5 para abrir páginas públicas
+User-agent: *
+Disallow: /

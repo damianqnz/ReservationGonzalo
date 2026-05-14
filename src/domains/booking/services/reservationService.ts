@@ -9,7 +9,7 @@ export type { CreateReservationInput, CreateManualBookingInput }
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
-const PENDING_EXPIRY_MINUTES = 30
+const PENDING_EXPIRY_MINUTES = 15
 
 const BOOKING_SELECT = {
   id: true,
@@ -63,9 +63,15 @@ function nightsBetween(start: Date, end: Date): number {
   return Math.ceil(diff / (1000 * 60 * 60 * 24))
 }
 
-function generateConfirmationCode(): string {
-  // Simple alphanumeric 6-char code
-  return Math.random().toString(36).substring(2, 8).toUpperCase()
+const CONFIRMATION_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+
+/** Generates a unique confirmation code in RG-XXXXXX format (6 uppercase alphanumeric chars). */
+export function generateConfirmationCode(): string {
+  let code = 'RG-'
+  for (let i = 0; i < 6; i++) {
+    code += CONFIRMATION_CHARS.charAt(Math.floor(Math.random() * CONFIRMATION_CHARS.length))
+  }
+  return code
 }
 
 
@@ -343,19 +349,11 @@ export async function createManualBooking(input: CreateManualBookingInput) {
   const totalPrice =
     input.pricePerNight * nights + input.cleaningFee + input.securityDeposit
 
-  // Generate RG-XXXXXX confirmation code
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
-  function genCode() {
-    let c = 'RG-'
-    for (let i = 0; i < 6; i++) c += chars.charAt(Math.floor(Math.random() * chars.length))
-    return c
-  }
-
-  let confirmationCode = genCode()
+  let confirmationCode = generateConfirmationCode()
   for (let i = 0; i < 5; i++) {
     const exists = await db.booking.findUnique({ where: { confirmationCode }, select: { id: true } })
     if (!exists) break
-    confirmationCode = genCode()
+    confirmationCode = generateConfirmationCode()
   }
 
   return db.$transaction(async (tx) => {
