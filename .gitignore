@@ -51,7 +51,7 @@ TOOLS.md
 .claude/settings.local.json
 .claude/skills/
 .agents/
-prompts/*
+prompts/
 
 # Internal documentation (kept local only)
 ARCHITECTURE.md
