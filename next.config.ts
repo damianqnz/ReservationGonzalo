@@ -2,11 +2,11 @@ import type { NextConfig } from 'next'
 
 const CSP = [
   "default-src 'self'",
-  "script-src 'self' https://js.stripe.com https://embed.tawk.to",
-  "frame-src https://js.stripe.com",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://embed.tawk.to",
+  "frame-src https://js.stripe.com https://embed.tawk.to",
   "img-src 'self' data: blob: https://res.cloudinary.com https://lh3.googleusercontent.com https://images.unsplash.com https://picsum.photos https://imagedelivery.net",
-  "connect-src 'self' https://api.stripe.com",
-  "font-src 'self' https://fonts.gstatic.com https://fonts.googleapis.com",
+  "connect-src 'self' https://api.stripe.com https://va.tawk.to wss://chat.tawk.to",
+  "font-src 'self' data: https://fonts.gstatic.com https://fonts.googleapis.com",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "worker-src 'self' blob:",
 ].join('; ')
